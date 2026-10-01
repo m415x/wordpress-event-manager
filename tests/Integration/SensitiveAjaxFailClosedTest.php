@@ -60,7 +60,9 @@ final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
         $this->_handleAjax($action);
         self::assertSame(
             ['success' => false, 'data' => ['code' => 'guest_access_unavailable']],
-            json_decode($this->_last_response, true)
+            json_decode($this->_last_response, true),
+            'Actual AJAX output: ' . var_export($this->_last_response, true)
+                . '; JSON error: ' . json_last_error_msg()
         );
         self::assertSame('0', (string) get_post_meta($postId, 'wem_checkin', true));
         self::assertSame('private-guest-marker', get_post_meta($postId, 'wem_nombre', true));
