@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Metabox_Manager {
+class WEM_Metabox_Manager {
     
     public function register_metaboxes() {
         add_action('add_meta_boxes', array($this, 'add_metaboxes'));
