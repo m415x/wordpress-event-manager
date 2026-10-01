@@ -84,13 +84,13 @@ class WEM_Shortcode_Manager {
         
         ob_start();
         ?>
-        <div class="wem_wrapper">
+        <div class="wem-wrapper">
             <?php $this->render_checkin_styles(); ?>
             
             <h2 class="wem-field-nombre"><?php echo esc_html($nombre); ?></h2>
-            <p class="wem-field-organizacion wem_field"><strong>Organización:</strong> <?php echo esc_html($data['organizacion']); ?></p>
-            <p class="wem-field-mesa wem_field"><strong>Mesa:</strong> <?php echo esc_html($data['mesa']); ?></p>
-            <p class="wem-field-evento wem_field"><strong>Evento:</strong> <?php echo esc_html($event_slug); ?></p>
+            <p class="wem-field-organizacion wem-field"><strong>Organización:</strong> <?php echo esc_html($data['organizacion']); ?></p>
+            <p class="wem-field-mesa wem-field"><strong>Mesa:</strong> <?php echo esc_html($data['mesa']); ?></p>
+            <p class="wem-field-evento wem-field"><strong>Evento:</strong> <?php echo esc_html($event_slug); ?></p>
             
             <?php if ($data['checkin']): ?>
                 <?php $this->render_checked_in_interface($invitado->ID, $data); ?>
@@ -115,7 +115,7 @@ class WEM_Shortcode_Manager {
             <?php if($data['checkout_by']): ?>
                 <p style="color:#666;font-size:0.9em;">Registrado por: <?php echo esc_html($data['checkout_by']); ?></p>
             <?php endif; ?>
-            <button class="wem_btn checkin_again" id="wem_btn_checkin_again" data-postid="<?php echo esc_attr($post_id); ?>">
+            <button class="wem-btn checkin_again" id="wem_btn_checkin_again" data-postid="<?php echo esc_attr($post_id); ?>">
                 🔄 Volver a ingresar
             </button>
             <?php
@@ -125,7 +125,7 @@ class WEM_Shortcode_Manager {
             <?php if($data['checkin_by']): ?>
                 <p style="color:#666;font-size:0.9em;">Registrado por: <?php echo esc_html($data['checkin_by']); ?></p>
             <?php endif; ?>
-            <button class="wem_btn checkout" id="wem_btn_checkout" data-postid="<?php echo esc_attr($post_id); ?>">
+            <button class="wem-btn checkout" id="wem_btn_checkout" data-postid="<?php echo esc_attr($post_id); ?>">
                 🚪 Registrar salida
             </button>
             <?php
@@ -140,11 +140,11 @@ class WEM_Shortcode_Manager {
     
     private function render_pending_interface($post_id) {
         ?>
-        <div class="wem_obs wem-field-observaciones">
+        <div class="wem-obs wem-field-observaciones">
             <label for="wem_obs"><?php _e('Observaciones'); ?></label>
             <textarea id="wem_obs" placeholder="Ej: alergia, silla extra..."></textarea>
         </div>
-        <button class="wem_btn" id="wem_btn" data-postid="<?php echo esc_attr($post_id); ?>">
+        <button class="wem-btn" id="wem_btn" data-postid="<?php echo esc_attr($post_id); ?>">
             ✅ Marcar ingreso
         </button>
         <?php
