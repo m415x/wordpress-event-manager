@@ -52,17 +52,19 @@ final class FrontendIdentityContractTest extends TestCase
         $js = file_get_contents($root . '/assets/js/frontend.js');
         $css = file_get_contents($root . '/assets/css/frontend.css');
         $shortcode = file_get_contents($root . '/includes/class-shortcode-manager.php');
+        $ajax = file_get_contents($root . '/includes/class-ajax-handler.php');
         self::assertIsString($js);
         self::assertIsString($css);
         self::assertIsString($shortcode);
+        self::assertIsString($ajax);
 
         self::assertStringContainsString('const WEM =', $js);
         self::assertStringContainsString('wem_ajax.url', $js);
         self::assertStringContainsString("'.wem-clickable-row'", $js);
 
         self::assertStringContainsString('.wem-clickable-row', $css);
-        self::assertStringContainsString('class="wem-clickable-row', $shortcode);
+        self::assertStringContainsString('class="wem-clickable-row', $ajax);
         self::assertStringContainsString('.wem-list-table', $css);
-        self::assertStringContainsString('class="wem-list-table', $shortcode);
+        self::assertStringContainsString('class="wem-list-table', $ajax);
     }
 }
