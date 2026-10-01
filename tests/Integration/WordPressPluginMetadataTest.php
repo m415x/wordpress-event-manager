@@ -15,7 +15,7 @@ final class WordPressPluginMetadataTest extends WP_UnitTestCase
 
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-        $entrypoint = dirname(__DIR__, 2) . '/wordpress-event-checkin-manager.php';
+        $entrypoint = dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         $metadata = get_plugin_data($entrypoint, false, false);
 
         self::assertNotEmpty($metadata['Name']);
