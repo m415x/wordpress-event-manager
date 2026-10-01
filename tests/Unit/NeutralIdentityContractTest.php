@@ -39,7 +39,10 @@ final class NeutralIdentityContractTest extends TestCase
             'test-results',
             'playwright-report',
         ];
-        $includedExtensions = ['php', 'js', 'jsx', 'ts', 'tsx', 'css', 'md', 'txt', 'json', 'xml', 'yaml', 'yml', 'neon', 'sh'];
+        $includedExtensions = [
+            'php', 'js', 'jsx', 'ts', 'tsx', 'css', 'md', 'txt',
+            'json', 'xml', 'yaml', 'yml', 'neon', 'sh',
+        ];
         $excludedNames = ['composer.lock', 'pnpm-lock.yaml', 'package-lock.json'];
 
         // Compose historical match expressions without embedding banned
