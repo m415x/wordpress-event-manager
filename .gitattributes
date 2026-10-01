@@ -1,0 +1,9 @@
+# Enforce Unix line endings for tools executed in Linux containers and CI.
+*.php text eol=lf
+*.sh text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.neon text eol=lf
+*.json text eol=lf
+*.md text eol=lf
