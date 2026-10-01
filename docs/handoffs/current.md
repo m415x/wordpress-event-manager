@@ -78,3 +78,7 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
 ## WEM-8 CI runner fixture follow-up
 - User confirmed `pnpm tdd unit` GREEN after formatting fixes. GitHub Actions run 36880687235: PHP 8.3 Composer, syntax, PHPCS, PHPStan and PHPUnit passed (8 tests, 98 assertions); runner self-test failed at `auto_sync`: mock logs full `pull --ff-only --quiet` while test incorrectly expected `--ff-only --quiet`. This is a fixture assertion error, not actual Git synchronization failure. WordPress integration was still running at initial review.
 - Corrected the mock's expected full command in `tests/Runner/tdd-runner.test.sh` commit cc3281f. Follow-up Actions pass is still unverified; do not mark WEM-8 complete before latest CI results and scope review. No product code changed.
+
+## Runner escaped-newline correction — pending human GREEN
+- User ran runner self-tests after cc3281f: first 14 cases PASS; last `failed_pull` FAIL because actual captured output was literal `ERROR\\n`, not `ERROR` with newline. Root cause: the two error-path `printf` statements for pretest Git synchronization used over-escaped newline sequences. Updated only those two print statements in `scripts/tdd.sh` at bdd5672; no Git sync or PHPUnit semantics changed.
+- The explicit `failed_pull` self-test provided the RED. Next: run `pnpm tdd unit` to pull the latest script, then `pnpm test:runner`. Expected `GREEN` and 15/15 PASS respectively. Do not claim a GREEN until user confirmation. GitHub CI must subsequently be verified separately.
