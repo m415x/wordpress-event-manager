@@ -41,3 +41,8 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
 ## WEM-8 next RED — 2026-10-01
 - Human confirmed updated Bash TDD runner mock suite 11/11, focused canonical entrypoint GREEN, whole naming source scan expected RED. These are Bash executions; pnpm script invocation is not yet separately verified.
 - Next focus: `tests/Unit/GuestMetadataNamingTest.php` committed at `c261da49` before changing any guest metadata consumer. It asserts canonical helper names and post-meta keys across six source modules. Execute `pnpm tdd:red tests/Unit/GuestMetadataNamingTest.php`; only then rename this bounded PHP consumer group. Other shortcodes, JavaScript and CSS may still be RED afterwards.
+
+## WEM-8 guest metadata rename — pending focused GREEN
+- User confirmed `pnpm tdd:red tests/Unit/GuestMetadataNamingTest.php` reported expected RED before implementation (no exact test counts supplied).
+- Updated all six PHP files listed in `GuestMetadataNamingTest` to use `wem_` helper names, postmeta keys, field names and related identifiers (remote commits 05cbf1d, f022f3e, 407d2f9, 48b0b61, e3b7040, 3ce97db). Remote readback shows zero banned short-prefix matches across these six modules. **This is source inspection only**, not executed PHPUnit GREEN.
+- Next: local `git pull --ff-only`, then `pnpm tdd tests/Unit/GuestMetadataNamingTest.php` and report output. Whole-project identity test remains expected RED because QR module, assets, readme and other surfaces remain. HTML identifiers emitted by PHP must be reconciled with JavaScript and CSS in subsequent bounded work; no end-to-end UI correctness asserted.
