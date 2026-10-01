@@ -32,7 +32,13 @@ final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
     public function testGuestAjaxRejectsBeforeAnyGuestReadOrWrite(string $action, bool $authenticated): void
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
-        do_action('plugins_loaded');
+
+        // WordPress' test teardown restores hook snapshots between cases,
+        // while require_once does not re-register the plugin bootstrap.
+        // The separate registration test verifies the entrypoint wiring;
+        // register fresh handlers here to isolate each request contract.
+        $ajax = new \\WEM_Ajax_Handler();
+        $ajax->register_ajax_handlers();
 
         if ($authenticated) {
             wp_set_current_user(self::factory()->user->create(['role' => 'administrator']));
@@ -57,7 +63,12 @@ final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
         // has started. wp_send_json() skips HTTP headers when headers_sent()
         // is true. Assert its JSON and side effects here; a separate real
         // HTTP test must verify the mandatory 403 response in wp-env.
-        $this->_handleAjax($action);
+        try {
+            $this->_handleAjax($action);
+        } catch (\\WPAjaxDieContinueException $exception) {
+            // WP_Ajax_UnitTestCase uses this to signal a completed JSON response.
+        }
+
         self::assertSame(
             ['success' => false, 'data' => ['code' => 'guest_access_unavailable']],
             json_decode($this->_last_response, true),
