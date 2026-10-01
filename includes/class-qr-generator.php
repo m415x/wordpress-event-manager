@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_QR_Generator {
+class WEM_QR_Generator {
     
     public function register_shortcodes() {
         add_shortcode('c8ecm_qr_table', array($this, 'generate_qr_table'));
