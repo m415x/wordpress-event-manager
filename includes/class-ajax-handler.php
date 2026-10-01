@@ -4,16 +4,16 @@ class WEM_Ajax_Handler {
     
     public function register_ajax_handlers() {
         // Check-in actions
-        add_action('wp_ajax_c8ecm_checkin_ajax', array($this, 'handle_checkin_ajax'));
-        add_action('wp_ajax_nopriv_c8ecm_checkin_ajax', array($this, 'handle_checkin_ajax'));
+        add_action('wp_ajax_wem_checkin_ajax', array($this, 'handle_checkin_ajax'));
+        add_action('wp_ajax_nopriv_wem_checkin_ajax', array($this, 'handle_checkin_ajax'));
         
         // List actions
-        add_action('wp_ajax_c8ecm_list_ajax', array($this, 'handle_list_ajax'));
-        add_action('wp_ajax_nopriv_c8ecm_list_ajax', array($this, 'handle_list_ajax'));
+        add_action('wp_ajax_wem_list_ajax', array($this, 'handle_list_ajax'));
+        add_action('wp_ajax_nopriv_wem_list_ajax', array($this, 'handle_list_ajax'));
     }
     
     public function handle_checkin_ajax() {
-        $this->verify_nonce('c8ecm_checkin_nonce');
+        $this->verify_nonce('wem_checkin_nonce');
         
         $post_id = $this->get_valid_post_id();
         $observ = $this->get_sanitized_observ();
@@ -23,9 +23,9 @@ class WEM_Ajax_Handler {
     }
     
     public function handle_list_ajax() {
-        $q = isset($_POST['q']) ? c8ecm_sanitize_search_query($_POST['q']) : '';
-        $evento = isset($_POST['evento']) ? c8ecm_sanitize_search_query($_POST['evento']) : '';
-        $mesa = isset($_POST['mesa']) ? c8ecm_sanitize_search_query($_POST['mesa']) : '';
+        $q = isset($_POST['q']) ? wem_sanitize_search_query($_POST['q']) : '';
+        $evento = isset($_POST['evento']) ? wem_sanitize_search_query($_POST['evento']) : '';
+        $mesa = isset($_POST['mesa']) ? wem_sanitize_search_query($_POST['mesa']) : '';
         
         $posts = $this->get_filtered_invitados($q, $evento, $mesa);
         $this->render_list_table($posts);
@@ -56,7 +56,7 @@ class WEM_Ajax_Handler {
     
     private function process_checkin_action($post_id, $observ, $check_action) {
         $current_time = current_time('Y-m-d H:i:s');
-        $operator = c8ecm_get_current_operator();
+        $operator = wem_get_current_operator();
         
         switch($check_action) {
             case 'checkin':
@@ -79,53 +79,53 @@ class WEM_Ajax_Handler {
     }
     
     private function process_checkin($post_id, $observ, $current_time, $operator) {
-        $already = get_post_meta($post_id, 'c8_checkin', true);
+        $already = get_post_meta($post_id, 'wem_checkin', true);
         if ($already) wp_send_json_error('Invitado ya ingresado');
         
-        update_post_meta($post_id, 'c8_checkin', 1);
-        update_post_meta($post_id, 'c8_checkin_at', $current_time);
-        update_post_meta($post_id, 'c8_checkin_by', $operator);
+        update_post_meta($post_id, 'wem_checkin', 1);
+        update_post_meta($post_id, 'wem_checkin_at', $current_time);
+        update_post_meta($post_id, 'wem_checkin_by', $operator);
         
         // Limpiar checkout si existe
-        delete_post_meta($post_id, 'c8_checkout');
-        delete_post_meta($post_id, 'c8_checkout_at');
-        delete_post_meta($post_id, 'c8_checkout_by');
+        delete_post_meta($post_id, 'wem_checkout');
+        delete_post_meta($post_id, 'wem_checkout_at');
+        delete_post_meta($post_id, 'wem_checkout_by');
         
         if ($observ) {
-            update_post_meta($post_id, 'c8_observaciones_checkin', $observ);
+            update_post_meta($post_id, 'wem_observaciones_checkin', $observ);
         }
     }
     
     private function process_checkout($post_id, $current_time, $operator) {
-        $checked_in = get_post_meta($post_id, 'c8_checkin', true);
+        $checked_in = get_post_meta($post_id, 'wem_checkin', true);
         if (!$checked_in) wp_send_json_error('Invitado no ha ingresado');
         
-        $already_checked_out = get_post_meta($post_id, 'c8_checkout', true);
+        $already_checked_out = get_post_meta($post_id, 'wem_checkout', true);
         if ($already_checked_out) wp_send_json_error('Invitado ya salió');
         
-        update_post_meta($post_id, 'c8_checkout', 1);
-        update_post_meta($post_id, 'c8_checkout_at', $current_time);
-        update_post_meta($post_id, 'c8_checkout_by', $operator);
+        update_post_meta($post_id, 'wem_checkout', 1);
+        update_post_meta($post_id, 'wem_checkout_at', $current_time);
+        update_post_meta($post_id, 'wem_checkout_by', $operator);
     }
     
     private function process_checkin_again($post_id, $current_time, $operator) {
-        $checked_out = get_post_meta($post_id, 'c8_checkout', true);
+        $checked_out = get_post_meta($post_id, 'wem_checkout', true);
         if (!$checked_out) wp_send_json_error('Invitado no ha salido');
         
-        update_post_meta($post_id, 'c8_checkin_at', $current_time);
-        update_post_meta($post_id, 'c8_checkin_by', $operator);
+        update_post_meta($post_id, 'wem_checkin_at', $current_time);
+        update_post_meta($post_id, 'wem_checkin_by', $operator);
         
         // Limpiar checkout para permitir re-ingreso
-        delete_post_meta($post_id, 'c8_checkout');
-        delete_post_meta($post_id, 'c8_checkout_at');
-        delete_post_meta($post_id, 'c8_checkout_by');
+        delete_post_meta($post_id, 'wem_checkout');
+        delete_post_meta($post_id, 'wem_checkout_at');
+        delete_post_meta($post_id, 'wem_checkout_by');
     }
     
     private function get_filtered_invitados($q, $evento, $mesa) {
         $args = array(
             'post_type' => 'invitado',
             'posts_per_page' => 200,
-            'meta_key' => 'c8_organizacion',
+            'meta_key' => 'wem_organizacion',
             'orderby' => 'meta_value',
             'order' => 'ASC',
         );
@@ -134,9 +134,9 @@ class WEM_Ajax_Handler {
         if ($q) {
             $args['meta_query'] = array(
                 'relation' => 'OR',
-                array('key' => 'c8_ticket', 'value' => $q, 'compare' => 'LIKE'),
-                array('key' => 'c8_nombre', 'value' => $q, 'compare' => 'LIKE'),
-                array('key' => 'c8_organizacion', 'value' => $q, 'compare' => 'LIKE')
+                array('key' => 'wem_ticket', 'value' => $q, 'compare' => 'LIKE'),
+                array('key' => 'wem_nombre', 'value' => $q, 'compare' => 'LIKE'),
+                array('key' => 'wem_organizacion', 'value' => $q, 'compare' => 'LIKE')
             );
         }
         
@@ -146,11 +146,11 @@ class WEM_Ajax_Handler {
                 $args['meta_query'] = array(
                     'relation' => 'AND',
                     $args['meta_query'],
-                    array('key' => 'c8_mesa', 'value' => $mesa, 'compare' => '=')
+                    array('key' => 'wem_mesa', 'value' => $mesa, 'compare' => '=')
                 );
             } else {
                 $args['meta_query'] = array(
-                    array('key' => 'c8_mesa', 'value' => $mesa, 'compare' => '=')
+                    array('key' => 'wem_mesa', 'value' => $mesa, 'compare' => '=')
                 );
             }
         }
@@ -173,11 +173,11 @@ class WEM_Ajax_Handler {
             wp_die();
         }
         
-        echo '<table class="c8-list-table"><thead><tr>
+        echo '<table class="wem-list-table"><thead><tr>
                 <th>Ticket</th>
-                <th class="c8-field-nombre">Nombre</th>
-                <th class="c8-field-organizacion">Organización</th>
-                <th class="c8-field-mesa">Mesa</th>
+                <th class="wem-field-nombre">Nombre</th>
+                <th class="wem-field-organizacion">Organización</th>
+                <th class="wem-field-mesa">Mesa</th>
                 <th>Evento</th>
                 <th>Check-in</th>
               </tr></thead><tbody>';
@@ -191,8 +191,8 @@ class WEM_Ajax_Handler {
     }
     
     private function render_list_row($post) {
-        $data = c8ecm_get_invitado_data($post->ID);
-        $terms = c8ecm_get_evento_terms($post->ID);
+        $data = wem_get_invitado_data($post->ID);
+        $terms = wem_get_evento_terms($post->ID);
         $evento_name = $terms ? $terms[0]->name : '';
         $evento_slug = $terms ? $terms[0]->slug : '';
         
@@ -200,12 +200,12 @@ class WEM_Ajax_Handler {
             home_url("/{$evento_slug}/?ticket=" . $post->post_title) : '#';
         ?>
         
-        <tr class="c8-clickable-row" data-href="<?php echo esc_url($checkin_url); ?>" style="cursor: pointer;">
+        <tr class="wem-clickable-row" data-href="<?php echo esc_url($checkin_url); ?>" style="cursor: pointer;">
             <td><strong><?php echo esc_html($post->post_title); ?></strong></td>
-            <td class="c8-field-nombre"><?php echo esc_html($data['nombre']); ?></td>
-            <td class="c8-field-organizacion"><?php echo esc_html($data['organizacion']); ?></td>
-            <td class="c8-field-mesa"><?php echo esc_html($data['mesa']); ?></td>
-            <td class="c8-field-evento"><?php echo esc_html($evento_name); ?></td>
+            <td class="wem-field-nombre"><?php echo esc_html($data['nombre']); ?></td>
+            <td class="wem-field-organizacion"><?php echo esc_html($data['organizacion']); ?></td>
+            <td class="wem-field-mesa"><?php echo esc_html($data['mesa']); ?></td>
+            <td class="wem-field-evento"><?php echo esc_html($evento_name); ?></td>
             <td>
                 <?php $this->render_checkin_status($post->ID, $data); ?>
             </td>
@@ -224,7 +224,7 @@ class WEM_Ajax_Handler {
                 }
             }
         } else {
-            echo '<button class="c8-do-checkin c8-list-btn" data-id="' . esc_attr($post_id) . '">Ingresar</button>';
+            echo '<button class="wem-do-checkin wem-list-btn" data-id="' . esc_attr($post_id) . '">Ingresar</button>';
         }
     }
 }
