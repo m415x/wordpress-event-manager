@@ -4,5 +4,6 @@
     "."
   ],
   "phpVersion": "8.3",
-  "port": 8890
+  "port": 8890,
+  "testsEnvironment": false
 }
