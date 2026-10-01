@@ -1,35 +1,35 @@
 /* Estilos para el admin de Invitados */
-.c8-metabox-field {
+.wem-metabox-field {
     margin-bottom: 15px;
 }
 
-.c8-metabox-field label {
+.wem-metabox-field label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
 }
 
-.c8-metabox-field input[type="text"],
-.c8-metabox-field textarea,
-.c8-metabox-field select {
+.wem-metabox-field input[type="text"],
+.wem-metabox-field textarea,
+.wem-metabox-field select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.c8-checkin-status {
+.wem-checkin-status {
     padding: 10px;
     background: #f9f9f9;
     border-radius: 4px;
 }
 
 /* Mejoras para la tabla de admin */
-.widefat .column-c8_checkin {
+.widefat .column-wem_checkin {
     width: 150px;
 }
 
-.widefat .column-c8_mesa {
+.widefat .column-wem_mesa {
     width: 100px;
 }
 
