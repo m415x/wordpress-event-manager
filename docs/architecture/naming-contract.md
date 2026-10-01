@@ -1,6 +1,6 @@
 # WEM-8 — Clean-break naming contract
 
-Status: **approved product compatibility decision; test-first implementation pending** (2026-10-01).
+Status: **WEM-8 identity naming implementation verified** (2026-10-01). New-installations-only compatibility policy remains binding. This records the naming scope only; plugin activation, event permissions and end-to-end functionality are not certified.
 Authority: Jira WEM-8. This document is a forward contract, not a claim that existing plugin code already complies.
 
 ## Scope and compatibility
