@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Import_Export {
+class WEM_Import_Export {
     
     public function register_menu() {
         add_action('admin_menu', array($this, 'add_import_export_page'));
