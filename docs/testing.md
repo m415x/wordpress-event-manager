@@ -74,3 +74,36 @@ The existing plugin is intentionally **not** automatically loaded by the integra
 
 ## Known blockers
 WEM-3 records the historical autoload filename mismatch and incomplete module hook registration. Neither problem is fixed by this harness.
+
+
+## WEM-7 PHP quality / CI baseline (requires local and GitHub verification)
+
+The Foundation deliberately separates **existing historical runtime debt** from gates on maintained code:
+- PHP syntax: `sh scripts/check-php-syntax.sh` checks plugin entrypoint, all `includes/`, and PHP tests. This catches syntax failures but cannot establish correctness or WordPress API safety.
+- Code style: `composer run lint:php` applies PHPCS PSR-12 to `tests/` (new PHP tests), not to the historical runtime code. Treat extension to production modules as an explicit migration after WEM-8 instead of silently rewriting old PHP.
+- Static analysis: `composer run analyse:php` runs PHPStan level 0 over `tests/Unit/` (independent tests). WordPress-backed tests and plugin runtime are **outside** this initial PHPStan analysis scope and must be included later with WordPress stubs or compatible context.
+- Unit tests: `composer run test:unit`.
+- Test runner classifiers: `bash tests/Runner/tdd-runner.test.sh`.
+- WordPress integration: `bash scripts/tdd.sh green integration`, using isolated `.wp-env.test.json`.
+
+After updating `composer.json` in WEM-7, regenerate `composer.lock` in the isolated Docker CLI:
+
+```bash
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer update --with-all-dependencies --no-interaction
+```
+
+Review `composer.lock` changes and commit them. From Git Bash verify:
+
+```bash
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer validate --strict
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager sh scripts/check-php-syntax.sh
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer run lint:php
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer run analyse:php
+bash tests/Runner/tdd-runner.test.sh
+bash scripts/tdd.sh green unit
+bash scripts/tdd.sh green integration
+```
+
+GitHub Actions workflow `.github/workflows/php-quality.yml` uses PHP 8.3, the tracked Composer lockfile, and an independently provisioned Docker/`wp-env` integration environment. Node and pnpm are CI setup only; this does not track the user's unreviewed local `package.json` or npm lockfile. CI installs a pinned `@wordpress/env` version. GitHub status is authoritative for actual CI outcome; **writing the workflow is not evidence that it passed**. If the GitHub runner's WordPress core test framework changes, diagnose and version a compatible test stack; do not hide failed CI gates.
+
+Existing functional defects (plugin bootstrap and unauthenticated access) stay tracked in WEM-3 and are **not** declared fixed by these quality checks.
