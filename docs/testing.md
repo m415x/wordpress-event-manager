@@ -107,3 +107,11 @@ bash scripts/tdd.sh green integration
 GitHub Actions workflow `.github/workflows/php-quality.yml` uses PHP 8.3, the tracked Composer lockfile, and an independently provisioned Docker/`wp-env` integration environment. Node and pnpm are CI setup only; this does not track the user's unreviewed local `package.json` or npm lockfile. CI installs a pinned `@wordpress/env` version. GitHub status is authoritative for actual CI outcome; **writing the workflow is not evidence that it passed**. If the GitHub runner's WordPress core test framework changes, diagnose and version a compatible test stack; do not hide failed CI gates.
 
 Existing functional defects (plugin bootstrap and unauthenticated access) stay tracked in WEM-3 and are **not** declared fixed by these quality checks.
+
+### Windows checkout line endings (WEM-7)
+
+The project tracks `.gitattributes` to require LF for `*.php`, `*.sh` and configuration files. In Windows Git Bash, CRLF shell scripts can fail before PHP starts (e.g. `set: illegal option -`), and PHPCS PSR-12 rejects CRLF. From an updated branch, inspect with `git ls-files --eol scripts/check-php-syntax.sh tests/bootstrap.php`: the working-tree column should read `w/lf`. If it does not, reconcile the local checkout without overwriting personal changes; no global Git setting is required.
+
+PHPCS applies namespaces and PSR-12 headers to new test files. `tests/integration-bootstrap.php` is deliberately a procedural WordPress fixture bootstrap and receives a narrowly scoped side-effects sniff exception. The historical plugin PHP remains syntax-checked but outside strict PHPCS/PHPStan coverage; this is explicit technical debt, not certification of the plugin.
+
+Local execution 2026-10-01 before the LF/PSR corrections: Composer strict validation and PHPStan passed; PHP syntax script failed at shell startup and PHPCS reported CRLF/header/namespace issues. Fixes are committed, but local rerun and CI verification are still pending.
