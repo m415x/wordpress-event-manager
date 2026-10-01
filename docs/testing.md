@@ -128,3 +128,26 @@ Human-run verification also confirmed runner classification `8/8` and both compa
 **Deferred maintenance warnings (not test failures):** GitHub Actions reports Node.js 20 deprecation for action versions currently used, and an upcoming change of `ubuntu-latest` to Ubuntu 26 beginning 2026-10-19. Review action version compatibility and runner image in a separately scoped maintenance change; do not treat warnings as successful migration evidence.
 
 WEM-7 does **not** attest that historical plugin activation, authorization or QR behavior is corrected; those remain bounded future work.
+
+
+### Compact pnpm entrypoints — WEM-8 tooling refinement
+
+The preferred interactive interface is now the **pnpm scripts**, rather than invoking the Bash runner with positional mode arguments:
+
+```bash
+pnpm tdd:red tests/Unit/NeutralIdentityContractTest.php
+pnpm tdd tests/Unit/PluginEntrypointTest.php
+pnpm tdd tests/Integration/WordPressPluginMetadataTest.php
+pnpm tdd:red tests/Unit/NeutralIdentityContractTest.php -v
+pnpm tdd tests/Unit/PluginEntrypointTest.php --verbose
+pnpm test:runner
+```
+
+- `tdd:red`: prints **RED** only if PHPUnit reports an expected assertion failure and no bootstrap error. Returns zero for confirmed expected RED, nonzero for a pass or infrastructure error. This is the established WEM-6 contract, intentionally not the shell semantics of another project.
+- `tdd`: prints **GREEN** only if focused PHPUnit and the PHP syntax gate both pass.
+- Unanticipated failures print **ERROR**, without stack traces by default; add `-v` or `--verbose` after the test path to inspect the captured PHPUnit output and syntax logs.
+- Path selection maps `tests/Unit/...` to standalone PHPUnit and `tests/Integration/...` to the isolated WordPress test config. Alternatively `pnpm tdd unit --filter TestMethod` remains supported.
+- `pn` is **not a standard pnpm executable**. If the developer has a personal `pn` alias, it can work, but portable documentation uses `pnpm`.
+- `package.json` contains only scripts. Do not run npm installation to operate these commands: the Bash runner uses `wp-env` from the developer's environment. Prefer the tracked pnpm dependency/lock discipline if JavaScript dependencies are added later.
+- **Local untracked-file warning:** the user previously had an untracked local `package.json` and `package-lock.json`. Back up and inspect the local manifest before pulling the new tracked `package.json`, to avoid an untracked-file checkout conflict. Do not silently discard the local file.
+- These refinements are **not locally verified yet**. The prior WEM-6 8/8 result applies to the former runner version. The updated runner fixture now defines 11 classification/verbosity checks; record actual results before claiming a new GREEN.
