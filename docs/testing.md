@@ -50,7 +50,27 @@ The initial WordPress integration test uses WordPress' own `get_plugin_data()` A
 
 The dedicated `.wp-env.test.json` explicitly sets `testsEnvironment: false`, because each configuration otherwise also launches a secondary test site on port 8889. The existing development configuration may already own that port. The dedicated WordPress environment uses port 8890 and its own Docker database; WordPress' PHP test bootstrap was confirmed operational in the isolated CLI integration run. Do not reset/destroy the development database.
 
-Compact RED/GREEN commands belong to WEM-6; lint/CI to WEM-7. Record only results actually executed.
+## Compact RED/GREEN commands — WEM-6 (pending local validation)
+
+Run from the repository root in Git Bash after `git pull --ff-only`:
+
+```bash
+bash tests/Runner/tdd-runner.test.sh
+bash scripts/tdd.sh red unit --filter SpecificContractTest
+bash scripts/tdd.sh green unit --filter SpecificContractTest
+bash scripts/tdd.sh green integration --filter WordPressPluginMetadataTest
+bash scripts/tdd.sh diagnose integration --filter WordPressPluginMetadataTest
+```
+
+- `red` succeeds (exit 0) **only** when PHPUnit exits unsuccessfully with a reported assertion failure and no test errors or obvious bootstrap/fatal error. An unexpected PASS or infrastructure error makes `red` fail. The developer must still inspect the failed assertion to confirm it expresses the intended contract; the runner cannot infer semantics.
+- `green` requires a PHPUnit `OK (...)` result followed by `php -l` syntax checks on the plugin entry point and PHP source/tests inside Docker.
+- `diagnose` prints unabridged output and preserves the test exit code. Routine `red`/`green` prints a short summary, escalating errors to the last 35 log lines.
+- `unit` uses `phpunit.xml.dist`; `integration` uses `phpunit.integration.xml.dist`, both in the dedicated `.wp-env.test.json` Docker setup.
+- The Bash runner has eight mocked behavioral classification cases in `tests/Runner/tdd-runner.test.sh`; these test the runner's result handling, not PHP/WordPress behavior.
+- WEM-6 syntax verification is deliberately narrow. Full PHP style/static analysis, CI and cross-environment validation are WEM-7 scope. No remote CI pass is implied.
+
+## Known bootstrap blocker
+The existing plugin is intentionally **not** automatically loaded by the integration bootstrap; its activation errors belong to a separate bounded regression-and-fix story. A test that fails because the environment fails to initialize is not a valid behavioral RED.
 
 ## Known blockers
 WEM-3 records the historical autoload filename mismatch and incomplete module hook registration. Neither problem is fixed by this harness.
