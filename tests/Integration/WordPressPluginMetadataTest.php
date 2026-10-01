@@ -1,5 +1,10 @@
 <?php
+
 declare(strict_types=1);
+
+namespace WEM\Tests\Integration;
+
+use WP_UnitTestCase;
 
 final class WordPressPluginMetadataTest extends WP_UnitTestCase
 {
