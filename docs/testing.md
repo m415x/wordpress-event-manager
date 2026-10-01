@@ -40,7 +40,7 @@ wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress
 
 The initial WordPress integration test uses WordPress' own `get_plugin_data()` API, but **does not activate** the historical plugin (known WEM-3 boot defect). The WordPress test framework may reset its dedicated disposable database; never point this command to the development or production database. This first integration suite has not yet been executed; treat unexpected failures as harness setup issues until diagnosed.
 
-`wp-env` currently emits a deprecation warning for starting both development and test services with one config file. The new `--config` explicitly provides separate isolation. Avoid resetting/destroying the development database.
+The dedicated `.wp-env.test.json` explicitly sets `testsEnvironment: false`, because each configuration otherwise also launches a secondary test site on port 8889. The existing development configuration may already own that port. The dedicated WordPress environment uses port 8890 and its own Docker database; WordPress' PHP test bootstrap must still be verified with the actual CLI integration run. Do not reset/destroy the development database.
 
 Compact RED/GREEN commands belong to WEM-6; lint/CI to WEM-7. Record only results actually executed.
 
