@@ -31,7 +31,7 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 ## Next work
 1. Sync local feature branch with remote commits (`git pull --ff-only`).
 2. WEM-6 is closed; runner classification self-tests passed 8/8, compact unit GREEN and integration GREEN both included PHP syntax verification (human execution, 2026-10-01). No true feature-level RED executed yet.
-3. WEM-7 is in progress: composer.json adds PHPCS ^4 and PHPStan ^2; lint is PSR-12 limited to new PHP tests, PHPStan is level 0 scoped to independent unit tests, and full-source syntax gate remains. GitHub Actions workflow added but CI has not been verified. Human must update and commit composer.lock, run new static/unit/integration gates and inspect actual CI results before WEM-7 closure.
+3. WEM-7 verification complete: GitHub Actions run #12 at 54be472 (2026-10-01) completed SUCCESS across both static/unit and isolated WordPress integration jobs. Composer lock is synced. Scope: PHPCS PSR-12 on tests, PHPStan level 0 on standalone unit tests, syntax all plugin PHP. Historical plugin activation still fails and is NOT a WEM-7 gate. Node.js 20 action deprecation and upcoming ubuntu-latest image migration are deferred maintenance warnings.
 4. WEM-8 identity migration; WEM-9 legacy delta; WEM-10 closure and `dev` integration.
 5. Preserve observed RED vs source-only findings vs genuinely executed verification.
 
