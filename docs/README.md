@@ -13,6 +13,7 @@ Read `../AGENTS.md` before starting a story.
 - Foundation closure and next-chat baseline: WEM-10.
 
 ## Durable documents
+- [Testing](testing.md) — initial PHPUnit harness, Docker commands, limits and pending integration coverage.
 - [Current handoff](handoffs/current.md) — operational state for resuming the active story.
 - `architecture/` — add domain contracts only when accepted and implemented. Do not treat preliminary ideas as production design.
 
