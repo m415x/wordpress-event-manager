@@ -106,7 +106,7 @@ sync_case() {
     printf 'FAIL: %s unexpected output/exit (exit %d, output <%s>)\n' "$label" "$result" "$actual" >&2
     exit 1
   fi
-  if [[ $should_call == yes && $calls != '--ff-only --quiet' ]] ||
+  if [[ $should_call == yes && $calls != 'pull --ff-only --quiet' ]] ||
      [[ $should_call == no && -n $calls ]]; then
     printf 'FAIL: %s git pull call mismatch <%s>\n' "$label" "$calls" >&2
     exit 1
