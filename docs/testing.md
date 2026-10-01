@@ -151,3 +151,12 @@ pnpm test:runner
 - `package.json` contains only scripts. Do not run npm installation to operate these commands: the Bash runner uses `wp-env` from the developer's environment. Prefer the tracked pnpm dependency/lock discipline if JavaScript dependencies are added later.
 - **Local untracked-file warning:** the user previously had an untracked local `package.json` and `package-lock.json`. Back up and inspect the local manifest before pulling the new tracked `package.json`, to avoid an untracked-file checkout conflict. Do not silently discard the local file.
 - These refinements are **not locally verified yet**. The prior WEM-6 8/8 result applies to the former runner version. The updated runner fixture now defines 11 classification/verbosity checks; record actual results before claiming a new GREEN.
+
+
+### Pre-test Git synchronization (WEM-8 refinement)
+
+The interactive TDD runner now invokes `git pull --ff-only --quiet` on the current checked-out tracking branch **before** running PHPUnit. Therefore `pnpm tdd tests/Unit/GuestMetadataNamingTest.php` and `pnpm tdd:red ...` require only one command for synchronization and the test. A non-fast-forward, missing upstream or unavailable remote aborts before PHPUnit with `ERROR`, and `-v`/`--verbose` reveals the actual Git diagnostic. The runner never automatically merges with merge commits, rebases or resets.
+
+CI intentionally skips the pull (`CI=true`) to keep the checked-out commit deterministic. To use the runner explicitly offline or during mock fixtures, set `WEM_TDD_SKIP_SYNC=1`. The runner self-test uses an injected temporary Git executable to verify the pull command without contacting the real remote.
+
+The updated self-test specifies **15 cases** (the previous 11, plus successful sync, CI skip, explicit skip, and failed pull); the new checks are **not yet verified locally**. Do not claim that the newly integrated pre-test Git behavior passed until the developer reports a real execution.
