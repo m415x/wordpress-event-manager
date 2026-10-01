@@ -45,7 +45,7 @@
 - First establish a focused expected-failure test and confirm RED for the intended reason. Environmental/bootstrap failures do not count.
 - Change the smallest coherent production behavior needed for GREEN. Record actual outcomes; request diagnostics only on unexpected failures.
 - Prefer targeted tests during implementation; reserve full suite, static analysis, security-relevant verification, plugin activation walkthrough and acceptance review for story closure.
-- The PHP/WordPress test runner, compact TDD commands, and CI baseline are NOT YET CONFIGURED at initial WEM-4 entry. WEM-5/WEM-6/WEM-7 establish them; do not invent commands or claim green checks before that.
+- WEM-5/6/7 established PHPUnit, compact Docker TDD and CI. Interactive commands: `pnpm tdd:red tests/Unit/ExampleTest.php` (expected assertion RED), `pnpm tdd tests/Unit/ExampleTest.php` (tests and PHP syntax GREEN), and equivalent `tests/Integration/` paths. Use `-v`/`--verbose` to reveal diagnostics. Default mode output is `RED`, `GREEN` or `ERROR`. The refined pnpm frontend and verbosity controls are pending local verification under WEM-8; do not attribute the prior WEM-6 gate results to them until rerun.
 - WordPress local runtime uses Docker/`wp-env`; any local config must avoid credentials and environment secrets. Maintain pnpm as the canonical JS package manager; commit `pnpm-lock.yaml`, not an npm lockfile once pnpm setup is migrated.
 - When asking the user for commands, use Bash-compatible syntax.
 
