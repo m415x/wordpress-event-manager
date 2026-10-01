@@ -47,8 +47,9 @@ add_action('plugins_loaded', function () {
     $admin_columns = new WEM_Admin_Columns();
     $admin_columns->setup_columns();
 
-    // WEM-11: guest-facing AJAX stays unregistered until deny-all guards are tested.
-    new WEM_Ajax_Handler();
+    // WEM-11: register guest AJAX routes only with deny-all handlers.
+    $ajax = new WEM_Ajax_Handler();
+    $ajax->register_ajax_handlers();
 
     $shortcodes = new WEM_Shortcode_Manager();
     $shortcodes->register_shortcodes();
