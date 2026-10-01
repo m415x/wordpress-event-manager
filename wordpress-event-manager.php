@@ -29,7 +29,7 @@ spl_autoload_register(function ($class) {
         return;
     }
 
-    $file = $base_dir . 'class-' . strtolower(str_replace($prefix, '', $class)) . '.php';
+    $file = $base_dir . 'class-' . str_replace('_', '-', strtolower(substr($class, strlen($prefix)))) . '.php';
 
     if (file_exists($file)) {
         require_once $file;
