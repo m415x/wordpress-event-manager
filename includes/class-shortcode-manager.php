@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Shortcode_Manager {
+class WEM_Shortcode_Manager {
     
     public function register_shortcodes() {
         add_shortcode('c8ecm_checkin', array($this, 'render_checkin_shortcode'));
