@@ -37,3 +37,7 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 6. Preserve observed RED vs source-only findings vs genuinely executed verification.
 
 Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira tasks before changing scope.
+
+## WEM-8 next RED — 2026-10-01
+- Human confirmed updated Bash TDD runner mock suite 11/11, focused canonical entrypoint GREEN, whole naming source scan expected RED. These are Bash executions; pnpm script invocation is not yet separately verified.
+- Next focus: `tests/Unit/GuestMetadataNamingTest.php` committed at `c261da49` before changing any guest metadata consumer. It asserts canonical helper names and post-meta keys across six source modules. Execute `pnpm tdd:red tests/Unit/GuestMetadataNamingTest.php`; only then rename this bounded PHP consumer group. Other shortcodes, JavaScript and CSS may still be RED afterwards.
