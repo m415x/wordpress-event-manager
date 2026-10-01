@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Ajax_Handler {
+class WEM_Ajax_Handler {
     
     public function register_ajax_handlers() {
         // Check-in actions
