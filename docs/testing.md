@@ -115,3 +115,16 @@ The project tracks `.gitattributes` to require LF for `*.php`, `*.sh` and config
 PHPCS applies namespaces and PSR-12 headers to new test files. `tests/integration-bootstrap.php` is deliberately a procedural WordPress fixture bootstrap and receives a narrowly scoped side-effects sniff exception. The historical plugin PHP remains syntax-checked but outside strict PHPCS/PHPStan coverage; this is explicit technical debt, not certification of the plugin.
 
 Local execution 2026-10-01 before the LF/PSR corrections: Composer strict validation and PHPStan passed; PHP syntax script failed at shell startup and PHPCS reported CRLF/header/namespace issues. Fixes are committed, but local rerun and CI verification are still pending.
+
+### WEM-7 verified CI baseline — 2026-10-01
+
+GitHub Actions workflow run [#12](https://github.com/m415x/wordpress-event-manager/actions/runs/36873660470), commit `54be472512b6829f3410f4c5c36f31a3dc625fd5`, completed with overall conclusion **success**. Both jobs completed successfully:
+
+- `PHP 8.3 lint, analysis and unit`: Composer strict validation and locked install, plugin-wide PHP syntax, PHPCS (new tests scope), PHPStan (independent unit tests scope), PHPUnit unit smoke and shell runner classification.
+- `WordPress isolated integration`: Docker/`wp-env` bootstrap, Composer locked dependencies and WordPress PHPUnit integration.
+
+Human-run verification also confirmed runner classification `8/8` and both compact `green unit` and `green integration` including their PHP syntax gate. Current tracked lock includes PHPUnit 9.6.37, Polyfills 2.0.5, PHPStan 2.2.16 and PHP_CodeSniffer 4.0.4.
+
+**Deferred maintenance warnings (not test failures):** GitHub Actions reports Node.js 20 deprecation for action versions currently used, and an upcoming change of `ubuntu-latest` to Ubuntu 26 beginning 2026-10-19. Review action version compatibility and runner image in a separately scoped maintenance change; do not treat warnings as successful migration evidence.
+
+WEM-7 does **not** attest that historical plugin activation, authorization or QR behavior is corrected; those remain bounded future work.
