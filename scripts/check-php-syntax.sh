@@ -1,4 +1,5 @@
 #!/bin/sh
+# POSIX shell; enforce LF checkout via .gitattributes on Windows.
 set -eu
 
 php -l wordpress-event-checkin-manager.php >/dev/null
