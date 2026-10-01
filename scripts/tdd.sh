@@ -54,9 +54,9 @@ done
 # CI runs on a detached checkout and the mock runner opts out explicitly.
 # A failed fast-forward stops the test instead of masking a stale baseline.
 if [[ ${CI:-} != true && ${WEM_TDD_SKIP_SYNC:-0} != 1 ]]; then
-  git_log=$(mktemp) || { printf 'ERROR\\n' >&2; exit 2; }
+  git_log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
   if ! "${WEM_TDD_GIT_BIN:-git}" pull --ff-only --quiet >"$git_log" 2>&1; then
-    printf 'ERROR\\n' >&2
+    printf 'ERROR\n' >&2
     if [[ $verbose == true ]]; then cat "$git_log" >&2; fi
     rm -f "$git_log"
     exit 1
