@@ -50,7 +50,7 @@ The initial WordPress integration test uses WordPress' own `get_plugin_data()` A
 
 The dedicated `.wp-env.test.json` explicitly sets `testsEnvironment: false`, because each configuration otherwise also launches a secondary test site on port 8889. The existing development configuration may already own that port. The dedicated WordPress environment uses port 8890 and its own Docker database; WordPress' PHP test bootstrap was confirmed operational in the isolated CLI integration run. Do not reset/destroy the development database.
 
-## Compact RED/GREEN commands — WEM-6 (pending local validation)
+## Compact RED/GREEN commands — WEM-6 (locally verified)
 
 Run from the repository root in Git Bash after `git pull --ff-only`:
 
@@ -66,7 +66,7 @@ bash scripts/tdd.sh diagnose integration --filter WordPressPluginMetadataTest
 - `green` requires a PHPUnit `OK (...)` result followed by `php -l` syntax checks on the plugin entry point and PHP source/tests inside Docker.
 - `diagnose` prints unabridged output and preserves the test exit code. Routine `red`/`green` prints a short summary, escalating errors to the last 35 log lines.
 - `unit` uses `phpunit.xml.dist`; `integration` uses `phpunit.integration.xml.dist`, both in the dedicated `.wp-env.test.json` Docker setup.
-- The Bash runner has eight mocked behavioral classification cases in `tests/Runner/tdd-runner.test.sh`; these test the runner's result handling, not PHP/WordPress behavior.
+- The Bash runner has eight mocked behavioral classification cases in `tests/Runner/tdd-runner.test.sh`; these test the runner's result handling, not PHP/WordPress behavior. **2026-10-01 human execution:** all 8/8 self-tests passed. Both `bash scripts/tdd.sh green unit` and `bash scripts/tdd.sh green integration` reported `GREEN confirmed: focused tests and PHP syntax verification passed.` A real new-feature behavioral RED has not yet been executed; do not imply otherwise.
 - WEM-6 syntax verification is deliberately narrow. Full PHP style/static analysis, CI and cross-environment validation are WEM-7 scope. No remote CI pass is implied.
 
 ## Known bootstrap blocker
