@@ -7,8 +7,8 @@ Read `../AGENTS.md` before starting a story.
 - Historical product baseline: `main@74116d06ccf40f3316cee7a33b034df45f8efa7b`.
 - Source-backed audit findings: [WEM-3](https://trail-running-workout-planning.atlassian.net/browse/WEM-3), closed. These are observations, not test-suite passes.
 - Current engineering workflow: [WEM-4](https://trail-running-workout-planning.atlassian.net/browse/WEM-4).
-- Runtime-specific and test setup: WEM-5, WEM-6, WEM-7 (not yet delivered).
-- Legacy naming migration: WEM-8 (not yet delivered).
+- PHP/WordPress test harness, RED/GREEN runner and CI baseline: WEM-5, WEM-6 and WEM-7 completed with verified CI.
+- [WEM-8 clean-break naming contract](architecture/naming-contract.md): approved for new installations only; test-first identity migration is in progress, with an intentional RED pending verification.
 - Legacy snapshot reconciliation: WEM-9 (not yet delivered).
 - Foundation closure and next-chat baseline: WEM-10.
 
@@ -25,4 +25,4 @@ Read `../AGENTS.md` before starting a story.
 - Chat history: navigation only.
 
 ## Explicit limitations
-The historical plugin does not currently boot in the observed local WordPress CLI environment. No automated test suite or CI gates have been established for this repository. Do not claim the old feature set passes until specific tests and walkthroughs provide evidence.
+The historical plugin does not currently boot in the observed local WordPress CLI environment. Automated unit/integration tests and scoped static/CI gates are established. A newly committed WEM-8 expected-failure contract test may temporarily make CI RED until the naming implementation reaches GREEN. Do not claim the old feature set passes until specific tests and walkthroughs provide evidence.
