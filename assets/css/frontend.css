@@ -1,30 +1,30 @@
 /* Estilos para los shortcodes frontend */
-.c8-list-wrap {
+.wem-list-wrap {
     max-width: 1000px;
     margin: 0 auto;
     font-family: system-ui, Arial, sans-serif;
 }
 
-.c8-list-controls {
+.wem-list-controls {
     display: flex;
     gap: 8px;
     margin-bottom: 10px;
     flex-wrap: wrap;
 }
 
-.c8-list-table {
+.wem-list-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.c8-list-table th,
-.c8-list-table td {
+.wem-list-table th,
+.wem-list-table td {
     padding: 8px;
     border-bottom: 1px solid #eee;
     text-align: left;
 }
 
-.c8-list-btn {
+.wem-list-btn {
     padding: 6px 10px;
     border-radius: 6px;
     border: 0;
@@ -34,19 +34,19 @@
     transition: background 0.2s;
 }
 
-.c8-list-btn:hover {
+.wem-list-btn:hover {
     background: #1a6dc1;
 }
 
-.c8-list-btn.green {
+.wem-list-btn.green {
     background: #4caf50;
 }
 
-.c8-list-btn.green:hover {
+.wem-list-btn.green:hover {
     background: #3d8b40;
 }
 
-.c8-filter-input {
+.wem-filter-input {
     padding: 6px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -55,19 +55,19 @@
 }
 
 /* Filas clickeables */
-.c8-clickable-row:hover {
+.wem-clickable-row:hover {
     background-color: #f5f5f5;
 }
 
-.c8-clickable-row:active {
+.wem-clickable-row:active {
     background-color: #e9e9e9;
 }
 
-.c8-clickable-row td:first-child {
+.wem-clickable-row td:first-child {
     position: relative;
 }
 
-.c8-clickable-row td:first-child::after {
+.wem-clickable-row td:first-child::after {
     content: "🔗";
     position: absolute;
     right: 5px;
@@ -78,7 +78,7 @@
 }
 
 /* Check-in individual */
-.c8c_wrapper {
+.wem-wrapper {
     max-width: 600px;
     margin: 20px auto;
     padding: 20px;
@@ -87,54 +87,54 @@
     background: #fafafa;
 }
 
-.c8c_field {
+.wem-field {
     margin: 10px 0;
     padding: 8px;
     background: white;
     border-radius: 4px;
 }
 
-.c8c_btn {
+.wem-btn {
     padding: 12px 24px;
     font-size: 16px;
     margin: 10px 5px;
 }
 
-.c8c_obs textarea {
+.wem-obs textarea {
     width: 100%;
     min-height: 80px;
     margin-top: 5px;
 }
 
 /* QR Generator */
-.c8ecm-qr-table-wrapper {
+.wem-qr-table-wrapper {
     margin: 20px 0;
 }
 
-.c8ecm-qr-table {
+.wem-qr-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.c8ecm-qr-cell {
+.wem-qr-cell {
     border: 1px solid #ddd;
     padding: 15px;
     text-align: center;
     vertical-align: top;
 }
 
-.c8ecm-qr-code {
+.wem-qr-code {
     margin: 0 auto;
     display: block;
 }
 
-.c8ecm-ticket-number {
+.wem-ticket-number {
     margin-top: 10px;
     font-weight: bold;
     font-size: 14px;
 }
 
-.c8ecm-event-name {
+.wem-event-name {
     font-size: 12px;
     color: #666;
     margin-top: 5px;
@@ -143,25 +143,25 @@
 /* Responsive */
 @media (max-width: 768px) {
 
-    .c8-list-table th:nth-child(5),
-    .c8-list-table td:nth-child(5) {
+    .wem-list-table th:nth-child(5),
+    .wem-list-table td:nth-child(5) {
         display: none;
     }
 
-    .c8-list-controls {
+    .wem-list-controls {
         flex-direction: column;
     }
 
-    .c8-filter-input {
+    .wem-filter-input {
         width: 100%;
         margin-bottom: 5px;
     }
 
-    .c8-list-btn {
+    .wem-list-btn {
         width: 100%;
     }
 
-    .c8ecm-qr-cell {
+    .wem-qr-cell {
         padding: 10px;
     }
 }
