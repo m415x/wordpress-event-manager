@@ -47,11 +47,15 @@ add_action('plugins_loaded', function () {
     $admin_columns = new WEM_Admin_Columns();
     $admin_columns->setup_columns();
 
+    // WEM-11: guest-facing AJAX stays unregistered until deny-all guards are tested.
     new WEM_Ajax_Handler();
-    new WEM_Shortcode_Manager();
+
+    $shortcodes = new WEM_Shortcode_Manager();
+    $shortcodes->register_shortcodes();
 
     $import_export = new WEM_Import_Export();
     $import_export->register_menu();
 
-    new WEM_QR_Generator();
+    $qr = new WEM_QR_Generator();
+    $qr->register_shortcodes();
 });
