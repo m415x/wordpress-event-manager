@@ -1,7 +1,19 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+$pluginRoot = dirname(__DIR__);
+require_once $pluginRoot . '/vendor/autoload.php';
+
+$polyfillsPath = $pluginRoot . '/vendor/yoast/phpunit-polyfills';
+if (!is_file($polyfillsPath . '/phpunitpolyfills-autoload.php')) {
+    throw new RuntimeException('WordPress PHPUnit polyfills are missing. Run Composer update.');
+}
+
+// WordPress Core's test bootstrap requires these polyfills to be discoverable.
+require_once $polyfillsPath . '/phpunitpolyfills-autoload.php';
+if (!defined('WP_TESTS_PHPUNIT_POLYFILLS_PATH')) {
+    define('WP_TESTS_PHPUNIT_POLYFILLS_PATH', $polyfillsPath);
+}
 
 $testsDir = getenv('WP_TESTS_DIR');
 
