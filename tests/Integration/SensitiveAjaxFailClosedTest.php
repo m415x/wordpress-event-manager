@@ -37,7 +37,7 @@ final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
         // while require_once does not re-register the plugin bootstrap.
         // The separate registration test verifies the entrypoint wiring;
         // register fresh handlers here to isolate each request contract.
-        $ajax = new \\WEM_Ajax_Handler();
+        $ajax = new \WEM_Ajax_Handler();
         $ajax->register_ajax_handlers();
 
         if ($authenticated) {
@@ -65,7 +65,7 @@ final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
         // HTTP test must verify the mandatory 403 response in wp-env.
         try {
             $this->_handleAjax($action);
-        } catch (\\WPAjaxDieContinueException $exception) {
+        } catch (\WPAjaxDieContinueException $exception) {
             // WP_Ajax_UnitTestCase uses this to signal a completed JSON response.
         }
 
