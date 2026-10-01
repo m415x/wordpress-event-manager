@@ -3,8 +3,8 @@
 class WEM_QR_Generator {
     
     public function register_shortcodes() {
-        add_shortcode('c8ecm_qr_table', array($this, 'generate_qr_table'));
-        add_shortcode('c8ecm_qr_single', array($this, 'generate_single_qr'));
+        add_shortcode('wem_qr_table', array($this, 'generate_qr_table'));
+        add_shortcode('wem_qr_single', array($this, 'generate_single_qr'));
     }
     
     public function generate_qr_table($atts) {
@@ -24,26 +24,26 @@ class WEM_QR_Generator {
         
         ob_start();
         ?>
-        <div class="c8ecm-qr-table-wrapper">
+        <div class="wem-qr-table-wrapper">
             <style>
-            .c8ecm-qr-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .c8ecm-qr-cell { border: 1px solid #ddd; padding: 15px; text-align: center; vertical-align: top; }
-            .c8ecm-qr-code { margin: 0 auto; display: block; }
-            .c8ecm-ticket-number { margin-top: 10px; font-weight: bold; font-size: 14px; }
-            .c8ecm-event-name { font-size: 12px; color: #666; margin-top: 5px; }
+            .wem-qr-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .wem-qr-cell { border: 1px solid #ddd; padding: 15px; text-align: center; vertical-align: top; }
+            .wem-qr-code { margin: 0 auto; display: block; }
+            .wem-ticket-number { margin-top: 10px; font-weight: bold; font-size: 14px; }
+            .wem-event-name { font-size: 12px; color: #666; margin-top: 5px; }
             </style>
             
-            <table class="c8ecm-qr-table">
+            <table class="wem-qr-table">
                 <?php
                 $count = 0;
                 for ($i = $start; $i <= $end; $i++):
                     if ($count % $columns == 0) echo '<tr>';
                 ?>
-                    <td class="c8ecm-qr-cell">
+                    <td class="wem-qr-cell">
                         <?php echo $this->generate_qr_code($event_slug, $i, $size); ?>
-                        <div class="c8ecm-ticket-number">Ticket <?php echo esc_html($i); ?></div>
+                        <div class="wem-ticket-number">Ticket <?php echo esc_html($i); ?></div>
                         <?php if ($event_slug): ?>
-                            <div class="c8ecm-event-name"><?php echo esc_html($event_slug); ?></div>
+                            <div class="wem-event-name"><?php echo esc_html($event_slug); ?></div>
                         <?php endif; ?>
                     </td>
                 <?php
@@ -55,7 +55,7 @@ class WEM_QR_Generator {
                 if ($count % $columns != 0) {
                     $remaining = $columns - ($count % $columns);
                     for ($i = 0; $i < $remaining; $i++) {
-                        echo '<td class="c8ecm-qr-cell">&nbsp;</td>';
+                        echo '<td class="wem-qr-cell">&nbsp;</td>';
                     }
                     echo '</tr>';
                 }
@@ -88,7 +88,7 @@ class WEM_QR_Generator {
         $qr_url = $this->generate_google_qr_url($url, $size);
         
         return sprintf(
-            '<img src="%s" alt="QR Code for Ticket %s" class="c8ecm-qr-code" width="%d" height="%d">',
+            '<img src="%s" alt="QR Code for Ticket %s" class="wem-qr-code" width="%d" height="%d">',
             esc_url($qr_url),
             esc_attr($ticket),
             $size,
