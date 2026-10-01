@@ -1,6 +1,6 @@
 # WEM-9 — Version 2.1.1 to 2.2.1 source reconciliation
 
-Status: **source-backed delta drafted; acceptance review pending** (2026-10-01).
+Status: **source comparison reconciled; independent follow-ups approved and recorded** (2026-10-01). This document establishes no functional activation GREEN.
 Parent: WEM-2; issue: [WEM-9](https://trail-running-workout-planning.atlassian.net/browse/WEM-9).
 
 ## Evidence and method
@@ -48,6 +48,23 @@ Parent: WEM-2; issue: [WEM-9](https://trail-running-workout-planning.atlassian.n
 4. **CSV (bounded probable regression):** import created/updated counter classification; test existing/new/skipped/duplicate-by-event cases before correcting. Also test encoding conversions with non-UTF-8 fixtures.
 5. **QR/provider:** image generated via an external service; validate reliability, privacy, sanitization and the use of unpredictable, purpose-scoped invitation credentials before production use.
 6. **Release/CI:** no proof of real plugin operation despite WEM-8 full static, unit, and isolated WordPress *metadata* integration GREEN; Node/action and Ubuntu runner warnings are nonblocking maintenance issues.
+
+## Jira follow-up reconciliation — approved
+
+The user explicitly approved preserving these findings as independent Jira work, not modifying runtime while closing WEM-9.
+
+| Issue | Ownership | Relationship to foundation |
+| --- | --- | --- |
+| [WEM-11](https://trail-running-workout-planning.atlassian.net/browse/WEM-11) | Bug: fix autoload resolution, modular hooks, prove isolated WordPress plugin activation/registration | **Blocks WEM-10 closure** because WEM-2 requires a walkthrough and source-backed functional continuity. WEM-2 cannot be represented as a verified usable baseline while this remains unresolved. |
+| [WEM-12](https://trail-running-workout-planning.atlassian.net/browse/WEM-12) | Bug: test and correct CSV existing-row creation/update counters | Independent probable behavior regression. Tracked as related to WEM-9/WEM-2; do not silently add its fix to WEM-9. Final WEM-10 AC review must explicitly decide whether an open regression can be accepted as a documented limitation. |
+| [WEM-13](https://trail-running-workout-planning.atlassian.net/browse/WEM-13) | Story: event-scoped permission model and authorization of guest reads/mutations | Separately scoped security work, related to WEM-11/WEM-2. **Public exposure remains disallowed without authorization assurance**; WordPress activation itself does not establish secure operation. |
+| [WEM-14](https://trail-running-workout-planning.atlassian.net/browse/WEM-14) | Story: append-only guest movement event model and current-status projections | Long-term domain model follow-up related to WEM-13; not a precondition for documenting the foundation source baseline. |
+
+### Closure decision
+
+WEM-9 is limited to historical delta classification and publication, and its acceptance findings have explicit issue owners. Its analysis can be completed without editing the plugin.
+
+WEM-10 and parent WEM-2 **must remain open** pending the WEM-11 activation/registration evidence and a distinct acceptance determination on any remaining regression/security limitations. The earlier GitHub Actions WordPress integration job only checked plugin metadata; it did not activate the plugin. No automatic merge to `dev`.
 
 ## Non-goals and acceptance check
 
