@@ -76,7 +76,7 @@ case_test 0 GREEN passing green unit
 case_test 0 GREEN passing green tests/Integration/WordPressPluginMetadataTest.php
 case_test 1 ERROR assertion_failure green unit
 case_test 1 ERROR syntax_failure green unit
-case_verbose assertion_failure red 'Failures: 1' -v unit
+case_verbose assertion_failure red 'Failures: 1' unit -v
 case_verbose bootstrap_failure red 'WordPress bootstrap missing' integration --verbose
 case_verbose passing green 'OK (1 test, 2 assertions)' tests/Unit/PluginEntrypointTest.php --verbose
 case_verbose bootstrap_failure diagnose 'WordPress bootstrap missing' integration
