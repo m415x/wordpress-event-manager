@@ -9,7 +9,7 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 - Project Jira: WEM. WEM-1 epic, WEM-2 story.
 - WEM-3 completed a code inventory and stored findings in Jira. No product PHP modifications yet.
 - WEM-4 is completed in Jira. The user pushed `.gitignore` via `bc2664b`; durable workflow documentation was subsequently added on the story branch.
-- WEM-5 is in progress. The user reported GREEN of the standalone PHPUnit smoke test on PHP 8.3.35 / PHPUnit 11.5.56 (1 test, 4 assertions). `composer.lock` is now tracked on the feature branch. WordPress-backed integration test scaffolding and dedicated `.wp-env.test.json` have been committed remotely, but **not yet executed**.
+- WEM-5 harness verification complete: human confirmed both standalone unit and WordPress integration GREEN after reconciling the WordPress test framework to PHPUnit 9.6 and Polyfills 2.x. Remote composer.lock currently pins PHPUnit 9.6.37 and Polyfills 2.0.5. WordPress plugin itself remains unverified for activation.
 
 ## Observed local environment
 - Windows with Git Bash, Node.js, pnpm, Docker Desktop.
@@ -29,7 +29,7 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 
 ## Next work
 1. Sync local feature branch with remote commits (`git pull --ff-only`).
-2. Run WEM-5 isolated WordPress integration test via `.wp-env.test.json`, record actual result and diagnose unexpected bootstrap/config failures. `docs/testing.md` contains commands.
+2. Continue WEM-6 compact RED/GREEN commands, then WEM-7 CI/static gates. `docs/testing.md` contains verified harness commands.
 3. WEM-6 compact RED/GREEN commands; WEM-7 static gates/CI.
 4. WEM-8 identity migration; WEM-9 legacy delta; WEM-10 closure and `dev` integration.
 5. Preserve observed RED vs source-only findings vs genuinely executed verification.
