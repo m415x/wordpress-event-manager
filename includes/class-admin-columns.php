@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Admin_Columns {
+class WEM_Admin_Columns {
     
     public function setup_columns() {
         add_filter('manage_invitado_posts_columns', array($this, 'modify_columns'));
