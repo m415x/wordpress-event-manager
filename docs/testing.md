@@ -13,7 +13,15 @@ This document describes the initial *standalone PHP unit-test harness*. It does 
 wp-env run cli --env-cwd=wp-content/plugins/wordpress-event-manager composer install --no-interaction
 ```
 
-`composer.lock` is tracked, so normal `composer install` resolves locked dependency versions. Do not commit `vendor/` or credentials.
+`composer.lock` is tracked. When `composer.json` introduces or changes dependencies, update the lockfile explicitly and commit it. Do not commit `vendor/` or credentials.
+
+For the WordPress integration bootstrap, WordPress Core requires PHPUnit Polyfills. We use `yoast/phpunit-polyfills:^4.0` (compatible with PHPUnit 11, unlike the older 2.x series). After pulling the manifest change, run this one-time update in the dedicated Docker CLI:
+
+```bash
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer update yoast/phpunit-polyfills --with-dependencies --no-interaction
+```
+
+Review and commit the resulting `composer.lock` so subsequent `composer install` restores exactly the tested dependency set.
 
 ## Focused standalone PHPUnit
 
