@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="WordPress Event Manager foundation">
+    <description>PSR-12 for new PHP tests; historical runtime modules remain audited debt.</description>
+    <file>tests</file>
+    <exclude-pattern>*/tests/Runner/*</exclude-pattern>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <rule ref="PSR12"/>
+</ruleset>
