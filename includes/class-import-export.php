@@ -12,13 +12,13 @@ class WEM_Import_Export {
             'Importar / Exportar',
             'Importar / Exportar',
             'manage_options',
-            'c8ecm_import_export',
+            'wem_import_export',
             array($this, 'render_import_export_page')
         );
     }
     
     public function render_import_export_page() {
-        if (!c8ecm_current_user_can_manage()) {
+        if (!wem_current_user_can_manage()) {
             wp_die('No autorizado');
         }
         
@@ -39,8 +39,8 @@ class WEM_Import_Export {
         <p>Formato CSV esperado (encabezado EXACTO): <code>titulo,nombre,organizacion,mesa,evento,observaciones,checkin</code></p>
         
         <form method="post" enctype="multipart/form-data">
-            <?php wp_nonce_field('c8ecm_import_action', 'c8ecm_import_nonce'); ?>
-            <input type="file" name="c8ecm_csv" accept=".csv" required>
+            <?php wp_nonce_field('wem_import_action', 'wem_import_nonce'); ?>
+            <input type="file" name="wem_csv" accept=".csv" required>
             
             <label style="display: block; margin: 10px 0;">
                 <input type="checkbox" name="update_existing"> 
@@ -49,7 +49,7 @@ class WEM_Import_Export {
             
             <?php $this->render_separator_selector(); ?>
             
-            <?php submit_button('Importar Invitados', 'primary', 'c8ecm_do_import'); ?>
+            <?php submit_button('Importar Invitados', 'primary', 'wem_do_import'); ?>
         </form>
         <?php
     }
@@ -59,8 +59,8 @@ class WEM_Import_Export {
         <hr>
         <h2>Exportar CSV</h2>
         <form method="post">
-            <?php wp_nonce_field('c8ecm_export_action', 'c8ecm_export_nonce'); ?>
-            <?php submit_button('Descargar CSV de Invitados', 'secondary', 'c8ecm_do_export'); ?>
+            <?php wp_nonce_field('wem_export_action', 'wem_export_nonce'); ?>
+            <?php submit_button('Descargar CSV de Invitados', 'secondary', 'wem_do_export'); ?>
         </form>
         <?php
     }
@@ -81,7 +81,7 @@ class WEM_Import_Export {
     }
     
     private function handle_import() {
-        if (!isset($_POST['c8ecm_do_import'])) {
+        if (!isset($_POST['wem_do_import'])) {
             return;
         }
         
@@ -89,7 +89,7 @@ class WEM_Import_Export {
             return;
         }
         
-        if (empty($_FILES['c8ecm_csv']['tmp_name'])) {
+        if (empty($_FILES['wem_csv']['tmp_name'])) {
             echo '<div class="notice notice-error"><p>No se recibió archivo.</p></div>';
             return;
         }
@@ -98,7 +98,7 @@ class WEM_Import_Export {
     }
     
     private function handle_export() {
-        if (!isset($_POST['c8ecm_do_export'])) {
+        if (!isset($_POST['wem_do_export'])) {
             return;
         }
         
@@ -110,8 +110,8 @@ class WEM_Import_Export {
     }
     
     private function verify_import_nonce() {
-        if (!isset($_POST['c8ecm_import_nonce']) || 
-            !wp_verify_nonce($_POST['c8ecm_import_nonce'], 'c8ecm_import_action')) {
+        if (!isset($_POST['wem_import_nonce']) || 
+            !wp_verify_nonce($_POST['wem_import_nonce'], 'wem_import_action')) {
             echo '<div class="notice notice-error"><p>Nonce inválido</p></div>';
             return false;
         }
@@ -119,8 +119,8 @@ class WEM_Import_Export {
     }
     
     private function verify_export_nonce() {
-        if (!isset($_POST['c8ecm_export_nonce']) || 
-            !wp_verify_nonce($_POST['c8ecm_export_nonce'], 'c8ecm_export_action')) {
+        if (!isset($_POST['wem_export_nonce']) || 
+            !wp_verify_nonce($_POST['wem_export_nonce'], 'wem_export_action')) {
             echo '<div class="notice notice-error"><p>Nonce inválido</p></div>';
             return false;
         }
@@ -130,11 +130,11 @@ class WEM_Import_Export {
     private function process_csv_import() {
         $update_existing = isset($_POST['update_existing']);
         $separador = $this->get_csv_separator();
-        $file = $_FILES['c8ecm_csv']['tmp_name'];
+        $file = $_FILES['wem_csv']['tmp_name'];
         
         // Convertir archivo completo a UTF-8 (a prueba de Excel)
         $raw = file_get_contents($file);
-        $raw = $this->c8_force_utf8($raw);
+        $raw = $this->wem_force_utf8($raw);
         file_put_contents($file, $raw);
 
         $handle = fopen($file, 'r');
@@ -173,8 +173,8 @@ class WEM_Import_Export {
                 continue;
             }
             
-            $row = array_map(array($this, 'c8_force_utf8'), $row);
-            $header = array_map(array($this, 'c8_force_utf8'), $header);
+            $row = array_map(array($this, 'wem_force_utf8'), $row);
+            $header = array_map(array($this, 'wem_force_utf8'), $header);
 
             $data = array_combine($header, $row);
             $result = $this->process_single_row($data, $update_existing);
@@ -246,12 +246,12 @@ class WEM_Import_Export {
     
     private function update_invitado_data($post_id, $data) {
         $meta_fields = array(
-            'c8_ticket' => $data['titulo'],
-            'c8_nombre' => $data['nombre'] ?? '',
-            'c8_organizacion' => $data['organizacion'] ?? '',
-            'c8_mesa' => $data['mesa'] ?? '',
-            'c8_observaciones' => $data['observaciones'] ?? '',
-            'c8_checkin' => $this->parse_checkin_value($data['checkin'] ?? '')
+            'wem_ticket' => $data['titulo'],
+            'wem_nombre' => $data['nombre'] ?? '',
+            'wem_organizacion' => $data['organizacion'] ?? '',
+            'wem_mesa' => $data['mesa'] ?? '',
+            'wem_observaciones' => $data['observaciones'] ?? '',
+            'wem_checkin' => $this->parse_checkin_value($data['checkin'] ?? '')
         );
         
         foreach ($meta_fields as $key => $value) {
@@ -259,8 +259,8 @@ class WEM_Import_Export {
         }
         
         // Si tiene checkin, agregar timestamp
-        if ($meta_fields['c8_checkin']) {
-            update_post_meta($post_id, 'c8_checkin_at', current_time('Y-m-d H:i:s'));
+        if ($meta_fields['wem_checkin']) {
+            update_post_meta($post_id, 'wem_checkin_at', current_time('Y-m-d H:i:s'));
         }
     }
     
@@ -340,8 +340,8 @@ class WEM_Import_Export {
     }
     
     private function prepare_invitado_for_export($invitado) {
-        $data = c8ecm_get_invitado_data($invitado->ID);
-        $terms = c8ecm_get_evento_terms($invitado->ID);
+        $data = wem_get_invitado_data($invitado->ID);
+        $terms = wem_get_evento_terms($invitado->ID);
         $evento = $terms ? $terms[0]->name : '';
         
         return array(
@@ -360,7 +360,7 @@ class WEM_Import_Export {
         return ($separador === 'tab') ? "\t" : $separador;
     }
 
-    private function c8_force_utf8($string) {
+    private function wem_force_utf8($string) {
         // Si ya está en UTF-8 válido, no tocamos nada
         if (mb_detect_encoding($string, 'UTF-8', true)) {
             return $string;
