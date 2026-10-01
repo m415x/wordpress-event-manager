@@ -31,7 +31,7 @@ wp-env run cli --env-cwd=wp-content/plugins/wordpress-event-manager vendor/bin/p
 
 The initial smoke test verifies that the plugin entrypoint exists and declares ordinary WordPress header fields. It deliberately does **not** require/activate WordPress or instantiate the plugin. It is expected to be green even while the known historical plugin bootstrap defect remains unresolved.
 
-## WordPress integration test harness (requires actual local verification)
+## WordPress integration test harness
 `wp-env` supplies the WordPress PHPUnit files at `WP_TESTS_DIR`. Run integration tests only against the separate disposable environment selected explicitly using `--config=.wp-env.test.json`; it has its own Docker containers and data, and never uses production credentials.
 
 Start the dedicated test environment from the plugin root:
@@ -46,9 +46,9 @@ Then run the WordPress integration suite:
 wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager vendor/bin/phpunit -c phpunit.integration.xml.dist
 ```
 
-The initial WordPress integration test uses WordPress' own `get_plugin_data()` API, but **does not activate** the historical plugin (known WEM-3 boot defect). The WordPress test framework may reset its dedicated disposable database; never point this command to the development or production database. This first integration suite has not yet been executed; treat unexpected failures as harness setup issues until diagnosed.
+The initial WordPress integration test uses WordPress' own `get_plugin_data()` API, but **does not activate** the historical plugin (known WEM-3 boot defect). The WordPress test framework may reset its dedicated disposable database; never point this command to the development or production database. User confirmed GREEN for the standalone unit and WordPress integration suites on 2026-10-01, with PHPUnit 9.6 + Polyfills 2.x. Counts and assertions for the integration run were not provided; Jira WEM-5 records the human confirmation. This validates the harness and plugin metadata read, not actual plugin activation.
 
-The dedicated `.wp-env.test.json` explicitly sets `testsEnvironment: false`, because each configuration otherwise also launches a secondary test site on port 8889. The existing development configuration may already own that port. The dedicated WordPress environment uses port 8890 and its own Docker database; WordPress' PHP test bootstrap must still be verified with the actual CLI integration run. Do not reset/destroy the development database.
+The dedicated `.wp-env.test.json` explicitly sets `testsEnvironment: false`, because each configuration otherwise also launches a secondary test site on port 8889. The existing development configuration may already own that port. The dedicated WordPress environment uses port 8890 and its own Docker database; WordPress' PHP test bootstrap was confirmed operational in the isolated CLI integration run. Do not reset/destroy the development database.
 
 Compact RED/GREEN commands belong to WEM-6; lint/CI to WEM-7. Record only results actually executed.
 
