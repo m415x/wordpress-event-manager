@@ -8,6 +8,9 @@ class WEM_Shortcode_Manager {
     }
     
     public function render_checkin_shortcode($atts) {
+        // WEM-11: deny guest access until WEM-13 authorizes event-scoped reads.
+        return '<p>Guest access is temporarily unavailable.</p>';
+
         $atts = shortcode_atts(array('event' => ''), $atts);
         $ticket = $this->get_ticket_from_query();
         
@@ -24,6 +27,9 @@ class WEM_Shortcode_Manager {
     }
     
     public function render_list_shortcode($atts) {
+        // WEM-11: do not query or render guest details until WEM-13.
+        return '<p>Guest access is temporarily unavailable.</p>';
+
         $atts = shortcode_atts(array('event' => ''), $atts);
         ob_start();
         ?>
