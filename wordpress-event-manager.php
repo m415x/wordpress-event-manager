@@ -41,10 +41,17 @@ require_once WEM_PATH . 'includes/helpers.php';
 add_action('plugins_loaded', function () {
     new WEM_CPT_Manager();
     new WEM_Taxonomy_Manager();
-    new WEM_Metabox_Manager();
-    new WEM_Admin_Columns();
+    $metaboxes = new WEM_Metabox_Manager();
+    $metaboxes->register_metaboxes();
+
+    $admin_columns = new WEM_Admin_Columns();
+    $admin_columns->setup_columns();
+
     new WEM_Ajax_Handler();
     new WEM_Shortcode_Manager();
-    new WEM_Import_Export();
+
+    $import_export = new WEM_Import_Export();
+    $import_export->register_menu();
+
     new WEM_QR_Generator();
 });
