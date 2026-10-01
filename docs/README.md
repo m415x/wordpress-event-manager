@@ -8,7 +8,7 @@ Read `../AGENTS.md` before starting a story.
 - Source-backed audit findings: [WEM-3](https://trail-running-workout-planning.atlassian.net/browse/WEM-3), closed. These are observations, not test-suite passes.
 - Current engineering workflow: [WEM-4](https://trail-running-workout-planning.atlassian.net/browse/WEM-4).
 - PHP/WordPress test harness, RED/GREEN runner and CI baseline: WEM-5, WEM-6 and WEM-7 completed with verified CI.
-- [WEM-8 clean-break naming contract](architecture/naming-contract.md): approved for new installations only; test-first identity migration is in progress, with an intentional RED pending verification.
+- [WEM-8 clean-break naming contract](architecture/naming-contract.md): verified neutral identity for new installations only; source regression GREEN and both GitHub Actions jobs SUCCESS (run #36881129249). Functional activation and authorization remain unverified.
 - Legacy snapshot reconciliation: WEM-9 (not yet delivered).
 - Foundation closure and next-chat baseline: WEM-10.
 
