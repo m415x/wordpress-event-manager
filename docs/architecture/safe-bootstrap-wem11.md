@@ -21,6 +21,15 @@ Jira: [WEM-11](https://trail-running-workout-planning.atlassian.net/browse/WEM-1
 3. **Fail-closed RED:** explicitly assert unauthenticated and authenticated AJAX actions reject with HTTP 403 and do not read/write guest metadata; confirm all four shortcode callbacks do not query, expose guest data or render QR links. Implement guard before any public handler registration can be considered complete. Ensure security tests execute in the isolated WP environment.
 4. **Closure:** confirm real activation and relevant registrations in a disposable WordPress walkthrough, focused tests, unit/WordPress integration gates, syntax, PHPCS, PHPStan and CI. Do not claim functional or public secure check-in while WEM-13 is pending. WEM-10 stays blocked until WEM-11 evidence is complete.
 
+## HTTP status verification boundary
+
+`WP_Ajax_UnitTestCase` is executed inside PHPUnit CLI after output may have begun. In this environment `wp_send_json()` does not reliably call `status_header()` when PHP reports headers already sent; `http_response_code()` likewise returned `false`. Therefore **no fake status assertion or status-filter hook is an acceptable substitute for a real HTTP 403 response**.
+
+- WordPress AJAX integration tests in `tests/Integration/SensitiveAjaxFailClosedTest.php` must verify exact denial JSON, registered auth/nopriv hooks, unchanged guest metadata and absence of leaked guest markers.
+- A **separate required HTTP gate** must activate the plugin in disposable `wp-env` and make actual `POST /wp-admin/admin-ajax.php` requests for `wem_checkin_ajax` and `wem_list_ajax`, unauthenticated and with a real authenticated WordPress session. For each, inspect both actual HTTP status **403** and the fixed JSON body; do not use WP CLI as evidence of HTTP headers. Verify guest state remains unchanged. No production site or guest data.
+- The authenticated HTTP case requires a test-only session/cookie flow, not simply declaring an AJAX caller authenticated inside PHPUnit. Avoid placing credentials or cookies in Git or logs.
+- Do not close WEM-11 or unblock WEM-10 if only the CLI tests pass and the independent real HTTP/activation verification has not succeeded.
+
 ## Source-of-truth caveats
 
 The existing integration bootstrap loads WordPress's test framework and deliberately avoids automatically loading the plugin. Its earlier metadata test and CI GREEN do **not** establish plugin activation. WEM-11's new integration tests should explicitly load the entrypoint **only in the test needing activation**, preserving independent metadata coverage and a deterministic error classification. WEM-8's new-installations-only breaking identity remains binding.
