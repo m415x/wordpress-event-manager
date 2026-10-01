@@ -9,6 +9,7 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 - Project Jira: WEM. WEM-1 epic, WEM-2 story.
 - WEM-3 completed a code inventory and stored findings in Jira. No product PHP modifications yet.
 - WEM-4 is completed in Jira. The user pushed `.gitignore` via `bc2664b`; durable workflow documentation was subsequently added on the story branch.
+- WEM-6 verification complete (pending Jira reconciliation in this handoff): 8/8 runner classification self-tests and GREEN for both unit and integration with PHP syntax checks.
 - WEM-5 harness verification complete: human confirmed both standalone unit and WordPress integration GREEN after reconciling the WordPress test framework to PHPUnit 9.6 and Polyfills 2.x. Remote composer.lock currently pins PHPUnit 9.6.37 and Polyfills 2.0.5. WordPress plugin itself remains unverified for activation.
 
 ## Observed local environment
@@ -29,8 +30,8 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 
 ## Next work
 1. Sync local feature branch with remote commits (`git pull --ff-only`).
-2. WEM-6 runner code and mock classification self-test have been committed; **local execution is still pending**. Run `bash tests/Runner/tdd-runner.test.sh`, then `bash scripts/tdd.sh green unit` and `bash scripts/tdd.sh green integration` from Git Bash and report actual output.
-3. Once verified, close WEM-6; WEM-7 owns CI and additional static-analysis gates.
+2. WEM-6 locally verified and ready for Jira closure: runner classification self-tests passed 8/8, compact unit GREEN and integration GREEN both included PHP syntax verification (human execution, 2026-10-01). No true feature-level RED executed yet.
+3. Begin WEM-7: static analysis, lint and CI baseline; do not confuse WEM-6 `php -l` with PHPCS/PHPStan or a CI workflow run.
 4. WEM-8 identity migration; WEM-9 legacy delta; WEM-10 closure and `dev` integration.
 5. Preserve observed RED vs source-only findings vs genuinely executed verification.
 
