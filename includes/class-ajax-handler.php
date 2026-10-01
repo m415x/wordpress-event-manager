@@ -13,6 +13,9 @@ class WEM_Ajax_Handler {
     }
     
     public function handle_checkin_ajax() {
+        // WEM-11: deny all guest access until WEM-13 establishes authorization.
+        wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+
         $this->verify_nonce('wem_checkin_nonce');
         
         $post_id = $this->get_valid_post_id();
@@ -23,6 +26,9 @@ class WEM_Ajax_Handler {
     }
     
     public function handle_list_ajax() {
+        // WEM-11: deny all guest access until WEM-13 establishes authorization.
+        wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+
         $q = isset($_POST['q']) ? wem_sanitize_search_query($_POST['q']) : '';
         $evento = isset($_POST['evento']) ? wem_sanitize_search_query($_POST['evento']) : '';
         $mesa = isset($_POST['mesa']) ? wem_sanitize_search_query($_POST['mesa']) : '';
