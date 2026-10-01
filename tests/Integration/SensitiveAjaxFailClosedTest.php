@@ -53,10 +53,22 @@ final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
         ];
         $_REQUEST = $_POST;
 
-        http_response_code(200);
-        $this->_handleAjax($action);
+        // PHP CLI does not reliably expose WordPress' emitted status via
+        // http_response_code(). Observe the status_header API instead.
+        $statusCodes = [];
+        $captureStatus = static function ($header, $code) use (&$statusCodes) {
+            $statusCodes[] = (int) $code;
+            return $header;
+        };
+        add_filter('status_header', $captureStatus, 10, 2);
 
-        self::assertSame(403, http_response_code());
+        try {
+            $this->_handleAjax($action);
+        } finally {
+            remove_filter('status_header', $captureStatus, 10);
+        }
+
+        self::assertContains(403, $statusCodes, 'WordPress must emit HTTP 403');
         self::assertSame(
             ['success' => false, 'data' => ['code' => 'guest_access_unavailable']],
             json_decode($this->_last_response, true)
