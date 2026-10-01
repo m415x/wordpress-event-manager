@@ -15,10 +15,10 @@ wp-env run cli --env-cwd=wp-content/plugins/wordpress-event-manager composer ins
 
 `composer.lock` is tracked. When `composer.json` introduces or changes dependencies, update the lockfile explicitly and commit it. Do not commit `vendor/` or credentials.
 
-For the WordPress integration bootstrap, WordPress Core requires PHPUnit Polyfills. We use `yoast/phpunit-polyfills:^4.0` (compatible with PHPUnit 11, unlike the older 2.x series). After pulling the manifest change, run this one-time update in the dedicated Docker CLI:
+For the WordPress integration bootstrap, WordPress Core requires PHPUnit Polyfills. The wp-env WordPress test framework currently invokes an API removed in PHPUnit 10. WEM-5 therefore uses PHPUnit `^9.6` with `yoast/phpunit-polyfills:^2.0` to match that framework (rather than claiming PHPUnit 11 compatibility). After pulling the manifest change, run this one-time full dependency reconciliation in the dedicated Docker CLI:
 
 ```bash
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer update yoast/phpunit-polyfills --with-dependencies --no-interaction
+wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer update --with-all-dependencies --no-interaction
 ```
 
 Review and commit the resulting `composer.lock` so subsequent `composer install` restores exactly the tested dependency set.
