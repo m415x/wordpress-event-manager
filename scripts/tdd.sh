@@ -74,7 +74,7 @@ fi
 
 printf 'Focused tests: GREEN. Checking PHP syntax...\n'
 # Static gate for WEM-6: PHP syntax only. PHPStan/PHPCS and CI belong to WEM-7.
-static_cmd='set -eu; php -l wordpress-event-checkin-manager.php >/dev/null; find includes tests -type f -name "*.php" -exec php -l {} \; | grep -v "^No syntax errors detected in " || true'
+static_cmd='set -eu; php -l wordpress-event-checkin-manager.php >/dev/null; find includes tests -type f -name "*.php" -exec sh -c '\''for file do php -l "$file" >/dev/null || exit 1; done'\'' sh {} +'
 set +e
 "${base_command[@]}" sh -lc "$static_cmd" >"$log" 2>&1
 static_exit=$?
