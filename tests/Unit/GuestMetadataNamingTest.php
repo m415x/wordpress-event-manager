@@ -42,17 +42,19 @@ final class GuestMetadataNamingTest extends TestCase
         $source = file_get_contents(dirname(__DIR__, 2) . '/includes/helpers.php');
         self::assertIsString($source);
 
-        foreach ([
+        $helpers = [
             'wem_get_evento_terms',
             'wem_get_invitado_data',
             'wem_current_user_can_manage',
             'wem_get_current_operator',
             'wem_sanitize_search_query',
-        ] as $helper) {
+        ];
+
+        foreach ($helpers as $helper) {
             self::assertStringContainsString('function ' . $helper . '(', $source);
         }
 
-        foreach ([
+        $keys = [
             'wem_nombre',
             'wem_organizacion',
             'wem_mesa',
@@ -63,7 +65,9 @@ final class GuestMetadataNamingTest extends TestCase
             'wem_checkout',
             'wem_checkout_at',
             'wem_checkout_by',
-        ] as $key) {
+        ];
+
+        foreach ($keys as $key) {
             self::assertStringContainsString("'" . $key . "'", $source);
         }
     }
