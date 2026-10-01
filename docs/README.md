@@ -25,4 +25,4 @@ Read `../AGENTS.md` before starting a story.
 - Chat history: navigation only.
 
 ## Explicit limitations
-The historical plugin does not currently boot in the observed local WordPress CLI environment. Automated unit/integration tests and scoped static/CI gates are established. A newly committed WEM-8 expected-failure contract test may temporarily make CI RED until the naming implementation reaches GREEN. Do not claim the old feature set passes until specific tests and walkthroughs provide evidence.
+The historical plugin did not boot in the observed local WordPress CLI environment. WEM-8 naming identity tests are now GREEN, and the isolated metadata integration and scoped static/CI gates are verified. This does **not** verify plugin activation, complete feature behavior, or authorization safety; require explicit integration and walkthrough evidence before making those claims.
