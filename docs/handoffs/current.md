@@ -29,8 +29,8 @@ Status date: 2026-10-01. This is a work-in-progress handoff, not a completed-sto
 
 ## Next work
 1. Sync local feature branch with remote commits (`git pull --ff-only`).
-2. Continue WEM-6 compact RED/GREEN commands, then WEM-7 CI/static gates. `docs/testing.md` contains verified harness commands.
-3. WEM-6 compact RED/GREEN commands; WEM-7 static gates/CI.
+2. WEM-6 runner code and mock classification self-test have been committed; **local execution is still pending**. Run `bash tests/Runner/tdd-runner.test.sh`, then `bash scripts/tdd.sh green unit` and `bash scripts/tdd.sh green integration` from Git Bash and report actual output.
+3. Once verified, close WEM-6; WEM-7 owns CI and additional static-analysis gates.
 4. WEM-8 identity migration; WEM-9 legacy delta; WEM-10 closure and `dev` integration.
 5. Preserve observed RED vs source-only findings vs genuinely executed verification.
 
