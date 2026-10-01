@@ -6,4 +6,8 @@
     <arg name="extensions" value="php"/>
     <arg name="colors"/>
     <rule ref="PSR12"/>
+    <!-- WordPress integration bootstrap intentionally registers a constant and loads fixtures. -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>*/tests/integration-bootstrap.php</exclude-pattern>
+    </rule>
 </ruleset>
