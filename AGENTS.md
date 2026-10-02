@@ -56,8 +56,8 @@
 - Avoid speculative large epics, transcript archives, and unrelated cleanup. Track deferred decisions as Jira work.
 - Closure subtask: reconcile approved subtasks and acceptance criteria, run actual applicable full gates and manual walkthrough, record passing/failing evidence, update durable docs and handoff, then mark the story `Listo` and merge to `dev`.
 
-## WEM-2 active baseline
-- Story: WEM-2, Foundation and v2.2.1 baseline; initial historical `main` SHA `74116d06ccf40f3316cee7a33b034df45f8efa7b`.
-- WEM-3 audited source and observed a reported local `wp-env` CLI bootstrap fatal. Its findings and exact legacy identifiers live in WEM-3 Jira evidence.
-- Do not conflate a successful Docker start with successful WordPress plugin boot.
-- WEM-4 establishes this workflow; WEM-5/6/7 establish testing and CI; WEM-8 explicitly migrates identity; WEM-9 reconciles legacy behavior; WEM-10 performs closure.
+## Integrated WEM-2 Foundation baseline
+- Foundation v2.2.1 was merged into **`dev`**, not `main`, through [PR #1](https://github.com/m415x/wordpress-event-manager/pull/1) on 2026-10-02; exact integration merge commit: `0b32514cb20ded251e21da70cc1b3f8681c1b6fd`. Historical `main` source before Foundation: `74116d06ccf40f3316cee7a33b034df45f8efa7b`. See `docs/handoffs/foundation-baseline.md` for acceptance evidence and pending post-merge Jira/CI status.
+- WEM-3 audited an earlier plugin bootstrap defect; WEM-11 subsequently fixed and verified actual WordPress activation, modular hooks and temporary fail-closed sensitive routes. **Do not conflate a successful Docker start or registration with public authorization or safe public check-in.** All guest-sensitive AJAX/shortcode routes must remain unavailable until WEM-13 independently proves actor- and event-scoped permissions.
+- WEM-4 establishes delivery workflow; WEM-5/6/7 establish PHPUnit, compact TDD and CI; WEM-8 explicitly migrates naming for **new installations only**; WEM-9 reconciles the legacy source; WEM-10 owns Foundation closeout. WEM-12 CSV counters, WEM-13 authorization and WEM-14 movement history are deferred independent issues.
+- Fresh chats must read current remote `dev` first, compare its HEAD against verified CI and Jira, then select/approve the next story; don't continue directly from the obsolete Foundation story branch.
