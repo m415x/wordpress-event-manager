@@ -294,3 +294,8 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
 - Composer root version fallback 1.0.0 message is informational. PHPCS and PHPStan check their configured scopes, not the entire historical plugin codebase.
 - Previous confirmations: PHPUnit unit and integration GREEN; isolated test DB leaves manual plugin Active; AJAX deny-all HTTP 403 real on anonymous and logged-in admin; shell helper tests GREEN.
 - Still pending: current branch head GitHub Actions verification; live CPT/taxonomy/admin/shortcode registration walkthrough; Jira acceptance reconciliation. WEM-11 En curso, WEM-10 blocked.
+
+## WEM-11 live WordPress registration smoke GREEN — 2026-10-02
+- User executed an actual `wp-env run cli --config=.wp-env.test.json wp eval` on the manual WordPress installation, after isolated PHPUnit tests and quality gates. All **13/13** checks reported `PASS`: CPT `invitado` and taxonomy `evento` (2); shortcodes `wem_checkin`, `wem_list`, `wem_qr_table`, `wem_qr_single` (4); hooks `wp_ajax_*` and `wp_ajax_nopriv_*` for checkin/list (4); admin hooks `add_meta_boxes`, `save_post_invitado`, `admin_menu` (3).
+- This verifies registration in a normal WordPress CLI load, not live admin interaction/functionality, and does not replace the separately verified real HTTP deny-all checks.
+- Remaining closure: inspect actual WordPress admin Edit Invite / CPT UI and safe shortcode rendering as applicable, check current-head GitHub Actions status/jobs, reconcile WEM-11 AC and blocking WEM-10. Do not merge/close until those are evidenced.
