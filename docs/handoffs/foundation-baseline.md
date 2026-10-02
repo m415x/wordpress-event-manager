@@ -1,13 +1,13 @@
 # WEM-2 Foundation — pre-merge closure baseline
 
-Status: **WEM-10 in progress; candidate baseline on feat/WEM-2-foundation**, 2026-10-02. This file is an evidence-based handoff, not proof that `dev` has been updated or that the entire guest-management product is functional.
+Status: **WEM-2 Foundation integrated into `dev` on 2026-10-02**. This file is the resulting durable technical baseline; it does not imply that the full guest-management product is functional.
 
 ## Repository and delivery
 - GitHub: `m415x/wordpress-event-manager`. Historical `main` baseline: `74116d06ccf40f3316cee7a33b034df45f8efa7b`.
-- Canonical integration: `dev`. Candidate branch: `feat/WEM-2-foundation`. Open integration [draft PR #1](https://github.com/m415x/wordpress-event-manager/pull/1) is **cumulative Foundation WEM-2**, not a WEM-11-only patch.
-- Remote comparison observed 2026-10-02: 198 commits ahead / 0 behind, 53 changed files versus `dev`. Recheck immediately before merging; these numbers are point-in-time only.
-- WEM-3, WEM-4, WEM-5, WEM-6, WEM-7, WEM-8, WEM-9 and blocking WEM-11: **Listo** in Jira. WEM-10: **En curso**. WEM-2 parent: **En curso**. Do not mark closure complete until latest-head CI and review/merge evidence are recorded.
-- WEM-10 is the approved final closure subtask: merge only after a refreshed WEM-2 acceptance review, checks and a durable baseline update. Do not merge to `main` as part of this operation.
+- Canonical integration: `dev`. Merged Foundation branch: `feat/WEM-2-foundation`. [PR #1](https://github.com/m415x/wordpress-event-manager/pull/1) was merged into `dev` at merge commit **`0b32514cb20ded251e21da70cc1b3f8681c1b6fd`** (conventional merge, preserving branch commits). This integrated cumulative WEM-2 and WEM-11 work, not a standalone WEM-11 patch.
+- Before integration, the branch contained 201 commits ahead / 0 behind and 54 changed files versus the previous `dev`. After GitHub-reported merge, a remote comparison of `feat/WEM-2-foundation...dev` returned ahead=1, behind=0, changed files=0, consistent with one merge commit and no remaining branch diff. Do not use these historical counts as ongoing branch state.
+- WEM-3 through WEM-9 and WEM-11: **Listo** in Jira as verified in the WEM-10 audit. WEM-10 and WEM-2 were **En curso at merge time**; close them after post-merge verification, recording status updates in Jira. Jira, not this static document, is the status authority.
+- WEM-10 is the approved final closure subtask: audit and CI checks completed before merge; PR #1 was made ready and merged after check #169 success on expected feature HEAD. **`main` was not changed** by this merge. The post-merge documentation commits on `dev` require their own CI tracking; do not attribute the earlier feature-head CI to these later docs changes.
 
 ## Foundation acceptance matrix
 
@@ -51,11 +51,20 @@ Status: **WEM-10 in progress; candidate baseline on feat/WEM-2-foundation**, 202
 - CI notices: Node 20 action deprecation and an announced `ubuntu-latest` runner image migration; treat as separate maintenance follow-up if not already tracked, not as fixed by this work.
 - No production deployment, migration from existing installations, complete guest data lifecycle audit, accessibility certification or public guest functionality is claimed.
 
-## Completion checklist for WEM-10 (not yet passed)
+## WEM-10 closure audit (execution evidence)
 
-1. Verify all WEM-3–WEM-9 and WEM-11 are still `Listo` in Jira; document WEM-2 criteria reconciliation.
-2. Run/review full applicable current-head CI and final relevant local checks, maintaining manual WordPress activation.
-3. Review draft PR #1 final diff, ensure no unintended compatibility aliases, secrets, open security handlers or new regressions.
-4. Update this page and current handoff with **actual merge SHA** only after merging, then verify `dev` points to the integrated result.
-5. Transition WEM-10 and WEM-2 to `Listo` only with evidence; leave `main` untouched.
-6. New chat begins from remote `dev`: read `AGENTS.md`, `docs/README.md`, this baseline, Jira and current source; do not treat earlier chats as authoritative.
+- [x] Jira WEM-3–WEM-9 and WEM-11 confirmed `Listo` before merge; WEM-2 acceptance dimensions reconciled with tracked implementation and documentation.
+- [x] WordPress activation/registration walkthrough and AJAX deny-all transport verified; unit/integration gates, configured PHP lint/static checks, runner helper and static DB isolation gates GREEN as recorded in WEM-11.
+- [x] Pull-request GitHub Actions #169 (run ID `37015712363`) completed **success** in both jobs on feature HEAD `82cb9a99a6517839f559abb547b1eccfb2a8334e`.
+- [x] Final GitHub diff reviewed as cumulative WEM-2 Foundation; no untracked credentials or production env files in the changed-path set; AJAX/shortcode/QR fail-closed guards inspected.
+- [x] PR #1 made ready, GitHub reported mergeable=true, merged into `dev` with expected feature-head SHA guard, merge SHA `0b32514cb20ded251e21da70cc1b3f8681c1b6fd`.
+- [x] Post-merge compare confirms `dev` ahead by one merge commit with no remaining feature diff.
+- [ ] Confirm GitHub Actions on the final post-merge documentation commit in `dev` and record status, then close WEM-10 and WEM-2 in Jira.
+- [ ] Freeze the final post-closure `dev` SHA and ensure the next fresh chat uses remote `dev`, not the old branch.
+
+## Fresh-chat bootstrap after Foundation
+
+1. Start from **remote `dev`**, inspect `AGENTS.md`, `docs/README.md`, this baseline, `docs/architecture/` and Jira; do not rely on the conversation transcript.
+2. Verify actual `dev` HEAD/CI and inspect source/tests before selecting subsequent work. WEM-12 (CSV accounting), WEM-13 (authorization) and WEM-14 (append-only check-in history) remain separate deferred issues. Do not infer a product release order from this handoff.
+3. Retain WEM-8 new-installations-only compatibility boundary. **Do not loosen temporary deny-all guards until WEM-13 explicitly freezes, implements and validates actor/event authorization.**
+4. Use separated manual and PHPUnit wp-env configurations, `pnpm tdd` and test-first workflows; do not point PHPUnit at production or the manual WordPress database.
