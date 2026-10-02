@@ -252,3 +252,14 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
 - Approved WEM-11 bounded repair: create separate `.wp-env.phpunit.json` on a **distinct port 8892** (no production config or manual site reset), direct TDD runner to it; add explicit start/stop of PHPUnit env, bootstrap Composer deps in that separate container and update CI + testing docs after RED.
 - Created TEST-ONLY regression `tests/Runner/wp-db-isolation.test.sh` (`03d9237`), pnpm alias `test:wp-isolation` (`c5d109d`). Test requires dedicated configuration file, runner selector, distinct ports, and no direct reuse of manual WordPress wp-env; performs no Docker calls, DB connections or resets. **RED not executed yet**. User next `pnpm test:wp-isolation`; expected FAIL stating dedicated PHPUnit wp-env configuration required. After human RED, implement minimal separate configuration and runner changes, then GREEN; no claim of fix before that.
 - WEM-11 En curso; WEM-10 blocked, full quality/CI still pending.
+
+## WEM-11 WP test DB isolation GREEN implementation; human validation pending — 2026-10-02
+- User confirmed **RED** running `pnpm test:wp-isolation` after creating isolated configuration static guard (`03d9237`) and pnpm alias (`c5d109d`); this was expected because isolated configuration did not exist.
+- Implemented (remote branch `feat/WEM-2-foundation`, **no tests run by assistant**):
+  - `.wp-env.phpunit.json` (commit `23ef92a`): distinct port **8892**, WP 8.3, plugin `.`, `testsEnvironment:false`. Manual `.wp-env.test.json` remains untouched on port 8890.
+  - `scripts/tdd.sh` (commit `681f74c`): explicit `wp_env_config='.wp-env.phpunit.json'`, both PHPUnit and PHP syntax gates run `wp-env run cli --config=$wp_env_config`. Existing compact RED/GREEN behavior/automatic `git pull --ff-only` unchanged.
+  - CI `.github/workflows/php-quality.yml` (commit `c7671a9`): WordPress integration job starts/install Composer/stops only isolated PHPUnit site; static PHPUnit isolation guard added to static/unit job.
+  - New safe `scripts/wp-phpunit.sh` (commit `51ca62b`) with `start` (starts isolated site and Composer locked install) and `stop` (no data removal); pnpm `wp:phpunit:start`, `wp:phpunit:stop` (commit `26bf68f`).
+  - Durable docs: `docs/testing.md` `787ec68`, `AGENTS.md` `ad76a98`, docs index `68c1a0e`.
+- Next user **focused static GREEN**: `pnpm test:wp-isolation`, expected `WORDPRESS DATABASE ISOLATION: GREEN (configuration only)`. Then start distinct PHPUnit environment `pnpm wp:phpunit:start` (may take time and downloads) and verify **manual WordPress plugin activation stays Active** after `pnpm tdd integration`. Do not imply static GREEN proves runtime DB isolation. If test env provisioning errors, inspect output, do not reset manual site.
+- No PHP production logic, guest AJAX guards, or manual WP data changed. WEM-11 En curso; WEM-10 blocked until real full gates.
