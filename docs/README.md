@@ -10,7 +10,7 @@ Read `../AGENTS.md` before starting a story.
 - PHP/WordPress test harness, RED/GREEN runner and CI baseline: WEM-5, WEM-6 and WEM-7 completed with verified CI.
 - [WEM-8 clean-break naming contract](architecture/naming-contract.md): verified neutral identity for new installations only; source regression GREEN and both GitHub Actions jobs SUCCESS (run #36881129249). Functional activation and authorization remain unverified.
 - [WEM-9 historical delta](architecture/legacy-delta-v211-v221.md): **Listo** in Jira. Source-backed classification completed, with follow-up work WEM-11/12/13/14; WEM-11 blocks WEM-10 until actual plugin activation and hook registration are verified. No WEM-9 runtime modifications.
-- [WEM-11 approved fail-closed bootstrap contract](architecture/safe-bootstrap-wem11.md): En curso, new WordPress integration class-resolution test authored before implementation, initial RED pending human execution. Sensitive AJAX and shortcodes must deny all guest access until WEM-13.
+- [WEM-11 approved fail-closed bootstrap contract](architecture/safe-bootstrap-wem11.md): En curso. Focused bootstrap, administrative hooks, guest shortcodes and JSON AJAX deny-all integration tests GREEN by user report. Actual disposable WordPress plugin activation verified on 2026-10-02; both anonymous HTTP AJAX requests returned real 403 with fixed deny-all JSON. Authenticated real HTTP verification and final gates still pending. [Daily wp-env commands](testing.md#disposable-wordpress-daily-commands--wem-11) are available for local reuse; helper tests not yet run.
 - Foundation closure and next-chat baseline: WEM-10, blocked by WEM-11.
 
 ## Durable documents
