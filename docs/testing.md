@@ -34,17 +34,25 @@ The initial smoke test verifies that the plugin entrypoint exists and declares o
 ## WordPress integration test harness
 `wp-env` supplies the WordPress PHPUnit files at `WP_TESTS_DIR`. Run integration tests only against the separate disposable environment selected explicitly using `--config=.wp-env.test.json`; it has its own Docker containers and data, and never uses production credentials.
 
-Start the dedicated test environment from the plugin root:
+Start the **isolated PHPUnit site** from the plugin root:
 
 ```bash
-wp-env start --config=.wp-env.test.json
+pnpm wp:phpunit:start
 ```
 
-Then run the WordPress integration suite:
+The command starts `.wp-env.phpunit.json` (port 8892) and installs the locked Composer dependencies in that container. Then run:
 
 ```bash
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager vendor/bin/phpunit -c phpunit.integration.xml.dist
+pnpm tdd integration
 ```
+
+To stop only the PHPUnit site, without removing its database:
+
+```bash
+pnpm wp:phpunit:stop
+```
+
+The manual `.wp-env.test.json` (port 8890) is **not** a PHPUnit target. Never run WordPress Core PHPUnit bootstrap against the manual site's `cli` container: WordPress Core test initialization can reset WordPress options, including `active_plugins`. The earlier shared-environment setup produced an observed Active-to-Inactive transition during PHPUnit.
 
 The initial WordPress integration test uses WordPress' own `get_plugin_data()` API, but **does not activate** the historical plugin (known WEM-3 boot defect). The WordPress test framework may reset its dedicated disposable database; never point this command to the development or production database. User confirmed GREEN for the standalone unit and WordPress integration suites on 2026-10-01, with PHPUnit 9.6 + Polyfills 2.x. Counts and assertions for the integration run were not provided; Jira WEM-5 records the human confirmation. This validates the harness and plugin metadata read, not actual plugin activation.
 
@@ -189,3 +197,28 @@ pnpm wp:stop
 - Neither `pnpm tdd` nor these helpers automatically run all full CI checks. Dependencies only need installation/reconciliation when first provisioning or when manifests/locks change.
 - No destructive reset/delete commands are exposed through these helpers. Never point the smoke test to production.
 - Before treating these scripts as verified, run `pnpm test:wp-scripts`, then `pnpm wp:status` and `pnpm wp:verify:anon` against the already running disposable site and record the actual result. Creating the scripts does not itself establish a passing gate.
+
+## WordPress PHPUnit/database isolation — WEM-11 correction, 2026-10-02
+
+Two independent `wp-env` configurations now have distinct purposes:
+
+| Configuration | Port | Purpose | Commands |
+| --- | --- | --- | --- |
+| `.wp-env.test.json` | 8890 | Manual admin dashboard and real anonymous/authenticated HTTP tests, preserve site state | `pnpm wp:start`, `pnpm wp:status`, `pnpm wp:verify:anon`, `pnpm wp:stop` |
+| `.wp-env.phpunit.json` | 8892 | Disposable PHPUnit and PHP syntax gates, separate WordPress database | `pnpm wp:phpunit:start`, `pnpm tdd ...`, `pnpm wp:phpunit:stop` |
+
+Start PHPUnit's installation at least once using `pnpm wp:phpunit:start` before the first `pnpm tdd`. The `wp:phpunit:start` script runs Composer's locked install after starting the environment. Once running, keep using the familiar `pnpm tdd:red ...` and `pnpm tdd ...` commands; they now target `.wp-env.phpunit.json` exclusively. They do **not** auto-start Docker or automatically repair a missing test installation.
+
+`pnpm test:wp-isolation` checks the configuration separation **without Docker**; it is a static regression guard, not proof of database isolation at runtime. After the first new-environment run, verify the manual site's plugin state is unchanged both before and after PHPUnit. The CI integration job also starts the dedicated PHPUnit site and uses its CLI for Composer and tests; it never starts the manual-site configuration.
+
+### Non-destructive verification sequence
+
+```bash
+pnpm test:wp-isolation
+pnpm wp:status
+pnpm wp:phpunit:start
+pnpm tdd integration
+pnpm wp:status
+```
+
+Expected: isolation guard GREEN, the PHPUnit suite GREEN, and WordPress Event Manager still **Active** on the manual port 8890. A failure requires diagnosis, **not** automatic reactivation or database resets. Do not reuse development or production data in PHPUnit.
