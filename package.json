@@ -12,6 +12,7 @@
     "wp:status": "bash scripts/wp-local.sh status",
     "wp:stop": "bash scripts/wp-local.sh stop",
     "wp:verify:anon": "bash scripts/check-guest-http.sh",
-    "test:wp-scripts": "bash tests/Runner/wp-local.test.sh"
+    "test:wp-scripts": "bash tests/Runner/wp-local.test.sh",
+    "test:wp-isolation": "bash tests/Runner/wp-db-isolation.test.sh"
   }
 }
