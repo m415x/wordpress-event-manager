@@ -70,7 +70,10 @@ container_cwd='wp-content/plugins/wordpress-event-manager'
 configuration=phpunit.xml.dist
 if [[ $suite == integration ]]; then configuration=phpunit.integration.xml.dist; fi
 
-base_command=("$wp_env_bin" run cli --config=.wp-env.test.json "--env-cwd=$container_cwd")
+# Dedicated PHPUnit WordPress installation: its database must never be
+# shared with the manual site at localhost:8890.
+wp_env_config='.wp-env.phpunit.json'
+base_command=("$wp_env_bin" run cli "--config=$wp_env_config" "--env-cwd=$container_cwd")
 phpunit_command=("${base_command[@]}" vendor/bin/phpunit -c "$configuration")
 if [[ -n $filter ]]; then phpunit_command+=(--filter "$filter"); fi
 if [[ -n $test_path ]]; then phpunit_command+=("$test_path"); fi
