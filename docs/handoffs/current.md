@@ -166,7 +166,7 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
 
 ## WEM-11 CLI AJAX test status assertion second diagnostic — 2026-10-01
 - User reran focused AJAX test: **5 tests, 1 pass, 4 failures**, all on `assertContains(403, $statusCodes)`. Even the WordPress `status_header` filter observed no emitted code in the PHPUnit CLI process. Earlier `http_response_code()` likewise returned `false`. No JSON/state assertions were reached before the failed status assertions.
-- Test-only correction `c8f8319`: remove unobservable HTTP header assertions and call `_handleAjax()` directly; retain exact JSON denial body, unchanged guest check-in and name metadata, no sensitive marker in response, and registration count. This intentionally does **not** claim to test HTTP status.
+- Test-only correction (Git history, 2026-10-01): remove unobservable HTTP header assertions and call `_handleAjax()` directly; retain exact JSON denial body, unchanged guest check-in and name metadata, no sensitive marker in response, and registration count. This intentionally does **not** claim to test HTTP status.
 - Frozen architecture contract updated at `91b1b57`: HTTP 403 remains **mandatory** for real WP requests and must be independently verified against an activated disposable WordPress on actual HTTP transport for both anonymous and session-authenticated actions (four scenarios). No production PHP change.
 - Next command `pnpm tdd tests/Integration/SensitiveAjaxFailClosedTest.php`, expected GREEN if remaining JSON/state assertions hold. If ERROR, diagnose actual output. After CLI GREEN, plan separate disposable WP activation and real HTTP 403+JSON gate; WEM-11 remains En curso and WEM-10 blocked.
 
