@@ -8,12 +8,16 @@ use WP_Ajax_UnitTestCase;
 
 final class SensitiveAjaxFailClosedTest extends WP_Ajax_UnitTestCase
 {
-    public function testGuestAjaxRoutesRegisterOnceForBothAuthenticationContexts(): void
+    public function testAjaxHandlerRegistersOnceForBothAuthenticationContexts(): void
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
-        // WordPress' test bootstrap fired plugins_loaded before the test.
-        do_action('plugins_loaded');
+        // WordPress restores hook snapshots between integration tests while
+        // require_once never reinstalls the entrypoint's plugins_loaded closure.
+        // Exercise the handler registration contract in this isolated fixture;
+        // real activation and request dispatch are verified in disposable wp-env.
+        $ajax = new \WEM_Ajax_Handler();
+        $ajax->register_ajax_handlers();
 
         foreach (['wem_checkin_ajax', 'wem_list_ajax'] as $action) {
             foreach (['wp_ajax_', 'wp_ajax_nopriv_'] as $prefix) {
