@@ -263,3 +263,8 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
   - Durable docs: `docs/testing.md` `787ec68`, `AGENTS.md` `ad76a98`, docs index `68c1a0e`.
 - Next user **focused static GREEN**: `pnpm test:wp-isolation`, expected `WORDPRESS DATABASE ISOLATION: GREEN (configuration only)`. Then start distinct PHPUnit environment `pnpm wp:phpunit:start` (may take time and downloads) and verify **manual WordPress plugin activation stays Active** after `pnpm tdd integration`. Do not imply static GREEN proves runtime DB isolation. If test env provisioning errors, inspect output, do not reset manual site.
 - No PHP production logic, guest AJAX guards, or manual WP data changed. WEM-11 En curso; WEM-10 blocked until real full gates.
+
+## WEM-11 static PHPUnit environment separation GREEN — 2026-10-02
+- User confirmed `pnpm test:wp-isolation` **GREEN** after dedicated PHPUnit configuration, isolated runner, CI and docs changes. This validates the regression's **static configuration boundary**, not runtime database independence or PHP suite status.
+- Next runtime test: `pnpm wp:phpunit:start` to start isolated WordPress port 8892 and install Composer locked deps in isolated CLI. Do not reset/delete databases. After startup, run `pnpm wp:status`, `pnpm tdd integration`, `pnpm wp:status` sequentially to show manual plugin status is not altered. If manual plugin is currently inactive from earlier shared-harness run, reactivate it once with `pnpm wp:start` *before* the before/after experiment; do not mask regressions by reactivating it afterward.
+- WEM-11 stays En curso, WEM-10 blocked. No assertion of successful runtime isolation yet.
