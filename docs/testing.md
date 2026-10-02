@@ -160,3 +160,32 @@ The interactive TDD runner now invokes `git pull --ff-only --quiet` on the curre
 CI intentionally skips the pull (`CI=true`) to keep the checked-out commit deterministic. To use the runner explicitly offline or during mock fixtures, set `WEM_TDD_SKIP_SYNC=1`. The runner self-test uses an injected temporary Git executable to verify the pull command without contacting the real remote.
 
 The updated self-test specifies **15 cases** (the previous 11, plus successful sync, CI skip, explicit skip, and failed pull); the new checks are **not yet verified locally**. Do not claim that the newly integrated pre-test Git behavior passed until the developer reports a real execution.
+
+
+## Disposable WordPress daily commands — WEM-11
+
+Use **Git Bash** from the repository root with Docker Desktop running. These commands always use the tracked `.wp-env.test.json` (disposable WordPress on `http://localhost:8890`), never the untracked development `.wp-env.json` or production.
+
+| Command | Meaning |
+| --- | --- |
+| `pnpm wp:start` | Start disposable WordPress; check whether the WEM plugin is already active, activate **only if needed**, and report current status. |
+| `pnpm wp:status` | Show WordPress plugin status (requires a running environment). |
+| `pnpm wp:verify:anon` | Send real HTTP POST requests to **both** protected guest AJAX routes on localhost:8890, require status **403** and exact deny-all JSON. Requires a running, activated environment. |
+| `pnpm wp:stop` | Stop the disposable environment, preserving its database and files. |
+| `pnpm test:wp-scripts` | Execute deterministic mocked command/HTTP classifications without Docker or production access. |
+| `pnpm tdd tests/Integration/SensitiveAjaxFailClosedTest.php` | Run focused PHP/WordPress PHPUnit integration tests; distinct from actual HTTP verification. |
+
+### Typical daily workflow
+
+```bash
+pnpm wp:start
+pnpm wp:verify:anon
+# Develop; run targeted pnpm tdd / pnpm tdd:red as needed.
+pnpm wp:stop
+```
+
+- `wp:start` is safe to repeat. It does **not** delete/reinitialize databases, install Composer dependencies every time or force plugin reactivation if already active. wp-env's own persistent Docker volumes normally retain site state across stops and starts; if volumes are deleted or the environment is recreated, activation is needed again.
+- `wp:verify:anon` tests **anonymous HTTP only**. It never obtains or stores login cookies, personal data or credentials. It does **not** satisfy the WEM-11 authenticated HTTP gate or all final integration gates.
+- Neither `pnpm tdd` nor these helpers automatically run all full CI checks. Dependencies only need installation/reconciliation when first provisioning or when manifests/locks change.
+- No destructive reset/delete commands are exposed through these helpers. Never point the smoke test to production.
+- Before treating these scripts as verified, run `pnpm test:wp-scripts`, then `pnpm wp:status` and `pnpm wp:verify:anon` against the already running disposable site and record the actual result. Creating the scripts does not itself establish a passing gate.
