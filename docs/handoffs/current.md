@@ -288,3 +288,9 @@ Consult `AGENTS.md`, `docs/README.md`, current repository state, and full Jira t
 - User confirmed `pnpm tdd unit` **GREEN** after docs-only historical identity regex collision fix `83e039e`. This verifies current isolated PHPUnit unit suite and runner's PHP syntax check. Previous failing verbose run reported 8 tests / 111 assertions / 1 failure; no assertion count was given for the passing run, so do not reuse that as its count.
 - Already confirmed: isolated WordPress integration `pnpm tdd integration` GREEN with manual plugin remaining Active before and afterward, anonymous and authenticated real HTTP AJAX both 403 + fixed deny JSON when plugin active, environment script/mock tests and static environment boundary GREEN.
 - Next quality-gate checks: Composer strict validation, PHPCS, PHPStan and CI at current branch revision, plus final live WordPress CPT/taxonomy/admin/shortcodes registration walkthrough. These are **pending**, not claimed GREEN; WEM-11 remains En curso and WEM-10 blocked.
+
+## WEM-11 PHP quality gates verified by user — 2026-10-02
+- Dedicated .wp-env.phpunit.json CLI with --env-cwd=wp-content/plugins/wordpress-event-manager: Composer strict validation returned ./composer.json is valid (exit 0); composer run lint:php completed PHPCS with no violations (exit 0); composer run analyse:php returned [OK] No errors in PHPStan (exit 0).
+- Composer root version fallback 1.0.0 message is informational. PHPCS and PHPStan check their configured scopes, not the entire historical plugin codebase.
+- Previous confirmations: PHPUnit unit and integration GREEN; isolated test DB leaves manual plugin Active; AJAX deny-all HTTP 403 real on anonymous and logged-in admin; shell helper tests GREEN.
+- Still pending: current branch head GitHub Actions verification; live CPT/taxonomy/admin/shortcode registration walkthrough; Jira acceptance reconciliation. WEM-11 En curso, WEM-10 blocked.
