@@ -53,6 +53,9 @@ jobs:
       - name: TDD runner classification
         run: bash tests/Runner/tdd-runner.test.sh
 
+      - name: Ensure manual and PHPUnit environment separation
+        run: bash tests/Runner/wp-db-isolation.test.sh
+
   wordpress-integration:
     name: WordPress isolated integration
     runs-on: ubuntu-latest
@@ -74,14 +77,14 @@ jobs:
         run: pnpm add --global @wordpress/env@11.15.0
 
       - name: Start disposable WordPress environment
-        run: wp-env start --config=.wp-env.test.json
+        run: wp-env start --config=.wp-env.phpunit.json
 
       - name: Install locked PHP dependencies in Docker
-        run: wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer install --no-interaction --prefer-dist --no-progress
+        run: wp-env run cli --config=.wp-env.phpunit.json --env-cwd=wp-content/plugins/wordpress-event-manager composer install --no-interaction --prefer-dist --no-progress
 
       - name: PHPUnit WordPress integration tests
         run: bash scripts/tdd.sh green integration
 
       - name: Stop disposable WordPress environment
         if: always()
-        run: wp-env stop --config=.wp-env.test.json
+        run: wp-env stop --config=.wp-env.phpunit.json
