@@ -1,0 +1,20 @@
+{
+  "name": "wordpress-event-manager",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Development tooling for WordPress Event Manager",
+  "scripts": {
+    "tdd": "bash scripts/tdd.sh green",
+    "tdd:red": "bash scripts/tdd.sh red",
+    "tdd:verbose": "bash scripts/tdd.sh green unit --verbose",
+    "test:runner": "bash tests/Runner/tdd-runner.test.sh",
+    "wp:start": "bash scripts/wp-local.sh start",
+    "wp:status": "bash scripts/wp-local.sh status",
+    "wp:stop": "bash scripts/wp-local.sh stop",
+    "wp:verify:anon": "bash scripts/check-guest-http.sh",
+    "test:wp-scripts": "bash tests/Runner/wp-local.test.sh",
+    "test:wp-isolation": "bash tests/Runner/wp-db-isolation.test.sh",
+    "wp:phpunit:start": "bash scripts/wp-phpunit.sh start",
+    "wp:phpunit:stop": "bash scripts/wp-phpunit.sh stop"
+  }
+}

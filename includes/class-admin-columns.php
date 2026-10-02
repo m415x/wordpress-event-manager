@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Admin_Columns {
+class WEM_Admin_Columns {
     
     public function setup_columns() {
         add_filter('manage_invitado_posts_columns', array($this, 'modify_columns'));
@@ -14,27 +14,27 @@ class C8ECM_Admin_Columns {
         $cols_new = array();
         $cols_new['cb'] = $cols['cb'];
         $cols_new['title'] = 'Ticket';
-        $cols_new['c8_nombre'] = 'Nombre';
-        $cols_new['c8_organizacion'] = 'Organización';
-        $cols_new['c8_mesa'] = 'Mesa';
+        $cols_new['wem_nombre'] = 'Nombre';
+        $cols_new['wem_organizacion'] = 'Organización';
+        $cols_new['wem_mesa'] = 'Mesa';
         $cols_new['evento'] = 'Evento';
-        $cols_new['c8_checkin'] = 'Check-in';
+        $cols_new['wem_checkin'] = 'Check-in';
         $cols_new['date'] = $cols['date'];
         return $cols_new;
     }
     
     public function render_columns($column, $post_id) {
         switch ($column) {
-            case 'c8_nombre':
-                echo esc_html(get_post_meta($post_id, 'c8_nombre', true));
+            case 'wem_nombre':
+                echo esc_html(get_post_meta($post_id, 'wem_nombre', true));
                 break;
                 
-            case 'c8_organizacion':
-                echo esc_html(get_post_meta($post_id, 'c8_organizacion', true));
+            case 'wem_organizacion':
+                echo esc_html(get_post_meta($post_id, 'wem_organizacion', true));
                 break;
                 
-            case 'c8_mesa':
-                echo esc_html(get_post_meta($post_id, 'c8_mesa', true));
+            case 'wem_mesa':
+                echo esc_html(get_post_meta($post_id, 'wem_mesa', true));
                 break;
                 
             case 'evento':
@@ -44,18 +44,18 @@ class C8ECM_Admin_Columns {
                 }
                 break;
                 
-            case 'c8_checkin':
+            case 'wem_checkin':
                 $this->render_checkin_column($post_id);
                 break;
         }
     }
     
     private function render_checkin_column($post_id) {
-        $checkin = get_post_meta($post_id, 'c8_checkin', true);
+        $checkin = get_post_meta($post_id, 'wem_checkin', true);
         
         if ($checkin) {
-            echo '<span style="color:green">Ingresó</span> — ' . esc_html(get_post_meta($post_id, 'c8_checkin_at', true));
-            $by = get_post_meta($post_id, 'c8_checkin_by', true);
+            echo '<span style="color:green">Ingresó</span> — ' . esc_html(get_post_meta($post_id, 'wem_checkin_at', true));
+            $by = get_post_meta($post_id, 'wem_checkin_by', true);
             if ($by) echo ' ('.esc_html($by).')';
         } else {
             echo '<span style="color:orange">Pendiente</span>';
@@ -89,18 +89,18 @@ class C8ECM_Admin_Columns {
     }
     
     private function render_organizacion_filter() {
-        $org_val = isset($_GET['c8_organizacion']) ? esc_attr($_GET['c8_organizacion']) : '';
-        echo '<input type="text" name="c8_organizacion" placeholder="Filtrar por organización" value="'.$org_val.'" style="margin-left:8px;">';
+        $org_val = isset($_GET['wem_organizacion']) ? esc_attr($_GET['wem_organizacion']) : '';
+        echo '<input type="text" name="wem_organizacion" placeholder="Filtrar por organización" value="'.$org_val.'" style="margin-left:8px;">';
     }
     
     private function render_mesa_filter() {
-        $mesa_val = isset($_GET['c8_mesa']) ? esc_attr($_GET['c8_mesa']) : '';
-        echo '<input type="text" name="c8_mesa" placeholder="Filtrar por mesa" value="'.$mesa_val.'" style="margin-left:8px;">';
+        $mesa_val = isset($_GET['wem_mesa']) ? esc_attr($_GET['wem_mesa']) : '';
+        echo '<input type="text" name="wem_mesa" placeholder="Filtrar por mesa" value="'.$mesa_val.'" style="margin-left:8px;">';
     }
     
     private function render_checkin_status_filter() {
-        $st = isset($_GET['c8_checkin_status']) ? esc_attr($_GET['c8_checkin_status']) : '';
-        echo '<select name="c8_checkin_status" style="margin-left:8px;">
+        $st = isset($_GET['wem_checkin_status']) ? esc_attr($_GET['wem_checkin_status']) : '';
+        echo '<select name="wem_checkin_status" style="margin-left:8px;">
                 <option value="">Todos los estados</option>
                 <option value="1" '.selected($st,'1',false).'>Ingresado</option>
                 <option value="0" '.selected($st,'0',false).'>Pendiente</option>
@@ -128,11 +128,11 @@ class C8ECM_Admin_Columns {
     }
     
     private function apply_organizacion_filter($query) {
-        if (!empty($_GET['c8_organizacion'])) {
+        if (!empty($_GET['wem_organizacion'])) {
             $meta = $query->get('meta_query') ?: array();
             $meta[] = array(
-                'key' => 'c8_organizacion',
-                'value' => sanitize_text_field($_GET['c8_organizacion']),
+                'key' => 'wem_organizacion',
+                'value' => sanitize_text_field($_GET['wem_organizacion']),
                 'compare' => 'LIKE'
             );
             $query->set('meta_query', $meta);
@@ -140,11 +140,11 @@ class C8ECM_Admin_Columns {
     }
     
     private function apply_mesa_filter($query) {
-        if (!empty($_GET['c8_mesa'])) {
+        if (!empty($_GET['wem_mesa'])) {
             $meta = $query->get('meta_query') ?: array();
             $meta[] = array(
-                'key' => 'c8_mesa',
-                'value' => sanitize_text_field($_GET['c8_mesa']),
+                'key' => 'wem_mesa',
+                'value' => sanitize_text_field($_GET['wem_mesa']),
                 'compare' => 'LIKE'
             );
             $query->set('meta_query', $meta);
@@ -152,11 +152,11 @@ class C8ECM_Admin_Columns {
     }
     
     private function apply_checkin_status_filter($query) {
-        if (isset($_GET['c8_checkin_status']) && $_GET['c8_checkin_status'] !== '') {
+        if (isset($_GET['wem_checkin_status']) && $_GET['wem_checkin_status'] !== '') {
             $meta = $query->get('meta_query') ?: array();
             $meta[] = array(
-                'key' => 'c8_checkin',
-                'value' => intval($_GET['c8_checkin_status']),
+                'key' => 'wem_checkin',
+                'value' => intval($_GET['wem_checkin_status']),
                 'compare' => '='
             );
             $query->set('meta_query', $meta);
@@ -171,7 +171,7 @@ class C8ECM_Admin_Columns {
             $s_esc = esc_sql($wpdb->esc_like($s));
             $search = " AND ( ({$wpdb->posts}.post_title LIKE '%{$s_esc}%') OR EXISTS (
                 SELECT 1 FROM {$wpdb->postmeta} pm WHERE pm.post_id = {$wpdb->posts}.ID
-                AND pm.meta_key = 'c8_nombre' AND pm.meta_value LIKE '%{$s_esc}%'
+                AND pm.meta_key = 'wem_nombre' AND pm.meta_value LIKE '%{$s_esc}%'
             ) ) ";
         }
         

@@ -2,9 +2,9 @@
     'use strict';
 
     // Configuración global
-    const C8ECM = {
-        ajaxUrl: c8ecm_ajax.url,
-        nonce: c8ecm_ajax.nonce,
+    const WEM = {
+        ajaxUrl: wem_ajax.url,
+        nonce: wem_ajax.nonce,
 
         init: function () {
             this.setupCheckinHandlers();
@@ -22,7 +22,7 @@
         },
 
         setupClickableRows: function () {
-            $(document).on('click', '.c8-clickable-row', function (e) {
+            $(document).on('click', '.wem-clickable-row', function (e) {
                 if ($(e.target).is('button') || $(e.target).closest('button').length) {
                     return;
                 }
@@ -42,7 +42,7 @@
                 data: data,
                 success: successCallback,
                 error: errorCallback || function (xhr, status, error) {
-                    console.error('C8ECM AJAX Error:', error);
+                    console.error('WEM AJAX Error:', error);
                     alert('Error de conexión. Por favor intenta nuevamente.');
                 }
             });
@@ -68,7 +68,7 @@
 
     // Inicializar cuando el documento esté listo
     $(document).ready(function () {
-        C8ECM.init();
+        WEM.init();
     });
 
 })(jQuery);

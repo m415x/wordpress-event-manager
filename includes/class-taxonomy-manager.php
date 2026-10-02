@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-class C8ECM_Taxonomy_Manager {
+class WEM_Taxonomy_Manager {
 
     public function __construct() {
         add_action('init', [$this, 'register_taxonomy']);

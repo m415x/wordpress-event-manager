@@ -1,0 +1,35 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Node.js / pnpm
+node_modules/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+
+# Composer
+/vendor/
+composer.phar
+auth.json
+
+# Test artifacts
+.phpunit.cache/
+.phpunit.result.cache
+coverage/
+test-results/
+playwright-report/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Runtime and temporary files
+*.log
+*.tmp
+.cache/

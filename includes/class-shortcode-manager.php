@@ -1,13 +1,16 @@
 <?php
 
-class C8ECM_Shortcode_Manager {
+class WEM_Shortcode_Manager {
     
     public function register_shortcodes() {
-        add_shortcode('c8ecm_checkin', array($this, 'render_checkin_shortcode'));
-        add_shortcode('c8ecm_list', array($this, 'render_list_shortcode'));
+        add_shortcode('wem_checkin', array($this, 'render_checkin_shortcode'));
+        add_shortcode('wem_list', array($this, 'render_list_shortcode'));
     }
     
     public function render_checkin_shortcode($atts) {
+        // WEM-11: deny guest access until WEM-13 authorizes event-scoped reads.
+        return '<p>Guest access is temporarily unavailable.</p>';
+
         $atts = shortcode_atts(array('event' => ''), $atts);
         $ticket = $this->get_ticket_from_query();
         
@@ -24,18 +27,21 @@ class C8ECM_Shortcode_Manager {
     }
     
     public function render_list_shortcode($atts) {
+        // WEM-11: do not query or render guest details until WEM-13.
+        return '<p>Guest access is temporarily unavailable.</p>';
+
         $atts = shortcode_atts(array('event' => ''), $atts);
         ob_start();
         ?>
-        <div class="c8-list-wrap">
+        <div class="wem-list-wrap">
             <?php $this->render_list_styles(); ?>
             
-            <div class="c8-list-controls">
-                <input class="c8-filter-input" id="c8_q" placeholder="Buscar por ticket, nombre, organización">
-                <input class="c8-filter-input" id="c8_mesa_filter" placeholder="Buscar por Mesa">
-                <button class="c8-list-btn" id="c8_refresh">Buscar</button>
+            <div class="wem-list-controls">
+                <input class="wem-filter-input" id="wem_q" placeholder="Buscar por ticket, nombre, organización">
+                <input class="wem-filter-input" id="wem_mesa_filter" placeholder="Buscar por Mesa">
+                <button class="wem-list-btn" id="wem_refresh">Buscar</button>
             </div>
-            <div id="c8_list_results">Cargando...</div>
+            <div id="wem_list_results">Cargando...</div>
         </div>
         
         <script>
@@ -79,18 +85,18 @@ class C8ECM_Shortcode_Manager {
     }
     
     private function render_checkin_interface($invitado, $event_slug) {
-        $data = c8ecm_get_invitado_data($invitado->ID);
+        $data = wem_get_invitado_data($invitado->ID);
         $nombre = $data['nombre'] ?: $invitado->post_title;
         
         ob_start();
         ?>
-        <div class="c8c_wrapper">
+        <div class="wem-wrapper">
             <?php $this->render_checkin_styles(); ?>
             
-            <h2 class="c8-field-nombre"><?php echo esc_html($nombre); ?></h2>
-            <p class="c8-field-organizacion c8c_field"><strong>Organización:</strong> <?php echo esc_html($data['organizacion']); ?></p>
-            <p class="c8-field-mesa c8c_field"><strong>Mesa:</strong> <?php echo esc_html($data['mesa']); ?></p>
-            <p class="c8-field-evento c8c_field"><strong>Evento:</strong> <?php echo esc_html($event_slug); ?></p>
+            <h2 class="wem-field-nombre"><?php echo esc_html($nombre); ?></h2>
+            <p class="wem-field-organizacion wem-field"><strong>Organización:</strong> <?php echo esc_html($data['organizacion']); ?></p>
+            <p class="wem-field-mesa wem-field"><strong>Mesa:</strong> <?php echo esc_html($data['mesa']); ?></p>
+            <p class="wem-field-evento wem-field"><strong>Evento:</strong> <?php echo esc_html($event_slug); ?></p>
             
             <?php if ($data['checkin']): ?>
                 <?php $this->render_checked_in_interface($invitado->ID, $data); ?>
@@ -98,7 +104,7 @@ class C8ECM_Shortcode_Manager {
                 <?php $this->render_pending_interface($invitado->ID); ?>
             <?php endif; ?>
             
-            <p id="c8c_msg" style="margin-top:10px;display:none;"></p>
+            <p id="wem_msg" style="margin-top:10px;display:none;"></p>
         </div>
         
         <script>
@@ -115,7 +121,7 @@ class C8ECM_Shortcode_Manager {
             <?php if($data['checkout_by']): ?>
                 <p style="color:#666;font-size:0.9em;">Registrado por: <?php echo esc_html($data['checkout_by']); ?></p>
             <?php endif; ?>
-            <button class="c8c_btn checkin_again" id="c8c_btn_checkin_again" data-postid="<?php echo esc_attr($post_id); ?>">
+            <button class="wem-btn checkin_again" id="wem_btn_checkin_again" data-postid="<?php echo esc_attr($post_id); ?>">
                 🔄 Volver a ingresar
             </button>
             <?php
@@ -125,7 +131,7 @@ class C8ECM_Shortcode_Manager {
             <?php if($data['checkin_by']): ?>
                 <p style="color:#666;font-size:0.9em;">Registrado por: <?php echo esc_html($data['checkin_by']); ?></p>
             <?php endif; ?>
-            <button class="c8c_btn checkout" id="c8c_btn_checkout" data-postid="<?php echo esc_attr($post_id); ?>">
+            <button class="wem-btn checkout" id="wem_btn_checkout" data-postid="<?php echo esc_attr($post_id); ?>">
                 🚪 Registrar salida
             </button>
             <?php
@@ -133,18 +139,18 @@ class C8ECM_Shortcode_Manager {
         
         if ($data['observaciones']):
             ?>
-            <p class="c8-field-observaciones"><strong>Observaciones:</strong><br><?php echo nl2br(esc_html($data['observaciones'])); ?></p>
+            <p class="wem-field-observaciones"><strong>Observaciones:</strong><br><?php echo nl2br(esc_html($data['observaciones'])); ?></p>
             <?php
         endif;
     }
     
     private function render_pending_interface($post_id) {
         ?>
-        <div class="c8c_obs c8-field-observaciones">
-            <label for="c8_obs"><?php _e('Observaciones'); ?></label>
-            <textarea id="c8_obs" placeholder="Ej: alergia, silla extra..."></textarea>
+        <div class="wem-obs wem-field-observaciones">
+            <label for="wem_obs"><?php _e('Observaciones'); ?></label>
+            <textarea id="wem_obs" placeholder="Ej: alergia, silla extra..."></textarea>
         </div>
-        <button class="c8c_btn" id="c8c_btn" data-postid="<?php echo esc_attr($post_id); ?>">
+        <button class="wem-btn" id="wem_btn" data-postid="<?php echo esc_attr($post_id); ?>">
             ✅ Marcar ingreso
         </button>
         <?php
@@ -153,26 +159,26 @@ class C8ECM_Shortcode_Manager {
     private function render_checkin_styles() {
         ?>
         <style>
-        .c8-list-wrap{max-width:1000px;margin:0 auto;font-family:system-ui,Arial,sans-serif;}
-        .c8-list-controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-        .c8-list-table{width:100%;border-collapse:collapse;}
-        .c8-list-table th, .c8-list-table td{padding:8px;border-bottom:1px solid #eee;text-align:left;}
-        .c8-list-btn{padding:6px 10px;border-radius:6px;border:0;background:#2d89ef;color:#fff;cursor:pointer;}
-        .c8-list-btn.green{background:#4caf50;}
-        .c8-filter-input{padding:6px;border:1px solid #ddd;border-radius:6px;}
+        .wem-list-wrap{max-width:1000px;margin:0 auto;font-family:system-ui,Arial,sans-serif;}
+        .wem-list-controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+        .wem-list-table{width:100%;border-collapse:collapse;}
+        .wem-list-table th, .wem-list-table td{padding:8px;border-bottom:1px solid #eee;text-align:left;}
+        .wem-list-btn{padding:6px 10px;border-radius:6px;border:0;background:#2d89ef;color:#fff;cursor:pointer;}
+        .wem-list-btn.green{background:#4caf50;}
+        .wem-filter-input{padding:6px;border:1px solid #ddd;border-radius:6px;}
         
-        .c8-clickable-row:hover { background-color: #f5f5f5; }
-        .c8-clickable-row:active { background-color: #e9e9e9; }
-        .c8-clickable-row td:first-child { position: relative; }
-        .c8-clickable-row td:first-child::after {
+        .wem-clickable-row:hover { background-color: #f5f5f5; }
+        .wem-clickable-row:active { background-color: #e9e9e9; }
+        .wem-clickable-row td:first-child { position: relative; }
+        .wem-clickable-row td:first-child::after {
             content: "🔗"; position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
             opacity: 0.5; font-size: 12px;
         }
         
         @media (max-width: 768px) {
-            .c8-list-table th:nth-child(5), .c8-list-table td:nth-child(5) { display: none; }
-            .c8-list-controls { flex-direction: column; }
-            .c8-filter-input, .c8-list-btn { width: 100%; margin-bottom: 5px; }
+            .wem-list-table th:nth-child(5), .wem-list-table td:nth-child(5) { display: none; }
+            .wem-list-controls { flex-direction: column; }
+            .wem-filter-input, .wem-list-btn { width: 100%; margin-bottom: 5px; }
         }
         </style>
         <?php
@@ -183,10 +189,10 @@ class C8ECM_Shortcode_Manager {
     }
     
     private function render_checkin_script($post_id, $nombre) {
-        $nonce = wp_create_nonce('c8ecm_checkin_nonce');
+        $nonce = wp_create_nonce('wem_checkin_nonce');
         ?>
         (function(){
-            const msg = document.getElementById('c8c_msg');
+            const msg = document.getElementById('wem_msg');
             const postId = <?php echo $post_id; ?>;
             const nombre = '<?php echo esc_js($nombre); ?>';
             const nonce = '<?php echo $nonce; ?>';
@@ -198,9 +204,9 @@ class C8ECM_Shortcode_Manager {
                 btn.classList.add('disabled');
                 btn.textContent = 'Procesando...';
                 
-                const observ = document.getElementById('c8_obs') ? document.getElementById('c8_obs').value : '';
+                const observ = document.getElementById('wem_obs') ? document.getElementById('wem_obs').value : '';
                 const data = new URLSearchParams();
-                data.append('action','c8ecm_checkin_ajax');
+                data.append('action','wem_checkin_ajax');
                 data.append('post_id', postId);
                 data.append('observ', observ);
                 data.append('check_action', action);
@@ -242,9 +248,9 @@ class C8ECM_Shortcode_Manager {
             }
 
             // Asignar eventos
-            const btnCheckin = document.getElementById('c8c_btn');
-            const btnCheckout = document.getElementById('c8c_btn_checkout');
-            const btnCheckinAgain = document.getElementById('c8c_btn_checkin_again');
+            const btnCheckin = document.getElementById('wem_btn');
+            const btnCheckout = document.getElementById('wem_btn_checkout');
+            const btnCheckinAgain = document.getElementById('wem_btn_checkin_again');
 
             if(btnCheckin) btnCheckin.addEventListener('click', () => 
                 handleAction(btnCheckin, 'checkin', 'Confirmar check-in para ' + nombre + '?'));
@@ -257,21 +263,21 @@ class C8ECM_Shortcode_Manager {
     }
     
     private function render_list_script($event_slug) {
-        $nonce = wp_create_nonce('c8ecm_checkin_nonce');
+        $nonce = wp_create_nonce('wem_checkin_nonce');
         ?>
         (function(){
             const ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
-            const results = document.getElementById('c8_list_results');
+            const results = document.getElementById('wem_list_results');
             const eventSlug = '<?php echo esc_js($event_slug); ?>';
             const nonce = '<?php echo $nonce; ?>';
 
             function loadList(){
-                const q = document.getElementById('c8_q').value;
-                const mesa = document.getElementById('c8_mesa_filter').value;
+                const q = document.getElementById('wem_q').value;
+                const mesa = document.getElementById('wem_mesa_filter').value;
                 results.innerHTML = 'Buscando...';
                 
                 const data = new URLSearchParams();
-                data.append('action','c8ecm_list_ajax');
+                data.append('action','wem_list_ajax');
                 data.append('q', q);
                 data.append('mesa', mesa);
                 data.append('evento', eventSlug);
@@ -289,7 +295,7 @@ class C8ECM_Shortcode_Manager {
             }
 
             function attachHandlers(){
-                document.querySelectorAll('.c8-do-checkin').forEach(btn=>{
+                document.querySelectorAll('.wem-do-checkin').forEach(btn=>{
                     btn.addEventListener('click', function(e){
                         e.stopPropagation();
                         const id = this.dataset.id;
@@ -299,7 +305,7 @@ class C8ECM_Shortcode_Manager {
                         this.textContent = 'Procesando...';
                         
                         const data = new URLSearchParams();
-                        data.append('action','c8ecm_checkin_ajax');
+                        data.append('action','wem_checkin_ajax');
                         data.append('post_id', id);
                         data.append('observ', '');
                         data.append('check_action', 'checkin');
@@ -329,7 +335,7 @@ class C8ECM_Shortcode_Manager {
             }
             
             function attachRowHandlers() {
-                document.querySelectorAll('.c8-clickable-row').forEach(row => {
+                document.querySelectorAll('.wem-clickable-row').forEach(row => {
                     row.addEventListener('click', function(e) {
                         if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
                         const href = this.dataset.href;
@@ -341,8 +347,8 @@ class C8ECM_Shortcode_Manager {
             }
 
             // Event listeners
-            document.getElementById('c8_refresh').addEventListener('click', loadList);
-            document.getElementById('c8_q').addEventListener('keyup', function(e){ 
+            document.getElementById('wem_refresh').addEventListener('click', loadList);
+            document.getElementById('wem_q').addEventListener('keyup', function(e){ 
                 if(e.key === 'Enter') loadList(); 
             });
 

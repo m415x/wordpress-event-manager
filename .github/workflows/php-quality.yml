@@ -1,0 +1,90 @@
+name: PHP quality and tests
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  php-static-and-unit:
+    name: PHP 8.3 lint, analysis and unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, xml, xmlwriter, simplexml, tokenizer, curl, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate Composer manifest and lock
+        run: composer validate --strict --no-interaction
+
+      - name: Install locked PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Check all historical and new PHP syntax
+        run: sh scripts/check-php-syntax.sh
+
+      - name: Lint foundation PHP
+        run: composer run lint:php
+
+      - name: Static analysis of independent unit tests
+        run: composer run analyse:php
+
+      - name: Standalone PHPUnit smoke tests
+        run: composer run test:unit
+
+      - name: TDD runner classification
+        run: bash tests/Runner/tdd-runner.test.sh
+
+      - name: Ensure manual and PHPUnit environment separation
+        run: bash tests/Runner/wp-db-isolation.test.sh
+
+  wordpress-integration:
+    name: WordPress isolated integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10.20.0'
+
+      - name: Install pinned wp-env for CI
+        run: pnpm add --global @wordpress/env@11.15.0
+
+      - name: Start disposable WordPress environment
+        run: wp-env start --config=.wp-env.phpunit.json
+
+      - name: Install locked PHP dependencies in Docker
+        run: wp-env run cli --config=.wp-env.phpunit.json --env-cwd=wp-content/plugins/wordpress-event-manager composer install --no-interaction --prefer-dist --no-progress
+
+      - name: PHPUnit WordPress integration tests
+        run: bash scripts/tdd.sh green integration
+
+      - name: Stop disposable WordPress environment
+        if: always()
+        run: wp-env stop --config=.wp-env.phpunit.json

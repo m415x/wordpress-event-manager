@@ -1,0 +1,7 @@
+parameters:
+    level: 0
+    paths:
+        - tests/Unit
+    bootstrapFiles:
+        - vendor/autoload.php
+    tmpDir: .phpunit.cache/phpstan

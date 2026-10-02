@@ -1,6 +1,6 @@
 <?php
 
-class C8ECM_Metabox_Manager {
+class WEM_Metabox_Manager {
     
     public function register_metaboxes() {
         add_action('add_meta_boxes', array($this, 'add_metaboxes'));
@@ -8,37 +8,37 @@ class C8ECM_Metabox_Manager {
     }
     
     public function add_metaboxes() {
-        add_meta_box('c8_invitado_data', 'Datos del Invitado', array($this, 'render_metabox'), 'invitado', 'normal', 'high');
+        add_meta_box('wem_invitado_data', 'Datos del Invitado', array($this, 'render_metabox'), 'invitado', 'normal', 'high');
     }
     
     public function render_metabox($post) {
-        wp_nonce_field('c8_save_invitado', 'c8_nonce');
+        wp_nonce_field('wem_save_invitado', 'wem_nonce');
         
-        $data = c8ecm_get_invitado_data($post->ID);
+        $data = wem_get_invitado_data($post->ID);
         $eventos = $this->get_eventos_list();
         $evento_actual = $this->get_current_evento($post->ID);
         ?>
         
         <style><?php echo $this->get_metabox_styles(); ?></style>
 
-        <div class="c8-metabox-field">
-            <label for="c8_nombre"><strong>Nombre completo</strong></label>
-            <input type="text" id="c8_nombre" name="c8_nombre" value="<?php echo esc_attr($data['nombre']); ?>">
+        <div class="wem-metabox-field">
+            <label for="wem_nombre"><strong>Nombre completo</strong></label>
+            <input type="text" id="wem_nombre" name="wem_nombre" value="<?php echo esc_attr($data['nombre']); ?>">
         </div>
 
-        <div class="c8-metabox-field">
-            <label for="c8_organizacion"><strong>Organización</strong></label>
-            <input type="text" id="c8_organizacion" name="c8_organizacion" value="<?php echo esc_attr($data['organizacion']); ?>">
+        <div class="wem-metabox-field">
+            <label for="wem_organizacion"><strong>Organización</strong></label>
+            <input type="text" id="wem_organizacion" name="wem_organizacion" value="<?php echo esc_attr($data['organizacion']); ?>">
         </div>
 
-        <div class="c8-metabox-field">
-            <label for="c8_mesa"><strong>Mesa asignada</strong></label>
-            <input type="text" id="c8_mesa" name="c8_mesa" value="<?php echo esc_attr($data['mesa']); ?>">
+        <div class="wem-metabox-field">
+            <label for="wem_mesa"><strong>Mesa asignada</strong></label>
+            <input type="text" id="wem_mesa" name="wem_mesa" value="<?php echo esc_attr($data['mesa']); ?>">
         </div>
 
-        <div class="c8-metabox-field">
-            <label for="c8_evento"><strong>Evento</strong></label>
-            <select id="c8_evento" name="c8_evento" style="width: 100%">
+        <div class="wem-metabox-field">
+            <label for="wem_evento"><strong>Evento</strong></label>
+            <select id="wem_evento" name="wem_evento" style="width: 100%">
                 <option value="">-- Seleccionar evento --</option>
                 <?php foreach($eventos as $evento): ?>
                     <option value="<?php echo esc_attr($evento->term_id); ?>" <?php selected($evento_actual, $evento->term_id); ?>>
@@ -49,12 +49,12 @@ class C8ECM_Metabox_Manager {
             <p><small>Selecciona un evento existente. Si no existe, créalo primero en la pestaña "Eventos".</small></p>
         </div>
 
-        <div class="c8-metabox-field">
-            <label for="c8_observaciones"><strong>Observaciones (privadas)</strong></label>
-            <textarea id="c8_observaciones" name="c8_observaciones" rows="3"><?php echo esc_textarea($data['observaciones']); ?></textarea>
+        <div class="wem-metabox-field">
+            <label for="wem_observaciones"><strong>Observaciones (privadas)</strong></label>
+            <textarea id="wem_observaciones" name="wem_observaciones" rows="3"><?php echo esc_textarea($data['observaciones']); ?></textarea>
         </div>
 
-        <div class="c8-checkin-status">
+        <div class="wem-checkin-status">
             <?php $this->render_checkin_status($data); ?>
         </div>
         
@@ -63,8 +63,8 @@ class C8ECM_Metabox_Manager {
     
     public function save_metabox_data($post_id) {
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-        if (!isset($_POST['c8_nonce']) || !wp_verify_nonce($_POST['c8_nonce'], 'c8_save_invitado')) return;
-        if (!c8ecm_current_user_can_manage()) return;
+        if (!isset($_POST['wem_nonce']) || !wp_verify_nonce($_POST['wem_nonce'], 'wem_save_invitado')) return;
+        if (!wem_current_user_can_manage()) return;
 
         $this->save_meta_fields($post_id);
         $this->save_evento_taxonomy($post_id);
@@ -72,10 +72,10 @@ class C8ECM_Metabox_Manager {
     
     private function save_meta_fields($post_id) {
         $fields = array(
-            'c8_nombre' => 'sanitize_text_field',
-            'c8_organizacion' => 'sanitize_text_field',
-            'c8_mesa' => 'sanitize_text_field',
-            'c8_observaciones' => 'sanitize_textarea_field'
+            'wem_nombre' => 'sanitize_text_field',
+            'wem_organizacion' => 'sanitize_text_field',
+            'wem_mesa' => 'sanitize_text_field',
+            'wem_observaciones' => 'sanitize_textarea_field'
         );
         
         foreach ($fields as $field => $sanitize) {
@@ -87,11 +87,11 @@ class C8ECM_Metabox_Manager {
         
         // Guardar ticket
         $titulo = get_the_title($post_id);
-        update_post_meta($post_id, 'c8_ticket', $titulo);
+        update_post_meta($post_id, 'wem_ticket', $titulo);
     }
     
     private function save_evento_taxonomy($post_id) {
-        $evento = isset($_POST['c8_evento']) ? intval($_POST['c8_evento']) : '';
+        $evento = isset($_POST['wem_evento']) ? intval($_POST['wem_evento']) : '';
         
         if (!empty($evento)) {
             wp_set_object_terms($post_id, $evento, 'evento', false);
@@ -110,18 +110,18 @@ class C8ECM_Metabox_Manager {
     }
     
     private function get_current_evento($post_id) {
-        $evento_terms = c8ecm_get_evento_terms($post_id);
+        $evento_terms = wem_get_evento_terms($post_id);
         return $evento_terms ? $evento_terms[0]->term_id : '';
     }
     
     private function get_metabox_styles() {
         return '
-        .c8-metabox-field { margin-bottom: 15px; }
-        .c8-metabox-field label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .c8-metabox-field input[type="text"],
-        .c8-metabox-field textarea,
-        .c8-metabox-field select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .c8-checkin-status { padding: 10px; background: #f9f9f9; border-radius: 4px; }
+        .wem-metabox-field { margin-bottom: 15px; }
+        .wem-metabox-field label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .wem-metabox-field input[type="text"],
+        .wem-metabox-field textarea,
+        .wem-metabox-field select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .wem-checkin-status { padding: 10px; background: #f9f9f9; border-radius: 4px; }
         ';
     }
     
