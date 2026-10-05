@@ -18,6 +18,7 @@ Read `../AGENTS.md` before starting a story.
 ## Durable documents
 - [Testing](testing.md) — initial PHPUnit harness, Docker commands, limits and pending integration coverage.
 - [Foundation integrated baseline](handoffs/foundation-baseline.md) — WEM-2 acceptance evidence, actual merge SHA, security/compatibility limitations, isolated test environments and fresh-chat bootstrap.
+- [WEM-13 staff authorization contract](architecture/staff-authorization-wem13.md) — frozen event-scoped staff/admin authorization model; public surfaces remain fail-closed.
 - [Current handoff](handoffs/current.md) — operational state for resuming the active story.
 - `architecture/` — add domain contracts only when accepted and implemented. Do not treat preliminary ideas as production design.
 
@@ -37,4 +38,4 @@ The chat prompt should stay minimal. The agent must reconstruct operational deta
 - Chat history: navigation only.
 
 ## Explicit limitations
-The historical bootstrap fault is fixed and verified with live WordPress activation and a bounded admin walkthrough (WEM-11, 2026-10-02). Authenticated and anonymous guest AJAX routes deliberately return HTTP 403 with fixed unavailable JSON; sensitive shortcodes are fail-closed. **This does not demonstrate working public check-in or establish event-scoped authorization**: WEM-13 owns that separately. Foundation has been merged into `dev` via PR #1 and WEM-10/WEM-2 are closed. WEM-12 and WEM-15–18 are also closed. WEM-13 and WEM-14 remain pending independent work; choose the next story only after reviewing their full Jira evidence and any product/discovery blockers. PHPStan and PHPCS cover only their configured scopes.
+The historical bootstrap fault is fixed and verified with live WordPress activation and a bounded admin walkthrough (WEM-11, 2026-10-02). Authenticated and anonymous guest AJAX routes deliberately return HTTP 403 with fixed unavailable JSON; sensitive shortcodes are fail-closed. **This does not demonstrate working public check-in or establish event-scoped authorization**: WEM-13 owns that separately. Foundation has been merged into `dev` via PR #1 and WEM-10/WEM-2 are closed. WEM-12 and WEM-15–18 are also closed. WEM-13 is active under its frozen staff/event-scope contract; WEM-14 remains pending independent work; choose the next story only after reviewing their full Jira evidence and any product/discovery blockers. PHPStan and PHPCS cover only their configured scopes.
