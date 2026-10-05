@@ -13,15 +13,22 @@ class WEM_Ajax_Handler {
     }
     
     public function handle_checkin_ajax() {
-        // WEM-11: deny all guest access until WEM-13 establishes authorization.
-        wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
+
+        $post_id = $this->get_valid_post_id();
+        $user_id = get_current_user_id();
+
+        if (!WEM_Authorization::can_operate_guest($user_id, $post_id)) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
 
         $this->verify_nonce('wem_checkin_nonce');
-        
-        $post_id = $this->get_valid_post_id();
+
         $observ = $this->get_sanitized_observ();
         $check_action = $this->get_check_action();
-        
+
         $this->process_checkin_action($post_id, $observ, $check_action);
     }
     
