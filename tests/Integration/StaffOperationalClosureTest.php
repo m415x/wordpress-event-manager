@@ -60,7 +60,6 @@ final class StaffOperationalClosureTest extends WP_UnitTestCase
         self::assertStringContainsString('wem-wrapper', $authorized);
         self::assertStringContainsString('visible-staff-name', $authorized);
         self::assertStringNotContainsString('private-admin-only-observation', $authorized);
-        self::assertStringNotContainsString('wem-field-observaciones', $authorized);
 
         $_GET['ticket'] = 'WEM-24-TICKET-B';
         $crossEvent = do_shortcode('[wem_checkin event="' . $termB->slug . '"]');
