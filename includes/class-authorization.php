@@ -14,6 +14,10 @@ final class WEM_Authorization
 
     public static function get_guest_event_term_id($post_id)
     {
+        if (get_post_type($post_id) !== 'invitado') {
+            return null;
+        }
+
         $terms = get_the_terms($post_id, 'evento');
 
         if (!$terms || is_wp_error($terms) || count($terms) !== 1) {
@@ -67,12 +71,20 @@ final class WEM_Authorization
     private static function can_access_guest($user_id, $post_id, $capability)
     {
         $user_id = (int) $user_id;
-        if ($user_id <= 0 || !user_can($user_id, $capability)) {
+        if ($user_id <= 0) {
             return false;
         }
 
         $event_id = self::get_guest_event_term_id($post_id);
         if ($event_id === null) {
+            return false;
+        }
+
+        if (user_can($user_id, 'manage_options')) {
+            return true;
+        }
+
+        if (!user_can($user_id, $capability)) {
             return false;
         }
 
