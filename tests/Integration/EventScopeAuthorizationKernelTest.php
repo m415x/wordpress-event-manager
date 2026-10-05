@@ -22,12 +22,14 @@ final class EventScopeAuthorizationKernelTest extends WP_UnitTestCase
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
-        foreach ([
-            'get_guest_event_term_id',
-            'get_authorized_event_ids',
-            'can_view_guest',
-            'can_operate_guest',
-        ] as $method) {
+        foreach (
+            [
+                'get_guest_event_term_id',
+                'get_authorized_event_ids',
+                'can_view_guest',
+                'can_operate_guest',
+            ] as $method
+        ) {
             self::assertTrue(
                 method_exists('WEM_Authorization', $method),
                 sprintf('WEM-20 authorization kernel must expose %s().', $method)
