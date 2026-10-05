@@ -193,15 +193,16 @@ class WEM_Import_Export {
             return 'skipped';
         }
         
-        $post_id = $this->find_or_create_invitado($titulo, $data, $update_existing);
-        if (!$post_id) {
+        $result = $this->find_or_create_invitado($titulo, $data, $update_existing);
+        if (!$result) {
             return 'skipped';
         }
-        
+
+        $post_id = $result['post_id'];
         $this->update_invitado_data($post_id, $data);
         $this->set_invitado_evento($post_id, $data['evento'] ?? '');
-        
-        return $post_id ? 'created' : 'updated';
+
+        return $result['operation'];
     }
     
     private function find_or_create_invitado($titulo, $data, $update_existing) {
@@ -209,16 +210,30 @@ class WEM_Import_Export {
         $existing_post = $this->find_existing_invitado($titulo, $evento);
         
         if ($existing_post) {
-            return $update_existing ? $existing_post->ID : false;
+            if (!$update_existing) {
+                return false;
+            }
+
+            return array(
+                'post_id' => $existing_post->ID,
+                'operation' => 'updated'
+            );
         }
-        
+
         $post_id = wp_insert_post(array(
             'post_type' => 'invitado',
             'post_title' => $titulo,
             'post_status' => 'publish'
         ));
-        
-        return $post_id ? $post_id : false;
+
+        if (!$post_id) {
+            return false;
+        }
+
+        return array(
+            'post_id' => $post_id,
+            'operation' => 'created'
+        );
     }
     
     private function find_existing_invitado($titulo, $evento) {
