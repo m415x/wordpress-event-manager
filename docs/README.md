@@ -13,13 +13,21 @@ Read `../AGENTS.md` before starting a story.
 - [WEM-11 approved fail-closed bootstrap contract](architecture/safe-bootstrap-wem11.md): **Listo** in Jira. WordPress activation, 13/13 live registration smoke, authenticated and anonymous HTTP 403 denial, unit/integration gates, Composer strict, scoped PHPCS/PHPStan, manual admin walkthrough and GitHub Actions #153 were verified on 2026-10-02. WEM-13 retains the event-scoped authorization design and release gate. [Daily wp-env commands](testing.md#disposable-wordpress-daily-commands--wem-11) are available and helper tests verified GREEN.
 - [Dedicated PHPUnit database isolation](testing.md#wordpress-phpunitdatabase-isolation--wem-11-correction-2026-10-02): manual WordPress port 8890 and PHPUnit port 8892 are independent. Static check GREEN and live manual plugin state **Active → integration GREEN → Active** verified on 2026-10-02.
 - [Merged PR #1](https://github.com/m415x/wordpress-event-manager/pull/1) integrated all WEM-2 Foundation changes, including WEM-11, into `dev`; WEM-10 and WEM-2 are closed in Jira. `main` remains unchanged.
-- **WEM-12 CSV import accounting** was integrated into `dev` via PR #2 on 2026-10-05 (merge `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`) after final candidate `ec2891426220295b99c928f9369fdbe6c7ddf3df` passed GitHub Actions run #183. The fix distinguishes created versus updated results explicitly while preserving title+event identity, the established CSV header, encoding behavior and WEM-11 fail-closed security boundaries. Focused RED→GREEN, regression tests, full local gates and a synthetic manual walkthrough are GREEN.
+- **WEM-12 CSV import accounting** is **Listo** in Jira. It was integrated into `dev` via PR #2 on 2026-10-05 (merge `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`) after candidate CI, post-merge CI, full local gates and synthetic walkthrough were GREEN. WEM-15 through WEM-18 are also `Listo`. The fix distinguishes created versus updated results explicitly while preserving title+event identity, CSV header/encoding behavior and WEM-11 fail-closed boundaries.
 
 ## Durable documents
 - [Testing](testing.md) — initial PHPUnit harness, Docker commands, limits and pending integration coverage.
 - [Foundation integrated baseline](handoffs/foundation-baseline.md) — WEM-2 acceptance evidence, actual merge SHA, security/compatibility limitations, isolated test environments and fresh-chat bootstrap.
 - [Current handoff](handoffs/current.md) — operational state for resuming the active story.
 - `architecture/` — add domain contracts only when accepted and implemented. Do not treat preliminary ideas as production design.
+
+## Fresh-chat entry point
+The chat prompt should stay minimal. The agent must reconstruct operational detail from `AGENTS.md`, this index, current source/tests, the current handoff and Jira.
+
+- Remote GitHub/Jira evidence is collected directly through connectors; do not ask the user to act as a proxy for CI, PR, branch or Jira status when those systems are accessible.
+- Human intervention is reserved for genuinely local/manual evidence or product decisions.
+- Story readiness is determined from Jira description, comments, relationships, blockers and durable evidence — not issue number/backlog order alone.
+- See [Testing](testing.md) for the current executable commands and environment boundaries.
 
 ## Ownership
 - Current source/tests: actual behavior.
@@ -29,4 +37,4 @@ Read `../AGENTS.md` before starting a story.
 - Chat history: navigation only.
 
 ## Explicit limitations
-The historical bootstrap fault is fixed and verified with live WordPress activation and a bounded admin walkthrough (WEM-11, 2026-10-02). Authenticated and anonymous guest AJAX routes deliberately return HTTP 403 with fixed unavailable JSON; sensitive shortcodes are fail-closed. **This does not demonstrate working public check-in or establish event-scoped authorization**: WEM-13 owns that separately. Foundation has been merged into `dev` via PR #1 and WEM-10/WEM-2 are closed. WEM-12 is integrated; Jira closure follows durable recording of the merge and final documentation CI evidence. PHPStan and PHPCS cover only their configured scopes.
+The historical bootstrap fault is fixed and verified with live WordPress activation and a bounded admin walkthrough (WEM-11, 2026-10-02). Authenticated and anonymous guest AJAX routes deliberately return HTTP 403 with fixed unavailable JSON; sensitive shortcodes are fail-closed. **This does not demonstrate working public check-in or establish event-scoped authorization**: WEM-13 owns that separately. Foundation has been merged into `dev` via PR #1 and WEM-10/WEM-2 are closed. WEM-12 and WEM-15–18 are also closed. WEM-13 and WEM-14 remain pending independent work; choose the next story only after reviewing their full Jira evidence and any product/discovery blockers. PHPStan and PHPCS cover only their configured scopes.
