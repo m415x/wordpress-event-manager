@@ -27,10 +27,30 @@ class WEM_Shortcode_Manager {
     }
     
     public function render_list_shortcode($atts) {
-        // WEM-11: do not query or render guest details until WEM-13.
-        return '<p>Guest access is temporarily unavailable.</p>';
-
         $atts = shortcode_atts(array('event' => ''), $atts);
+
+        if (!is_user_logged_in()) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
+        $event_slug = isset($atts['event']) ? sanitize_title($atts['event']) : '';
+        $term = $event_slug ? get_term_by('slug', $event_slug, 'evento') : false;
+
+        if (!$term || is_wp_error($term)) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
+        $user_id = get_current_user_id();
+        if (
+            !user_can($user_id, 'manage_options')
+            && (
+                !user_can($user_id, 'wem_view_event_guests')
+                || !in_array((int) $term->term_id, WEM_Authorization::get_authorized_event_ids($user_id), true)
+            )
+        ) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
         ob_start();
         ?>
         <div class="wem-list-wrap">
