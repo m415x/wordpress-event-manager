@@ -73,6 +73,55 @@ final class StaffScopedGuestListingTest extends WP_Ajax_UnitTestCase
     }
 
 
+
+    public function testListingExcludesGuestsWithMultipleEventoTerms(): void
+    {
+        $eventA = wp_insert_term('WEM-21 Cardinality Event A', 'evento');
+        $eventB = wp_insert_term('WEM-21 Cardinality Event B', 'evento');
+
+        self::assertNotWPError($eventA);
+        self::assertNotWPError($eventB);
+
+        $eventAId = (int) $eventA['term_id'];
+        $eventBId = (int) $eventB['term_id'];
+
+        $this->createGuest('WEM-21 Valid Ticket', 'valid-single-event', $eventAId);
+        $invalidGuestId = $this->createGuest('WEM-21 Invalid Ticket', 'invalid-multi-event', $eventAId);
+        wp_set_object_terms($invalidGuestId, [$eventAId, $eventBId], 'evento', false);
+
+        $staffId = self::factory()->user->create(['role' => 'subscriber']);
+        $staff = get_user_by('id', $staffId);
+        self::assertInstanceOf(\WP_User::class, $staff);
+
+        $staff->add_cap('wem_view_event_guests');
+        update_user_meta($staffId, 'wem_authorized_event_ids', [$eventAId]);
+        wp_set_current_user($staffId);
+
+        $termA = get_term($eventAId, 'evento');
+        self::assertInstanceOf(\WP_Term::class, $termA);
+
+        $_POST = [
+            'action' => 'wem_list_ajax',
+            'evento' => $termA->slug,
+            'q' => '',
+            'mesa' => '',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_list_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // HTML response is captured by WP_Ajax_UnitTestCase.
+        }
+
+        self::assertStringContainsString('valid-single-event', $this->_last_response);
+        self::assertStringNotContainsString(
+            'invalid-multi-event',
+            $this->_last_response,
+            'A guest with multiple evento terms must never appear in an operational roster.'
+        );
+    }
+
     public function testAuthorizedStaffListShortcodeRendersOnlyForScopedEvent(): void
     {
         $eventA = wp_insert_term('WEM-21 Shortcode Event A', 'evento');
