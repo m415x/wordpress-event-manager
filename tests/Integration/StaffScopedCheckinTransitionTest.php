@@ -112,6 +112,86 @@ final class StaffScopedCheckinTransitionTest extends WP_Ajax_UnitTestCase
         self::assertSame('preexisting-operator', (string) get_post_meta($guestId, 'wem_checkout_by', true));
     }
 
+
+    public function testReadOnlyCapabilityAndInvalidNonceCannotMutateGuest(): void
+    {
+        $event = wp_insert_term('WEM-22 Guard Event', 'evento');
+        self::assertNotWPError($event);
+
+        $eventId = (int) $event['term_id'];
+        $guestId = $this->createGuest('WEM-22 Guard Guest', $eventId);
+
+        $viewerId = self::factory()->user->create(['role' => 'subscriber']);
+        $viewer = get_user_by('id', $viewerId);
+        self::assertInstanceOf(\WP_User::class, $viewer);
+        $viewer->add_cap('wem_view_event_guests');
+        update_user_meta($viewerId, 'wem_authorized_event_ids', [$eventId]);
+        wp_set_current_user($viewerId);
+
+        $this->dispatchCheckin($guestId);
+
+        self::assertFalse((bool) json_decode($this->_last_response, true)['success']);
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin', true));
+
+        $operatorId = self::factory()->user->create(['role' => 'subscriber']);
+        $operator = get_user_by('id', $operatorId);
+        self::assertInstanceOf(\WP_User::class, $operator);
+        $operator->add_cap('wem_operate_event_guests');
+        update_user_meta($operatorId, 'wem_authorized_event_ids', [$eventId]);
+        wp_set_current_user($operatorId);
+
+        $this->_last_response = '';
+        $_POST = [
+            'action' => 'wem_checkin_ajax',
+            'post_id' => $guestId,
+            'check_action' => 'checkin',
+            'observ' => '',
+            'nonce' => 'invalid-nonce',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_checkin_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // JSON response completed.
+        }
+
+        self::assertFalse((bool) json_decode($this->_last_response, true)['success']);
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin_at', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin_by', true));
+    }
+
+    public function testGlobalAdminCanOperateValidGuestButMultipleEventGuestIsDenied(): void
+    {
+        $eventA = wp_insert_term('WEM-22 Admin Event A', 'evento');
+        $eventB = wp_insert_term('WEM-22 Admin Event B', 'evento');
+
+        self::assertNotWPError($eventA);
+        self::assertNotWPError($eventB);
+
+        $eventAId = (int) $eventA['term_id'];
+        $eventBId = (int) $eventB['term_id'];
+
+        $validGuestId = $this->createGuest('WEM-22 Admin Valid Guest', $eventAId);
+        $invalidGuestId = $this->createGuest('WEM-22 Admin Invalid Guest', $eventAId);
+        wp_set_object_terms($invalidGuestId, [$eventAId, $eventBId], 'evento', false);
+
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        wp_set_current_user($adminId);
+
+        $this->dispatchCheckin($validGuestId);
+        self::assertSame('1', (string) get_post_meta($validGuestId, 'wem_checkin', true));
+
+        $this->_last_response = '';
+        $this->dispatchCheckin($invalidGuestId);
+
+        self::assertFalse((bool) json_decode($this->_last_response, true)['success']);
+        self::assertSame('', (string) get_post_meta($invalidGuestId, 'wem_checkin', true));
+        self::assertSame('', (string) get_post_meta($invalidGuestId, 'wem_checkin_at', true));
+        self::assertSame('', (string) get_post_meta($invalidGuestId, 'wem_checkin_by', true));
+    }
+
     private function dispatchCheckin(int $guestId): void
     {
         $_POST = [
