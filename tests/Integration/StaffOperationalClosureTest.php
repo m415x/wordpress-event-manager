@@ -22,7 +22,11 @@ final class StaffOperationalClosureTest extends WP_Ajax_UnitTestCase
             register_post_type('invitado', ['public' => false]);
         }
 
-        do_action('plugins_loaded');
+        $ajax = new \WEM_Ajax_Handler();
+        $ajax->register_ajax_handlers();
+
+        $shortcodes = new \WEM_Shortcode_Manager();
+        $shortcodes->register_shortcodes();
     }
 
     public function testAuthorizedStaffCheckinShortcodeIsScopedAndDoesNotDisclosePrivateObservations(): void
