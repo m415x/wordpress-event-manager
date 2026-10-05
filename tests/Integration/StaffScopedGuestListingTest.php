@@ -122,6 +122,119 @@ final class StaffScopedGuestListingTest extends WP_Ajax_UnitTestCase
         );
     }
 
+
+    public function testListingDeniesMissingCapabilityMissingEventAndCrossScopeFilterAttempts(): void
+    {
+        $eventA = wp_insert_term('WEM-21 Guard Event A', 'evento');
+        $eventB = wp_insert_term('WEM-21 Guard Event B', 'evento');
+
+        self::assertNotWPError($eventA);
+        self::assertNotWPError($eventB);
+
+        $eventAId = (int) $eventA['term_id'];
+        $eventBId = (int) $eventB['term_id'];
+
+        $this->createGuest('WEM-21 Guard Ticket A', 'guard-visible-a', $eventAId);
+        $this->createGuest('WEM-21 Guard Ticket B', 'guard-hidden-b', $eventBId);
+
+        $termA = get_term($eventAId, 'evento');
+        self::assertInstanceOf(\WP_Term::class, $termA);
+
+        $userId = self::factory()->user->create(['role' => 'subscriber']);
+        update_user_meta($userId, 'wem_authorized_event_ids', [$eventAId]);
+        wp_set_current_user($userId);
+
+        $_POST = [
+            'action' => 'wem_list_ajax',
+            'evento' => $termA->slug,
+            'q' => 'guard-visible-a',
+            'mesa' => '',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_list_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // Fixed deny response.
+        }
+
+        self::assertSame(
+            ['success' => false, 'data' => ['code' => 'guest_access_unavailable']],
+            json_decode($this->_last_response, true)
+        );
+
+        $user = get_user_by('id', $userId);
+        self::assertInstanceOf(\WP_User::class, $user);
+        $user->add_cap('wem_view_event_guests');
+
+        $this->_last_response = '';
+        $_POST = [
+            'action' => 'wem_list_ajax',
+            'evento' => '',
+            'q' => 'guard-visible-a',
+            'mesa' => '',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_list_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // Fixed deny response.
+        }
+
+        self::assertSame(
+            ['success' => false, 'data' => ['code' => 'guest_access_unavailable']],
+            json_decode($this->_last_response, true)
+        );
+
+        $this->_last_response = '';
+        $_POST = [
+            'action' => 'wem_list_ajax',
+            'evento' => $termA->slug,
+            'q' => 'guard-hidden-b',
+            'mesa' => '',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_list_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // HTML response is captured by WP_Ajax_UnitTestCase.
+        }
+
+        self::assertStringNotContainsString('guard-hidden-b', $this->_last_response);
+    }
+
+    public function testGlobalAdminCanListAnyExplicitValidEventWithoutUserMetaScope(): void
+    {
+        $eventId = $this->createEvent('WEM-21 Admin List Event');
+        $this->createGuest('WEM-21 Admin Ticket', 'admin-visible', $eventId);
+
+        $term = get_term($eventId, 'evento');
+        self::assertInstanceOf(\WP_Term::class, $term);
+
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        wp_set_current_user($adminId);
+
+        self::assertSame([], \WEM_Authorization::get_authorized_event_ids($adminId));
+
+        $_POST = [
+            'action' => 'wem_list_ajax',
+            'evento' => $term->slug,
+            'q' => '',
+            'mesa' => '',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_list_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // HTML response is captured by WP_Ajax_UnitTestCase.
+        }
+
+        self::assertStringContainsString('admin-visible', $this->_last_response);
+    }
+
     public function testAuthorizedStaffListShortcodeRendersOnlyForScopedEvent(): void
     {
         $eventA = wp_insert_term('WEM-21 Shortcode Event A', 'evento');
@@ -160,6 +273,14 @@ final class StaffScopedGuestListingTest extends WP_Ajax_UnitTestCase
 
         $anonymous = do_shortcode('[wem_list event="' . $termA->slug . '"]');
         self::assertSame('<p>Guest access is temporarily unavailable.</p>', $anonymous);
+    }
+
+    private function createEvent(string $name): int
+    {
+        $term = wp_insert_term($name, 'evento');
+        self::assertNotWPError($term);
+
+        return (int) $term['term_id'];
     }
 
     private function createGuest(string $ticket, string $name, int $eventId): int
