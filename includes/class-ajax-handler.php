@@ -138,12 +138,16 @@ class WEM_Ajax_Handler {
     }
     
     private function process_checkin_again($post_id, $current_time, $operator) {
+        $checked_in = get_post_meta($post_id, 'wem_checkin', true);
         $checked_out = get_post_meta($post_id, 'wem_checkout', true);
-        if (!$checked_out) wp_send_json_error('Invitado no ha salido');
-        
+
+        if (!$checked_in || !$checked_out) {
+            wp_send_json_error('Invitado no puede reingresar');
+        }
+
         update_post_meta($post_id, 'wem_checkin_at', $current_time);
         update_post_meta($post_id, 'wem_checkin_by', $operator);
-        
+
         // Limpiar checkout para permitir re-ingreso
         delete_post_meta($post_id, 'wem_checkout');
         delete_post_meta($post_id, 'wem_checkout_at');
