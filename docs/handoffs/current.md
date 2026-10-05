@@ -1,42 +1,38 @@
-# Current operational handoff — WEM-12 CSV import accounting
+# Current operational handoff — post WEM-12
 
-Updated: 2026-10-05. Source of truth remains remote GitHub + Jira; reread both before resuming.
+Updated: 2026-10-05. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
-## Current source state
-- Repository: `m415x/wordpress-event-manager`; canonical integration branch: `dev`; stable `main` unchanged.
-- WEM-12 was merged through PR #2 into `dev` at `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
-- Verified candidate HEAD: `ec2891426220295b99c928f9369fdbe6c7ddf3df`; GitHub Actions run #183 (`37311008966`) completed successfully before merge.
-- WEM-15, WEM-16 and WEM-17 are `Listo`; WEM-18/WEM-12 await only final documentation-CI/Jira reconciliation.
+## Current baseline
+- Canonical integration branch: `dev`; stable `main` remains separate.
+- Foundation WEM-1/WEM-2 is closed. PR #1 integrated Foundation into `dev`.
+- WEM-12 CSV import accounting is **Listo** in Jira. PR #2 merged into `dev` at `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`. WEM-15, WEM-16, WEM-17 and WEM-18 are also **Listo**.
+- WEM-13 (event-scoped authorization) and WEM-14 (immutable movement history/state projection) are **Por hacer**. Do not assume either is automatically next: inspect full Jira descriptions, comments, relationships, product decisions and blockers before choosing work.
+- WEM-11 fail-closed security remains binding until WEM-13 explicitly replaces it with tested authorization.
 
-## Implemented WEM-12 contract
-- The importer now distinguishes `created` and `updated` explicitly instead of inferring the result from a truthy post ID.
-- Guest identity remains scoped by title + event.
-- Existing skip behavior, persisted `wem_*` guest fields, the CSV header `titulo,nombre,organizacion,mesa,evento,observaciones,checkin`, and established encoding normalization remain unchanged.
-- No schema migration, authorization change, public guest exposure or movement-history redesign is part of WEM-12.
-- WEM-11 fail-closed behavior remains mandatory until WEM-13 defines and verifies real event-scoped authorization.
+## Fresh-chat behavior
+A fresh chat should not carry operational workflow in its prompt. Follow `AGENTS.md`.
 
-## Verified evidence
-- Test-only RED commit: `9e3467ffe1d262c69fa282623083c0ca76f44fe3`; human execution confirmed the expected behavioral RED.
-- Minimal runtime fix commit: `e937d7df7e3ad907f55840f1d57a1f2de7d850ec`; focused integration test GREEN.
-- Regression coverage commit: `a04be24cd2cdecd5df5d0b4677d8a095818247c5`; multirow accounting, persistence, event isolation and CP1252/already-UTF-8 checks GREEN.
-- Full local gates GREEN: standalone unit, WordPress integration, runner self-tests 15/15, wp-env DB isolation, Composer strict validation, configured PHPCS and PHPStan.
-- Manual environment isolation preserved: PHPUnit WordPress on 8892; manual WordPress on 8890.
-- Manual runtime recovered non-destructively and returned HTTP 200 on 8890 with plugin v2.2.1 active.
-- Synthetic CSV walkthrough GREEN: 1 created, 1 updated, 0 skipped; the existing guest remained one record with updated persisted values.
-- `pnpm wp:verify:anon` GREEN: both sensitive AJAX actions returned HTTP 403 and fixed deny-all JSON.
+- Start from remote `dev`, current CI/PR state, source/tests, docs and Jira.
+- Use GitHub/Jira connectors directly for remote evidence. Do not ask the user to open GitHub Actions, copy Jira statuses or provide screenshots when the connector can retrieve that same information.
+- Ask the user only for genuinely local/manual evidence (Docker/wp-env/browser UI) or a real product/domain decision.
+- Do not repeat tests/CI/walkthroughs merely to recreate evidence when the same relevant SHA/configuration is already covered.
+- Before implementation, present a concise readiness diagnosis and proposed next story/decomposition. Do not create new issues/branches or change Jira state until that bounded action is approved.
+- After TDD work is approved, continue RED → GREEN → next RED without routine confirmation. Stop for unexpected results, decisions, discrepancies, destructive actions or scope changes.
 
-## Integration evidence
-- PR #2 was marked ready only after run #183 completed successfully on the exact candidate SHA.
-- PR #2 merged to `dev` with merge SHA `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
-- This post-merge documentation reconciliation must receive its own successful `dev` CI before WEM-18/WEM-12 are transitioned to `Listo`.
+## Current testing workflow
+See `docs/testing.md` for authoritative commands.
 
-## Developer commands
-- Manual WordPress: `pnpm wp:start`, `pnpm wp:status`, `pnpm wp:verify:anon`, `pnpm wp:stop`.
-- Isolated PHPUnit: `pnpm wp:phpunit:start`, `pnpm tdd unit`, `pnpm tdd integration`, `pnpm wp:phpunit:stop`.
-- Focused behavior: `pnpm tdd:red tests/Integration/CsvImportAccountingTest.php` and `pnpm tdd tests/Integration/CsvImportAccountingTest.php`.
-- Mock/helper gates: `pnpm test:runner`, `pnpm test:wp-isolation`.
+- Manual WordPress: `.wp-env.test.json`, port 8890.
+- PHPUnit WordPress: `.wp-env.phpunit.json`, port 8892.
+- Never run WordPress Core PHPUnit against the manual site.
+- Use `pnpm tdd:red ...`, `pnpm tdd ...`, `pnpm test:runner`, `pnpm test:wp-scripts` and `pnpm test:wp-isolation` according to scope.
+- Remote CI status should be inspected directly through GitHub tooling.
 
-## Deferred work
-- WEM-13: event-scoped authorization and permitted guest/staff actions.
-- WEM-14: immutable movement history and current-state projection.
-- No WEM-12 work should relax security guards or introduce backward-compatibility migration.
+## Product boundaries still in force
+- WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
+- Sensitive AJAX and shortcode/QR paths remain unavailable under WEM-11 until WEM-13 defines and verifies real actor/event authorization.
+- WEM-14 has not introduced append-only movement history yet.
+- No production deployment or production guest data is implied by completed local/CI evidence.
+
+## Next intervention
+Reconstruct remote `dev` and Jira. Compare WEM-13, WEM-14 and any newer issues by actual readiness, not backlog order. If a likely next story is waiting on product discovery or a decision, leave it untouched and identify another independent story that can safely advance.
