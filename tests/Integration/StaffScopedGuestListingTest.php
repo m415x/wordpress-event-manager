@@ -72,6 +72,47 @@ final class StaffScopedGuestListingTest extends WP_Ajax_UnitTestCase
         self::assertStringNotContainsString('private-observation-a', $this->_last_response);
     }
 
+
+    public function testAuthorizedStaffListShortcodeRendersOnlyForScopedEvent(): void
+    {
+        $eventA = wp_insert_term('WEM-21 Shortcode Event A', 'evento');
+        $eventB = wp_insert_term('WEM-21 Shortcode Event B', 'evento');
+
+        self::assertNotWPError($eventA);
+        self::assertNotWPError($eventB);
+
+        $eventAId = (int) $eventA['term_id'];
+        $eventBId = (int) $eventB['term_id'];
+
+        $termA = get_term($eventAId, 'evento');
+        $termB = get_term($eventBId, 'evento');
+
+        self::assertInstanceOf(\WP_Term::class, $termA);
+        self::assertInstanceOf(\WP_Term::class, $termB);
+
+        $staffId = self::factory()->user->create(['role' => 'subscriber']);
+        $staff = get_user_by('id', $staffId);
+        self::assertInstanceOf(\WP_User::class, $staff);
+
+        $staff->add_cap('wem_view_event_guests');
+        update_user_meta($staffId, 'wem_authorized_event_ids', [$eventAId]);
+        wp_set_current_user($staffId);
+
+        do_action('plugins_loaded');
+
+        $authorized = do_shortcode('[wem_list event="' . $termA->slug . '"]');
+        self::assertStringContainsString('wem-list-wrap', $authorized);
+        self::assertStringContainsString($termA->slug, $authorized);
+
+        $crossEvent = do_shortcode('[wem_list event="' . $termB->slug . '"]');
+        self::assertSame('<p>Guest access is temporarily unavailable.</p>', $crossEvent);
+
+        wp_set_current_user(0);
+
+        $anonymous = do_shortcode('[wem_list event="' . $termA->slug . '"]');
+        self::assertSame('<p>Guest access is temporarily unavailable.</p>', $anonymous);
+    }
+
     private function createGuest(string $ticket, string $name, int $eventId): int
     {
         $guestId = self::factory()->post->create(
