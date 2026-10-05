@@ -142,19 +142,19 @@ final class EventScopeAuthorizationKernelTest extends WP_UnitTestCase
 
         $adminId = self::factory()->user->create(['role' => 'administrator']);
 
-        self::assertSame([], \\WEM_Authorization::get_authorized_event_ids($adminId));
+        self::assertSame([], \WEM_Authorization::get_authorized_event_ids($adminId));
 
-        self::assertTrue(\\WEM_Authorization::can_view_guest($adminId, $guestA));
-        self::assertTrue(\\WEM_Authorization::can_view_guest($adminId, $guestB));
-        self::assertTrue(\\WEM_Authorization::can_operate_guest($adminId, $guestA));
-        self::assertTrue(\\WEM_Authorization::can_operate_guest($adminId, $guestB));
+        self::assertTrue(\WEM_Authorization::can_view_guest($adminId, $guestA));
+        self::assertTrue(\WEM_Authorization::can_view_guest($adminId, $guestB));
+        self::assertTrue(\WEM_Authorization::can_operate_guest($adminId, $guestA));
+        self::assertTrue(\WEM_Authorization::can_operate_guest($adminId, $guestB));
 
-        self::assertFalse(\\WEM_Authorization::can_view_guest($adminId, $noEventGuest));
-        self::assertFalse(\\WEM_Authorization::can_operate_guest($adminId, $noEventGuest));
-        self::assertFalse(\\WEM_Authorization::can_view_guest($adminId, $multiEventGuest));
-        self::assertFalse(\\WEM_Authorization::can_operate_guest($adminId, $multiEventGuest));
-        self::assertFalse(\\WEM_Authorization::can_view_guest($adminId, $nonGuestPostId));
-        self::assertFalse(\\WEM_Authorization::can_operate_guest($adminId, $nonGuestPostId));
+        self::assertFalse(\WEM_Authorization::can_view_guest($adminId, $noEventGuest));
+        self::assertFalse(\WEM_Authorization::can_operate_guest($adminId, $noEventGuest));
+        self::assertFalse(\WEM_Authorization::can_view_guest($adminId, $multiEventGuest));
+        self::assertFalse(\WEM_Authorization::can_operate_guest($adminId, $multiEventGuest));
+        self::assertFalse(\WEM_Authorization::can_view_guest($adminId, $nonGuestPostId));
+        self::assertFalse(\WEM_Authorization::can_operate_guest($adminId, $nonGuestPostId));
     }
 
     private function createEvent(string $name): int
