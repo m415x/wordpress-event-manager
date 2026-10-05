@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
 
-use WP_UnitTestCase;
+use WP_Ajax_UnitTestCase;
 
-final class StaffOperationalClosureTest extends WP_UnitTestCase
+final class StaffOperationalClosureTest extends WP_Ajax_UnitTestCase
 {
     protected function setUp(): void
     {
@@ -70,6 +70,65 @@ final class StaffOperationalClosureTest extends WP_UnitTestCase
 
         $anonymous = do_shortcode('[wem_checkin event="' . $termA->slug . '"]');
         self::assertSame('<p>Guest access is temporarily unavailable.</p>', $anonymous);
+    }
+
+
+    public function testAuthenticatedStaffSessionCoversListCheckinCheckoutAndReentry(): void
+    {
+        $event = wp_insert_term('WEM-24 Lifecycle Event', 'evento');
+        self::assertNotWPError($event);
+
+        $eventId = (int) $event['term_id'];
+        $guestId = $this->createGuest('WEM-24-LIFECYCLE', 'lifecycle-staff-name', $eventId);
+
+        $staffId = self::factory()->user->create(['role' => 'subscriber']);
+        $staff = get_user_by('id', $staffId);
+        self::assertInstanceOf(\WP_User::class, $staff);
+
+        $staff->add_cap('wem_view_event_guests');
+        $staff->add_cap('wem_operate_event_guests');
+        self::assertTrue(\WEM_Authorization::set_authorized_event_ids($staffId, [$eventId]));
+        wp_set_current_user($staffId);
+
+        $term = get_term($eventId, 'evento');
+        self::assertInstanceOf(\WP_Term::class, $term);
+
+        $list = do_shortcode('[wem_list event="' . $term->slug . '"]');
+        self::assertStringContainsString('wem-list-wrap', $list);
+
+        $_GET['ticket'] = 'WEM-24-LIFECYCLE';
+        $checkinUi = do_shortcode('[wem_checkin event="' . $term->slug . '"]');
+        self::assertStringContainsString('wem-wrapper', $checkinUi);
+        self::assertStringContainsString('lifecycle-staff-name', $checkinUi);
+
+        foreach (['checkin', 'checkout', 'checkin_again'] as $action) {
+            $this->_last_response = '';
+            $_POST = [
+                'action' => 'wem_checkin_ajax',
+                'post_id' => $guestId,
+                'check_action' => $action,
+                'observ' => '',
+                'nonce' => wp_create_nonce('wem_checkin_nonce'),
+            ];
+            $_REQUEST = $_POST;
+
+            try {
+                $this->_handleAjax('wem_checkin_ajax');
+            } catch (\WPAjaxDieContinueException $exception) {
+                // JSON response completed.
+            }
+
+            $response = json_decode($this->_last_response, true);
+            self::assertIsArray($response);
+            self::assertTrue((bool) $response['success'], 'Action failed: ' . $action);
+        }
+
+        self::assertSame('1', (string) get_post_meta($guestId, 'wem_checkin', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkout', true));
+        self::assertNotSame('', (string) get_post_meta($guestId, 'wem_checkin_at', true));
+        self::assertNotSame('', (string) get_post_meta($guestId, 'wem_checkin_by', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkout_at', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkout_by', true));
     }
 
     private function createGuest(string $ticket, string $name, int $eventId): int
