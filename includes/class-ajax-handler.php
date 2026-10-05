@@ -40,6 +40,15 @@ class WEM_Ajax_Handler {
         }
 
         $posts = $this->get_filtered_invitados($q, $event_id, $mesa);
+        $posts = array_values(
+            array_filter(
+                $posts,
+                static function ($post) use ($event_id) {
+                    return WEM_Authorization::get_guest_event_term_id($post->ID) === $event_id;
+                }
+            )
+        );
+
         $this->render_list_table($posts);
     }
     
