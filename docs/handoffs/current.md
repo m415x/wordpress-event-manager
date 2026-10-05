@@ -4,9 +4,9 @@ Updated: 2026-10-05. Source of truth remains remote GitHub + Jira; reread both b
 
 ## Current source state
 - Repository: `m415x/wordpress-event-manager`; canonical integration branch: `dev`; stable `main` unchanged.
-- Active branch: `fix/WEM-12-csv-import-accounting`, based on `dev@0d9cc403f5916a8c61a22629177c713c0afe011b`.
-- Draft PR: #2, targeting `dev`.
-- WEM-12 is `En curso`; WEM-15, WEM-16 and WEM-17 are `Listo`; WEM-18 is `En curso`.
+- WEM-12 was merged through PR #2 into `dev` at `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
+- Verified candidate HEAD: `ec2891426220295b99c928f9369fdbe6c7ddf3df`; GitHub Actions run #183 (`37311008966`) completed successfully before merge.
+- WEM-15, WEM-16 and WEM-17 are `Listo`; WEM-18/WEM-12 await only final documentation-CI/Jira reconciliation.
 
 ## Implemented WEM-12 contract
 - The importer now distinguishes `created` and `updated` explicitly instead of inferring the result from a truthy post ID.
@@ -25,12 +25,10 @@ Updated: 2026-10-05. Source of truth remains remote GitHub + Jira; reread both b
 - Synthetic CSV walkthrough GREEN: 1 created, 1 updated, 0 skipped; the existing guest remained one record with updated persisted values.
 - `pnpm wp:verify:anon` GREEN: both sensitive AJAX actions returned HTTP 403 and fixed deny-all JSON.
 
-## Closure still required
-1. Treat the documentation commit that updates this handoff as the final candidate HEAD.
-2. Verify GitHub Actions on that exact PR HEAD; both PHP quality/unit and isolated WordPress integration jobs must succeed.
-3. Mark PR #2 ready, merge to `dev` only if the verified HEAD is unchanged and mergeable.
-4. Record exact CI run + candidate SHA + merge SHA in Jira WEM-18/WEM-12.
-5. Transition WEM-18 and WEM-12 to `Listo` only after integration evidence is durable.
+## Integration evidence
+- PR #2 was marked ready only after run #183 completed successfully on the exact candidate SHA.
+- PR #2 merged to `dev` with merge SHA `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
+- This post-merge documentation reconciliation must receive its own successful `dev` CI before WEM-18/WEM-12 are transitioned to `Listo`.
 
 ## Developer commands
 - Manual WordPress: `pnpm wp:start`, `pnpm wp:status`, `pnpm wp:verify:anon`, `pnpm wp:stop`.
