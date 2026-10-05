@@ -69,8 +69,9 @@ class WEM_Ajax_Handler {
     private function get_valid_post_id() {
         $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         if (!$post_id || get_post_type($post_id) !== 'invitado') {
-            wp_send_json_error('Ticket inválido');
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
         }
+
         return $post_id;
     }
     
