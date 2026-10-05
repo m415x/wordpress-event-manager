@@ -1,224 +1,157 @@
-# Testing (Foundation)
+# Testing and verification
 
-This document describes the initial *standalone PHP unit-test harness*. It does not assert that the historical plugin boots or passes WordPress integration tests.
+This document is the **current operational testing guide** for WordPress Event Manager. Historical setup evidence belongs in Jira and the handoffs; do not recover obsolete commands from old conversations.
 
-## Local requirements
-- Docker Desktop running.
-- WordPress environment started with `wp-env`.
-- Work from the repository root in Bash.
+## Principles
 
-## Installation (inside Docker)
+- Work from the repository root in Git Bash.
+- Docker Desktop must be running for `wp-env`.
+- Use pnpm scripts as the canonical entrypoints.
+- Never use production credentials or databases.
+- Manual WordPress and PHPUnit WordPress are intentionally separate environments.
+- A written command, configured workflow or proposed test is not evidence. Record only observed results.
+- Reuse valid evidence for the same relevant code/configuration. Do not rerun gates merely to recreate screenshots or logs.
 
-```bash
-wp-env run cli --env-cwd=wp-content/plugins/wordpress-event-manager composer install --no-interaction
-```
+## Environments
 
-`composer.lock` is tracked. When `composer.json` introduces or changes dependencies, update the lockfile explicitly and commit it. Do not commit `vendor/` or credentials.
+| Configuration | Port | Purpose |
+| --- | ---: | --- |
+| `.wp-env.test.json` | 8890 | Manual/admin/browser walkthroughs and real HTTP smoke |
+| `.wp-env.phpunit.json` | 8892 | PHPUnit and WordPress Core test bootstrap |
 
-For the WordPress integration bootstrap, WordPress Core requires PHPUnit Polyfills. The wp-env WordPress test framework currently invokes an API removed in PHPUnit 10. WEM-5 therefore uses PHPUnit `^9.6` with `yoast/phpunit-polyfills:^2.0` to match that framework (rather than claiming PHPUnit 11 compatibility). After pulling the manifest change, run this one-time full dependency reconciliation in the dedicated Docker CLI:
+The PHPUnit environment must never share the manual site's database. WordPress Core tests can mutate WordPress options, including plugin activation.
 
-```bash
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer update --with-all-dependencies --no-interaction
-```
-
-Review and commit the resulting `composer.lock` so subsequent `composer install` restores exactly the tested dependency set.
-
-## Focused standalone PHPUnit
+### Manual WordPress
 
 ```bash
-wp-env run cli --env-cwd=wp-content/plugins/wordpress-event-manager vendor/bin/phpunit --testsuite unit
+pnpm wp:start
+pnpm wp:status
+pnpm wp:verify:anon
+pnpm wp:stop
 ```
 
-The initial smoke test verifies that the plugin entrypoint exists and declares ordinary WordPress header fields. It deliberately does **not** require/activate WordPress or instantiate the plugin. It is expected to be green even while the known historical plugin bootstrap defect remains unresolved.
+- `wp:start` starts the manual site and activates WEM only when needed.
+- `wp:verify:anon` checks the two sensitive anonymous AJAX routes over **real HTTP** and requires HTTP 403 plus the fixed deny-all JSON.
+- `wp:stop` preserves site data; these helpers expose no reset/delete action.
 
-## WordPress integration test harness
-`wp-env` supplies the WordPress PHPUnit files at `WP_TESTS_DIR`. Run integration tests only against the separate disposable environment selected explicitly using `--config=.wp-env.test.json`; it has its own Docker containers and data, and never uses production credentials.
+### Isolated PHPUnit WordPress
 
-Start the **isolated PHPUnit site** from the plugin root:
+Start once before local PHPUnit work, or again after stopping the environment:
 
 ```bash
 pnpm wp:phpunit:start
 ```
 
-The command starts `.wp-env.phpunit.json` (port 8892) and installs the locked Composer dependencies in that container. Then run:
+This starts `.wp-env.phpunit.json` and restores locked Composer dependencies inside its CLI container.
 
-```bash
-pnpm tdd integration
-```
-
-To stop only the PHPUnit site, without removing its database:
+Stop it without deleting data:
 
 ```bash
 pnpm wp:phpunit:stop
 ```
 
-The manual `.wp-env.test.json` (port 8890) is **not** a PHPUnit target. Never run WordPress Core PHPUnit bootstrap against the manual site's `cli` container: WordPress Core test initialization can reset WordPress options, including `active_plugins`. The earlier shared-environment setup produced an observed Active-to-Inactive transition during PHPUnit.
+## TDD commands
 
-The initial WordPress integration test uses WordPress' own `get_plugin_data()` API, but **does not activate** the historical plugin (known WEM-3 boot defect). The WordPress test framework may reset its dedicated disposable database; never point this command to the development or production database. User confirmed GREEN for the standalone unit and WordPress integration suites on 2026-10-01, with PHPUnit 9.6 + Polyfills 2.x. Counts and assertions for the integration run were not provided; Jira WEM-5 records the human confirmation. This validates the harness and plugin metadata read, not actual plugin activation.
-
-The dedicated `.wp-env.test.json` explicitly sets `testsEnvironment: false`, because each configuration otherwise also launches a secondary test site on port 8889. The existing development configuration may already own that port. The dedicated WordPress environment uses port 8890 and its own Docker database; WordPress' PHP test bootstrap was confirmed operational in the isolated CLI integration run. Do not reset/destroy the development database.
-
-## Compact RED/GREEN commands — WEM-6 (locally verified)
-
-Run from the repository root in Git Bash after `git pull --ff-only`:
+Focused expected RED:
 
 ```bash
-bash tests/Runner/tdd-runner.test.sh
-bash scripts/tdd.sh red unit --filter SpecificContractTest
-bash scripts/tdd.sh green unit --filter SpecificContractTest
-bash scripts/tdd.sh green integration --filter WordPressPluginMetadataTest
-bash scripts/tdd.sh diagnose integration --filter WordPressPluginMetadataTest
+pnpm tdd:red tests/Unit/ExampleTest.php
+pnpm tdd:red tests/Integration/ExampleTest.php
 ```
 
-- `red` succeeds (exit 0) **only** when PHPUnit exits unsuccessfully with a reported assertion failure and no test errors or obvious bootstrap/fatal error. An unexpected PASS or infrastructure error makes `red` fail. The developer must still inspect the failed assertion to confirm it expresses the intended contract; the runner cannot infer semantics.
-- `green` requires a PHPUnit `OK (...)` result followed by `php -l` syntax checks on the plugin entry point and PHP source/tests inside Docker.
-- `diagnose` prints unabridged output and preserves the test exit code. Routine `red`/`green` prints a short summary, escalating errors to the last 35 log lines.
-- `unit` uses `phpunit.xml.dist`; `integration` uses `phpunit.integration.xml.dist`, both in the dedicated `.wp-env.test.json` Docker setup.
-- The Bash runner has eight mocked behavioral classification cases in `tests/Runner/tdd-runner.test.sh`; these test the runner's result handling, not PHP/WordPress behavior. **2026-10-01 human execution:** all 8/8 self-tests passed. Both `bash scripts/tdd.sh green unit` and `bash scripts/tdd.sh green integration` reported `GREEN confirmed: focused tests and PHP syntax verification passed.` A real new-feature behavioral RED has not yet been executed; do not imply otherwise.
-- WEM-6 syntax verification is deliberately narrow. Full PHP style/static analysis, CI and cross-environment validation are WEM-7 scope. No remote CI pass is implied.
-
-## Known bootstrap blocker
-The existing plugin is intentionally **not** automatically loaded by the integration bootstrap; its activation errors belong to a separate bounded regression-and-fix story. A test that fails because the environment fails to initialize is not a valid behavioral RED.
-
-## Known blockers
-WEM-3 records the historical autoload filename mismatch and incomplete module hook registration. Neither problem is fixed by this harness.
-
-
-## WEM-7 PHP quality / CI baseline (requires local and GitHub verification)
-
-The Foundation deliberately separates **existing historical runtime debt** from gates on maintained code:
-- PHP syntax: `sh scripts/check-php-syntax.sh` checks plugin entrypoint, all `includes/`, and PHP tests. This catches syntax failures but cannot establish correctness or WordPress API safety.
-- Code style: `composer run lint:php` applies PHPCS PSR-12 to `tests/` (new PHP tests), not to the historical runtime code. Treat extension to production modules as an explicit migration after WEM-8 instead of silently rewriting old PHP.
-- Static analysis: `composer run analyse:php` runs PHPStan level 0 over `tests/Unit/` (independent tests). WordPress-backed tests and plugin runtime are **outside** this initial PHPStan analysis scope and must be included later with WordPress stubs or compatible context.
-- Unit tests: `composer run test:unit`.
-- Test runner classifiers: `bash tests/Runner/tdd-runner.test.sh`.
-- WordPress integration: `bash scripts/tdd.sh green integration`, using isolated `.wp-env.test.json`.
-
-After updating `composer.json` in WEM-7, regenerate `composer.lock` in the isolated Docker CLI:
+Focused GREEN:
 
 ```bash
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer update --with-all-dependencies --no-interaction
+pnpm tdd tests/Unit/ExampleTest.php
+pnpm tdd tests/Integration/ExampleTest.php
 ```
 
-Review `composer.lock` changes and commit them. From Git Bash verify:
+Suite-level GREEN:
 
 ```bash
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer validate --strict
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager sh scripts/check-php-syntax.sh
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer run lint:php
-wp-env run cli --config=.wp-env.test.json --env-cwd=wp-content/plugins/wordpress-event-manager composer run analyse:php
-bash tests/Runner/tdd-runner.test.sh
-bash scripts/tdd.sh green unit
-bash scripts/tdd.sh green integration
-```
-
-GitHub Actions workflow `.github/workflows/php-quality.yml` uses PHP 8.3, the tracked Composer lockfile, and an independently provisioned Docker/`wp-env` integration environment. Node and pnpm are CI setup only; this does not track the user's unreviewed local `package.json` or npm lockfile. CI installs a pinned `@wordpress/env` version. GitHub status is authoritative for actual CI outcome; **writing the workflow is not evidence that it passed**. If the GitHub runner's WordPress core test framework changes, diagnose and version a compatible test stack; do not hide failed CI gates.
-
-Existing functional defects (plugin bootstrap and unauthenticated access) stay tracked in WEM-3 and are **not** declared fixed by these quality checks.
-
-### Windows checkout line endings (WEM-7)
-
-The project tracks `.gitattributes` to require LF for `*.php`, `*.sh` and configuration files. In Windows Git Bash, CRLF shell scripts can fail before PHP starts (e.g. `set: illegal option -`), and PHPCS PSR-12 rejects CRLF. From an updated branch, inspect with `git ls-files --eol scripts/check-php-syntax.sh tests/bootstrap.php`: the working-tree column should read `w/lf`. If it does not, reconcile the local checkout without overwriting personal changes; no global Git setting is required.
-
-PHPCS applies namespaces and PSR-12 headers to new test files. `tests/integration-bootstrap.php` is deliberately a procedural WordPress fixture bootstrap and receives a narrowly scoped side-effects sniff exception. The historical plugin PHP remains syntax-checked but outside strict PHPCS/PHPStan coverage; this is explicit technical debt, not certification of the plugin.
-
-Local execution 2026-10-01 before the LF/PSR corrections: Composer strict validation and PHPStan passed; PHP syntax script failed at shell startup and PHPCS reported CRLF/header/namespace issues. Fixes are committed, but local rerun and CI verification are still pending.
-
-### WEM-7 verified CI baseline — 2026-10-01
-
-GitHub Actions workflow run [#12](https://github.com/m415x/wordpress-event-manager/actions/runs/36873660470), commit `54be472512b6829f3410f4c5c36f31a3dc625fd5`, completed with overall conclusion **success**. Both jobs completed successfully:
-
-- `PHP 8.3 lint, analysis and unit`: Composer strict validation and locked install, plugin-wide PHP syntax, PHPCS (new tests scope), PHPStan (independent unit tests scope), PHPUnit unit smoke and shell runner classification.
-- `WordPress isolated integration`: Docker/`wp-env` bootstrap, Composer locked dependencies and WordPress PHPUnit integration.
-
-Human-run verification also confirmed runner classification `8/8` and both compact `green unit` and `green integration` including their PHP syntax gate. Current tracked lock includes PHPUnit 9.6.37, Polyfills 2.0.5, PHPStan 2.2.16 and PHP_CodeSniffer 4.0.4.
-
-**Deferred maintenance warnings (not test failures):** GitHub Actions reports Node.js 20 deprecation for action versions currently used, and an upcoming change of `ubuntu-latest` to Ubuntu 26 beginning 2026-10-19. Review action version compatibility and runner image in a separately scoped maintenance change; do not treat warnings as successful migration evidence.
-
-WEM-7 does **not** attest that historical plugin activation, authorization or QR behavior is corrected; those remain bounded future work.
-
-
-### Compact pnpm entrypoints — WEM-8 tooling refinement
-
-The preferred interactive interface is now the **pnpm scripts**, rather than invoking the Bash runner with positional mode arguments:
-
-```bash
-pnpm tdd:red tests/Unit/NeutralIdentityContractTest.php
-pnpm tdd tests/Unit/PluginEntrypointTest.php
-pnpm tdd tests/Integration/WordPressPluginMetadataTest.php
-pnpm tdd:red tests/Unit/NeutralIdentityContractTest.php -v
-pnpm tdd tests/Unit/PluginEntrypointTest.php --verbose
-pnpm test:runner
-```
-
-- `tdd:red`: prints **RED** only if PHPUnit reports an expected assertion failure and no bootstrap error. Returns zero for confirmed expected RED, nonzero for a pass or infrastructure error. This is the established WEM-6 contract, intentionally not the shell semantics of another project.
-- `tdd`: prints **GREEN** only if focused PHPUnit and the PHP syntax gate both pass.
-- Unanticipated failures print **ERROR**, without stack traces by default; add `-v` or `--verbose` after the test path to inspect the captured PHPUnit output and syntax logs.
-- Path selection maps `tests/Unit/...` to standalone PHPUnit and `tests/Integration/...` to the isolated WordPress test config. Alternatively `pnpm tdd unit --filter TestMethod` remains supported.
-- `pn` is **not a standard pnpm executable**. If the developer has a personal `pn` alias, it can work, but portable documentation uses `pnpm`.
-- `package.json` contains only scripts. Do not run npm installation to operate these commands: the Bash runner uses `wp-env` from the developer's environment. Prefer the tracked pnpm dependency/lock discipline if JavaScript dependencies are added later.
-- **Local untracked-file warning:** the user previously had an untracked local `package.json` and `package-lock.json`. Back up and inspect the local manifest before pulling the new tracked `package.json`, to avoid an untracked-file checkout conflict. Do not silently discard the local file.
-- These refinements are **not locally verified yet**. The prior WEM-6 8/8 result applies to the former runner version. The updated runner fixture now defines 11 classification/verbosity checks; record actual results before claiming a new GREEN.
-
-
-### Pre-test Git synchronization (WEM-8 refinement)
-
-The interactive TDD runner now invokes `git pull --ff-only --quiet` on the current checked-out tracking branch **before** running PHPUnit. Therefore `pnpm tdd tests/Unit/GuestMetadataNamingTest.php` and `pnpm tdd:red ...` require only one command for synchronization and the test. A non-fast-forward, missing upstream or unavailable remote aborts before PHPUnit with `ERROR`, and `-v`/`--verbose` reveals the actual Git diagnostic. The runner never automatically merges with merge commits, rebases or resets.
-
-CI intentionally skips the pull (`CI=true`) to keep the checked-out commit deterministic. To use the runner explicitly offline or during mock fixtures, set `WEM_TDD_SKIP_SYNC=1`. The runner self-test uses an injected temporary Git executable to verify the pull command without contacting the real remote.
-
-The updated self-test specifies **15 cases** (the previous 11, plus successful sync, CI skip, explicit skip, and failed pull); the new checks are **not yet verified locally**. Do not claim that the newly integrated pre-test Git behavior passed until the developer reports a real execution.
-
-
-## Disposable WordPress daily commands — WEM-11
-
-Use **Git Bash** from the repository root with Docker Desktop running. These commands always use the tracked `.wp-env.test.json` (disposable WordPress on `http://localhost:8890`), never the untracked development `.wp-env.json` or production.
-
-| Command | Meaning |
-| --- | --- |
-| `pnpm wp:start` | Start disposable WordPress; check whether the WEM plugin is already active, activate **only if needed**, and report current status. |
-| `pnpm wp:status` | Show WordPress plugin status (requires a running environment). |
-| `pnpm wp:verify:anon` | Send real HTTP POST requests to **both** protected guest AJAX routes on localhost:8890, require status **403** and exact deny-all JSON. Requires a running, activated environment. |
-| `pnpm wp:stop` | Stop the disposable environment, preserving its database and files. |
-| `pnpm test:wp-scripts` | Execute deterministic mocked command/HTTP classifications without Docker or production access. |
-| `pnpm tdd tests/Integration/SensitiveAjaxFailClosedTest.php` | Run focused PHP/WordPress PHPUnit integration tests; distinct from actual HTTP verification. |
-
-### Typical daily workflow
-
-```bash
-pnpm wp:start
-pnpm wp:verify:anon
-# Develop; run targeted pnpm tdd / pnpm tdd:red as needed.
-pnpm wp:stop
-```
-
-- `wp:start` is safe to repeat. It does **not** delete/reinitialize databases, install Composer dependencies every time or force plugin reactivation if already active. wp-env's own persistent Docker volumes normally retain site state across stops and starts; if volumes are deleted or the environment is recreated, activation is needed again.
-- `wp:verify:anon` tests **anonymous HTTP only**. It never obtains or stores login cookies, personal data or credentials. It does **not** satisfy the WEM-11 authenticated HTTP gate or all final integration gates.
-- Neither `pnpm tdd` nor these helpers automatically run all full CI checks. Dependencies only need installation/reconciliation when first provisioning or when manifests/locks change.
-- No destructive reset/delete commands are exposed through these helpers. Never point the smoke test to production.
-- Before treating these scripts as verified, run `pnpm test:wp-scripts`, then `pnpm wp:status` and `pnpm wp:verify:anon` against the already running disposable site and record the actual result. Creating the scripts does not itself establish a passing gate.
-
-## WordPress PHPUnit/database isolation — WEM-11 correction, 2026-10-02
-
-Two independent `wp-env` configurations now have distinct purposes:
-
-| Configuration | Port | Purpose | Commands |
-| --- | --- | --- | --- |
-| `.wp-env.test.json` | 8890 | Manual admin dashboard and real anonymous/authenticated HTTP tests, preserve site state | `pnpm wp:start`, `pnpm wp:status`, `pnpm wp:verify:anon`, `pnpm wp:stop` |
-| `.wp-env.phpunit.json` | 8892 | Disposable PHPUnit and PHP syntax gates, separate WordPress database | `pnpm wp:phpunit:start`, `pnpm tdd ...`, `pnpm wp:phpunit:stop` |
-
-Start PHPUnit's installation at least once using `pnpm wp:phpunit:start` before the first `pnpm tdd`. The `wp:phpunit:start` script runs Composer's locked install after starting the environment. Once running, keep using the familiar `pnpm tdd:red ...` and `pnpm tdd ...` commands; they now target `.wp-env.phpunit.json` exclusively. They do **not** auto-start Docker or automatically repair a missing test installation.
-
-`pnpm test:wp-isolation` checks the configuration separation **without Docker**; it is a static regression guard, not proof of database isolation at runtime. After the first new-environment run, verify the manual site's plugin state is unchanged both before and after PHPUnit. The CI integration job also starts the dedicated PHPUnit site and uses its CLI for Composer and tests; it never starts the manual-site configuration.
-
-### Non-destructive verification sequence
-
-```bash
-pnpm test:wp-isolation
-pnpm wp:status
-pnpm wp:phpunit:start
+pnpm tdd unit
 pnpm tdd integration
-pnpm wp:status
 ```
 
-Expected: isolation guard GREEN, the PHPUnit suite GREEN, and WordPress Event Manager still **Active** on the manual port 8890. A failure requires diagnosis, **not** automatic reactivation or database resets. Do not reuse development or production data in PHPUnit.
+Add `-v` or `--verbose` only when diagnostics are needed.
+
+Runner semantics:
+
+- `RED`: PHPUnit produced an expected assertion failure, with no bootstrap/fatal error.
+- `GREEN`: focused PHPUnit passed and the runner's PHP syntax gate passed.
+- `ERROR`: unexpected pass in RED mode, assertion failure in GREEN mode, bootstrap/infrastructure error, or syntax failure.
+
+After a story/decomposition and its TDD cycle are approved, continue **RED → GREEN → next RED** without routine user confirmation. Stop when the observed result is unexpected or a real product/security/scope decision is needed.
+
+## Helper regression checks
+
+```bash
+pnpm test:runner
+pnpm test:wp-scripts
+pnpm test:wp-isolation
+```
+
+- `test:runner` checks the shell runner's classification behavior with mocks; it is not PHP product coverage.
+- `test:wp-scripts` checks local WordPress helper behavior without Docker.
+- `test:wp-isolation` statically guards the manual/PHPUnit configuration boundary.
+
+## PHP quality gates
+
+Run inside the isolated PHPUnit environment:
+
+```bash
+wp-env run cli --config=.wp-env.phpunit.json \
+  --env-cwd=wp-content/plugins/wordpress-event-manager \
+  composer validate --strict --no-interaction
+
+wp-env run cli --config=.wp-env.phpunit.json \
+  --env-cwd=wp-content/plugins/wordpress-event-manager \
+  composer run lint:php
+
+wp-env run cli --config=.wp-env.phpunit.json \
+  --env-cwd=wp-content/plugins/wordpress-event-manager \
+  composer run analyse:php
+```
+
+Scope matters:
+
+- PHP syntax is broader than PHPCS/PHPStan.
+- PHPCS and PHPStan certify only the paths configured in `phpcs.xml.dist` and `phpstan.neon.dist`.
+- Do not describe those tools as a whole-plugin audit unless their configurations are intentionally expanded and verified.
+
+## CI
+
+GitHub Actions workflow: `.github/workflows/php-quality.yml`.
+
+Use GitHub directly for remote CI evidence:
+
+- inspect the exact commit SHA and associated workflow run;
+- verify both jobs and their conclusions;
+- inspect failed job logs when needed;
+- do **not** ask the user for a screenshot or copy/paste of GitHub Actions when the connector exposes the same evidence.
+
+User intervention is appropriate only when the required result is outside available remote tooling, such as a local Docker run or a manual browser/UI walkthrough.
+
+A previous CI success remains useful evidence for its exact relevant code/configuration. Story closure may still require a newer run if subsequent changes affect CI-scanned files or the closure contract requires current-head verification.
+
+## Security-relevant manual verification
+
+Automated WordPress tests do not substitute for real HTTP transport or browser/session behavior when those are acceptance requirements.
+
+For the current WEM-11 fail-closed baseline:
+
+- both sensitive AJAX actions must reject anonymous and authenticated access with HTTP 403 and fixed unavailable JSON;
+- all four sensitive shortcodes must remain unavailable until WEM-13 changes the authorization contract;
+- never weaken these guards merely to make a walkthrough possible.
+
+Use the manual environment for browser/admin verification. Ask the user only for behavior that cannot be observed through connected GitHub/Jira tooling or automated repository tests.
+
+## Compatibility and data safety
+
+- WEM-8 remains **new-installations-only**. Do not introduce legacy aliases, dual-read paths or migrations unless a later Jira story explicitly changes that contract.
+- No production guest data, credentials or database exports belong in tests or Git.
+- Do not reset/destroy the manual WordPress site to repair a test failure; diagnose environment isolation first.
+
+## Source of truth
+
+For test commands and environment boundaries, this file and the current scripts/configuration are authoritative. For story-specific acceptance evidence and historical runs, use Jira and the current handoff. Chat transcripts are not project authority.
