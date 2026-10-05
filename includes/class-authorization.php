@@ -27,6 +27,42 @@ final class WEM_Authorization
         return (int) $terms[0]->term_id;
     }
 
+    public static function set_authorized_event_ids($user_id, $event_ids)
+    {
+        $user_id = (int) $user_id;
+        if ($user_id <= 0 || !get_userdata($user_id)) {
+            return false;
+        }
+
+        if (!is_array($event_ids)) {
+            $event_ids = array();
+        }
+
+        $valid_event_ids = array();
+
+        foreach ($event_ids as $event_id) {
+            $event_id = absint($event_id);
+            if (!$event_id) {
+                continue;
+            }
+
+            $term = get_term($event_id, 'evento');
+            if (!$term || is_wp_error($term)) {
+                continue;
+            }
+
+            $valid_event_ids[] = $event_id;
+        }
+
+        $valid_event_ids = array_values(array_unique($valid_event_ids));
+
+        return update_user_meta(
+            $user_id,
+            self::EVENT_SCOPE_META_KEY,
+            $valid_event_ids
+        ) !== false;
+    }
+
     public static function get_authorized_event_ids($user_id)
     {
         $user_id = (int) $user_id;
