@@ -22,14 +22,25 @@
 - Transition work to `En curso` before implementation, and to `Listo` only after required evidence; never mistake a proposed command for an executed one.
 - Before creating new story subtasks or branches, reconcile implementation with durable docs and the full Jira issue, then request approval for bounded decomposition.
 
+## Tool autonomy and human intervention
+- **Use connected systems directly whenever they can answer the question.** GitHub is the authority for remote branches, commits, PR state and CI/job results; Jira is the authority for issue state, relationships and recorded acceptance evidence. Query them yourself instead of asking the user to open the same page, copy statuses or provide screenshots.
+- Do **not** request visual confirmation of GitHub Actions, PR state, branch SHA or Jira status when the connector can retrieve that evidence. A user screenshot may supplement evidence but is not required merely to confirm remotely accessible data.
+- Ask the user to intervene only when the required evidence genuinely exists outside available connectors/tools: local Docker/wp-env execution, browser-only/manual UI behavior, an unavailable credentialed session, physical/device behavior, or a product/domain decision that requires human choice.
+- When local execution is necessary, give the smallest useful Bash-compatible command (or bounded manual walkthrough), state the expected result, and wait for the observed output. Never claim local GREEN without user/runtime evidence.
+- If a connector/tool cannot expose a required datum, say exactly what is missing before requesting manual evidence. Do not ask for a manual check first and then query the same remote evidence afterward.
+- Reuse valid evidence tied to the same code/configuration when nothing relevant changed. Do not rerun tests, CI, walkthroughs or merges merely to recreate evidence; rerun when the code/configuration affecting that gate changed, when the closure contract explicitly requires current-head evidence, or when prior evidence is ambiguous/invalid.
+- Once a bounded story/decomposition and its TDD cycle are approved, perform connector-side Git/Jira operations and advance **RED → GREEN → next RED** without asking for routine confirmations. Stop for unexpected results, material discrepancies, real product/security decisions, destructive actions or scope changes.
+
 ## Source of truth and fresh-chat bootstrap
-1. Read repository `AGENTS.md` and `docs/README.md` on the current `dev` head; read any nested agent instructions.
-2. Inspect the current relevant PHP, JS/TS, schemas, tests and lockfiles. Source and tests establish actual behavior.
-3. Consult `docs/architecture/` for current domain invariants, and the current `docs/handoffs/` operational handoff.
-4. Read Jira story acceptance criteria, issue relationships, comments and current statuses.
-5. Explicitly reconcile discrepancies. Never quietly infer a missing decision from chat memory.
-6. Report current behavior, reusable infrastructure, risks, open decisions and task decomposition before implementation.
-7. Every completed story must publish enough durable evidence to resume in a fresh chat.
+A fresh chat is only an entry point. All operational detail must be recoverable from the repository and Jira.
+
+1. Start from **remote `dev`**, not a remembered branch or prior-chat SHA. Verify current HEAD, relevant open/merged PRs and CI through the available GitHub connector.
+2. Read `AGENTS.md` and `docs/README.md` at that HEAD, then inspect relevant source, tests, lockfiles and configuration. Source/tests establish actual behavior.
+3. Read current durable contracts in `docs/architecture/`, the operational handoff in `docs/handoffs/current.md`, and any baseline document linked from the docs index.
+4. Query Jira directly. For candidate work, inspect description, acceptance criteria, comments/evidence, parent/child relations, blockers and current status; do not select work solely by issue number, backlog order or a satisfied technical dependency.
+5. Reconcile repository, CI, docs and Jira. If a likely next story still depends on product discovery, an unresolved decision or an operational blocker, **do not materialize or implement it**. Identify another safely independent candidate when one exists.
+6. Before implementation, report a concise diagnosis: verified baseline, discrepancies, stories that can actually advance, blocking decisions and the recommended next intervention. Do not create issues/branches or mutate Jira during this diagnostic unless the user has already approved that bounded action.
+7. Never use chat memory as project authority. Every completed story must leave enough durable repository/Jira evidence for this bootstrap to work without the previous conversation.
 
 ## Engineering boundaries
 - WordPress remains the host: PHP and WordPress APIs own server-side business rules and authorization.
@@ -41,14 +52,15 @@
 - No credential, secret, personal guest data or production database export in Git.
 
 ## Testing and verification
-- Use RED -> GREEN -> refactor for new/changed behavior where a focused automated test can express the contract economically.
-- First establish a focused expected-failure test and confirm RED for the intended reason. Environmental/bootstrap failures do not count.
-- Change the smallest coherent production behavior needed for GREEN. Record actual outcomes; request diagnostics only on unexpected failures.
-- Prefer targeted tests during implementation; reserve full suite, static analysis, security-relevant verification, plugin activation walkthrough and acceptance review for story closure.
-- WEM-5/6/7 established PHPUnit, compact Docker TDD and CI. Interactive commands: `pnpm tdd:red tests/Unit/ExampleTest.php` (expected assertion RED), `pnpm tdd tests/Unit/ExampleTest.php` (tests and PHP syntax GREEN), and equivalent `tests/Integration/` paths. Use `-v`/`--verbose` to reveal diagnostics. Default mode output is `RED`, `GREEN` or `ERROR`. The refined pnpm frontend and verbosity controls are pending local verification under WEM-8; do not attribute the prior WEM-6 gate results to them until rerun.
-- WordPress local runtime uses Docker/`wp-env`; any local config must avoid credentials and environment secrets. Maintain pnpm as the canonical JS package manager; commit `pnpm-lock.yaml`, not an npm lockfile once pnpm setup is migrated.
-- **Database isolation is mandatory:** `.wp-env.test.json` (manual browser/admin, port 8890) and `.wp-env.phpunit.json` (WordPress PHPUnit, port 8892) must stay independent. Start the PHPUnit site using `pnpm wp:phpunit:start` before first run; `pnpm tdd` and CI integration must use only `.wp-env.phpunit.json`, never the manual site's CLI. WordPress test bootstrap can alter site options, including plugin activation. Do not reset, drop or auto-repair the manual site's database after PHPUnit; first run `pnpm test:wp-isolation` and confirm its plugin stays Active after the integration suite.
-- When asking the user for commands, use Bash-compatible syntax.
+- Use RED → GREEN → refactor for new/changed behavior when a focused automated test can express the contract economically. Do not manufacture RED for audits, documentation-only reconciliation or administrative Jira work.
+- First establish a focused expected assertion failure and confirm RED for the intended reason; bootstrap/environment errors are not behavioral RED.
+- After an approved cycle, implement the smallest coherent change for GREEN and continue directly to the next approved RED. Request diagnostics only on unexpected failures or when evidence is insufficient to distinguish product code from infrastructure.
+- Prefer focused tests during implementation. Run full applicable suites/static/security gates and manual walkthroughs at story closure, but reuse already-valid exact-SHA evidence unless a relevant change invalidated it.
+- Canonical interactive commands are `pnpm tdd:red tests/Unit/ExampleTest.php` and `pnpm tdd tests/Unit/ExampleTest.php`, with equivalent Integration paths. Use `-v`/`--verbose` only when diagnostics are needed. Normal output is `RED`, `GREEN` or `ERROR`.
+- WordPress local runtime uses Docker/`wp-env`; pnpm is the canonical JS package manager. Never commit credentials, local database exports or production data.
+- **Database isolation is mandatory:** `.wp-env.test.json` is the manual browser/admin site on port 8890; `.wp-env.phpunit.json` is the WordPress PHPUnit site on port 8892. `pnpm tdd` and CI integration must use only the PHPUnit configuration. Never point WordPress Core tests at the manual site.
+- Current commands and gate scope live in `docs/testing.md`; do not recover obsolete commands from old Jira comments or chat history.
+- When user execution is genuinely required, use Bash-compatible commands and ask only for the missing local result.
 
 ## Docs and closure
 - Repository docs and agent instructions are written in English. Product language/localization decisions are separate.
