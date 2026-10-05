@@ -67,6 +67,51 @@ final class StaffScopedCheckinTransitionTest extends WP_Ajax_UnitTestCase
         self::assertSame('', (string) get_post_meta($guestB, 'wem_checkin_by', true));
     }
 
+
+    public function testReentryDeniesCheckoutWithoutPriorCheckinAndPreservesState(): void
+    {
+        $event = wp_insert_term('WEM-22 Invalid Reentry Event', 'evento');
+        self::assertNotWPError($event);
+
+        $eventId = (int) $event['term_id'];
+        $guestId = $this->createGuest('WEM-22 Invalid Reentry Guest', $eventId);
+
+        update_post_meta($guestId, 'wem_checkout', 1);
+        update_post_meta($guestId, 'wem_checkout_at', '2026-10-05 10:00:00');
+        update_post_meta($guestId, 'wem_checkout_by', 'preexisting-operator');
+
+        $operatorId = self::factory()->user->create(['role' => 'subscriber']);
+        $operator = get_user_by('id', $operatorId);
+        self::assertInstanceOf(\WP_User::class, $operator);
+
+        $operator->add_cap('wem_operate_event_guests');
+        update_user_meta($operatorId, 'wem_authorized_event_ids', [$eventId]);
+        wp_set_current_user($operatorId);
+
+        $_POST = [
+            'action' => 'wem_checkin_ajax',
+            'post_id' => $guestId,
+            'check_action' => 'checkin_again',
+            'observ' => '',
+            'nonce' => wp_create_nonce('wem_checkin_nonce'),
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_checkin_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // JSON response completed.
+        }
+
+        self::assertFalse((bool) json_decode($this->_last_response, true)['success']);
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin_at', true));
+        self::assertSame('', (string) get_post_meta($guestId, 'wem_checkin_by', true));
+        self::assertSame('1', (string) get_post_meta($guestId, 'wem_checkout', true));
+        self::assertSame('2026-10-05 10:00:00', (string) get_post_meta($guestId, 'wem_checkout_at', true));
+        self::assertSame('preexisting-operator', (string) get_post_meta($guestId, 'wem_checkout_by', true));
+    }
+
     private function dispatchCheckin(int $guestId): void
     {
         $_POST = [
