@@ -26,14 +26,20 @@ class WEM_Ajax_Handler {
     }
     
     public function handle_list_ajax() {
-        // WEM-11: deny all guest access until WEM-13 establishes authorization.
-        wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
 
         $q = isset($_POST['q']) ? wem_sanitize_search_query($_POST['q']) : '';
         $evento = isset($_POST['evento']) ? wem_sanitize_search_query($_POST['evento']) : '';
         $mesa = isset($_POST['mesa']) ? wem_sanitize_search_query($_POST['mesa']) : '';
-        
-        $posts = $this->get_filtered_invitados($q, $evento, $mesa);
+
+        $event_id = $this->get_authorized_list_event_id($evento);
+        if (!$event_id) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
+
+        $posts = $this->get_filtered_invitados($q, $event_id, $mesa);
         $this->render_list_table($posts);
     }
     
@@ -127,7 +133,31 @@ class WEM_Ajax_Handler {
         delete_post_meta($post_id, 'wem_checkout_by');
     }
     
-    private function get_filtered_invitados($q, $evento, $mesa) {
+    private function get_authorized_list_event_id($event_slug) {
+        if (!$event_slug) {
+            return 0;
+        }
+
+        $term = get_term_by('slug', $event_slug, 'evento');
+        if (!$term || is_wp_error($term)) {
+            return 0;
+        }
+
+        $user_id = get_current_user_id();
+        if (
+            !user_can($user_id, 'manage_options')
+            && (
+                !user_can($user_id, 'wem_view_event_guests')
+                || !in_array((int) $term->term_id, WEM_Authorization::get_authorized_event_ids($user_id), true)
+            )
+        ) {
+            return 0;
+        }
+
+        return (int) $term->term_id;
+    }
+
+    private function get_filtered_invitados($q, $event_id, $mesa) {
         $args = array(
             'post_type' => 'invitado',
             'posts_per_page' => 200,
@@ -161,14 +191,11 @@ class WEM_Ajax_Handler {
             }
         }
         
-        // Filtro por evento
-        if ($evento) {
-            $args['tax_query'] = array(array(
-                'taxonomy' => 'evento',
-                'field' => 'slug',
-                'terms' => $evento
-            ));
-        }
+        $args['tax_query'] = array(array(
+            'taxonomy' => 'evento',
+            'field' => 'term_id',
+            'terms' => $event_id
+        ));
         
         return get_posts($args);
     }
