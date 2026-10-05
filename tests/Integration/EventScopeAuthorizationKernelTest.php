@@ -81,6 +81,60 @@ final class EventScopeAuthorizationKernelTest extends WP_UnitTestCase
         );
     }
 
+    public function testViewAndOperateAuthorizationRequireCapabilityAndMatchingEventScope(): void
+    {
+        $eventAId = $this->createEvent('WEM-20 Scoped Event A');
+        $eventBId = $this->createEvent('WEM-20 Scoped Event B');
+        $guestA = $this->createGuestForEvent('WEM-20 Scoped Guest A', $eventAId);
+        $guestB = $this->createGuestForEvent('WEM-20 Scoped Guest B', $eventBId);
+
+        $noCapabilityUserId = self::factory()->user->create(['role' => 'subscriber']);
+        $viewerId = self::factory()->user->create(['role' => 'subscriber']);
+        $operatorId = self::factory()->user->create(['role' => 'subscriber']);
+
+        $viewer = get_user_by('id', $viewerId);
+        $operator = get_user_by('id', $operatorId);
+
+        self::assertInstanceOf(\WP_User::class, $viewer);
+        self::assertInstanceOf(\WP_User::class, $operator);
+
+        $viewer->add_cap('wem_view_event_guests');
+        $operator->add_cap('wem_view_event_guests');
+        $operator->add_cap('wem_operate_event_guests');
+
+        update_user_meta($viewerId, 'wem_authorized_event_ids', [$eventAId]);
+        update_user_meta($operatorId, 'wem_authorized_event_ids', [$eventAId]);
+
+        self::assertSame([$eventAId], \WEM_Authorization::get_authorized_event_ids($viewerId));
+
+        self::assertFalse(\WEM_Authorization::can_view_guest(0, $guestA));
+        self::assertFalse(\WEM_Authorization::can_view_guest($noCapabilityUserId, $guestA));
+
+        self::assertTrue(\WEM_Authorization::can_view_guest($viewerId, $guestA));
+        self::assertFalse(\WEM_Authorization::can_view_guest($viewerId, $guestB));
+        self::assertFalse(\WEM_Authorization::can_operate_guest($viewerId, $guestA));
+
+        self::assertTrue(\WEM_Authorization::can_view_guest($operatorId, $guestA));
+        self::assertTrue(\WEM_Authorization::can_operate_guest($operatorId, $guestA));
+        self::assertFalse(\WEM_Authorization::can_operate_guest($operatorId, $guestB));
+    }
+
+    private function createEvent(string $name): int
+    {
+        $term = wp_insert_term($name, 'evento');
+        self::assertNotWPError($term);
+
+        return (int) $term['term_id'];
+    }
+
+    private function createGuestForEvent(string $title, int $eventId): int
+    {
+        $guestId = $this->createGuest($title);
+        wp_set_object_terms($guestId, [$eventId], 'evento', false);
+
+        return $guestId;
+    }
+
     private function createGuest(string $title): int
     {
         return self::factory()->post->create(
