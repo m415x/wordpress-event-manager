@@ -83,6 +83,42 @@ final class CsvImportAccountingTest extends WP_UnitTestCase
         self::assertSame(['count' => 0, 'skipped' => 1, 'updated' => 0], $counts);
     }
 
+    public function testRepeatedGuestWithinOneImportCountsCreateThenUpdate(): void
+    {
+        $this->ensureEvent('WEM CSV Event D');
+
+        $counts = $this->importRows([
+            ['Repeated Ticket', 'First value', 'Org A', '1', 'WEM CSV Event D', 'First note', '0'],
+            ['Repeated Ticket', 'Second value', 'Org B', '2', 'WEM CSV Event D', 'Second note', '1'],
+        ], true);
+
+        self::assertSame(['count' => 1, 'skipped' => 0, 'updated' => 1], $counts);
+
+        $guestId = $this->guestId('Repeated Ticket', 'WEM CSV Event D');
+        self::assertGreaterThan(0, $guestId);
+        self::assertSame('Second value', get_post_meta($guestId, 'wem_nombre', true));
+        self::assertSame('Org B', get_post_meta($guestId, 'wem_organizacion', true));
+        self::assertSame('2', get_post_meta($guestId, 'wem_mesa', true));
+        self::assertSame('Second note', get_post_meta($guestId, 'wem_observaciones', true));
+        self::assertSame('1', (string) get_post_meta($guestId, 'wem_checkin', true));
+        self::assertNotSame('', (string) get_post_meta($guestId, 'wem_checkin_at', true));
+    }
+
+    public function testEstablishedCsvHeaderAndEncodingContractRemainStable(): void
+    {
+        $header = ['titulo', 'nombre', 'organizacion', 'mesa', 'evento', 'observaciones', 'checkin'];
+        self::assertSame(
+            $header,
+            ['titulo', 'nombre', 'organizacion', 'mesa', 'evento', 'observaciones', 'checkin']
+        );
+
+        $encodingMethod = new ReflectionMethod(\WEM_Import_Export::class, 'wem_force_utf8');
+        $cp1252 = "Jos\xE9";
+
+        self::assertSame('José', $encodingMethod->invoke($this->importer, $cp1252));
+        self::assertSame('José', $encodingMethod->invoke($this->importer, 'José'));
+    }
+
     private function importRows(array $rows, bool $updateExisting): array
     {
         $header = ['titulo', 'nombre', 'organizacion', 'mesa', 'evento', 'observaciones', 'checkin'];
