@@ -119,6 +119,44 @@ final class EventScopeAuthorizationKernelTest extends WP_UnitTestCase
         self::assertFalse(\WEM_Authorization::can_operate_guest($operatorId, $guestB));
     }
 
+
+    public function testGlobalAdminScopeStillRequiresValidSingleEventGuestResource(): void
+    {
+        $eventAId = $this->createEvent('WEM-20 Admin Event A');
+        $eventBId = $this->createEvent('WEM-20 Admin Event B');
+
+        $guestA = $this->createGuestForEvent('WEM-20 Admin Guest A', $eventAId);
+        $guestB = $this->createGuestForEvent('WEM-20 Admin Guest B', $eventBId);
+        $noEventGuest = $this->createGuest('WEM-20 Admin No Event Guest');
+        $multiEventGuest = $this->createGuest('WEM-20 Admin Multi Event Guest');
+        wp_set_object_terms($multiEventGuest, [$eventAId, $eventBId], 'evento', false);
+
+        $nonGuestPostId = self::factory()->post->create(
+            [
+                'post_type' => 'post',
+                'post_title' => 'WEM-20 Non Guest Resource',
+                'post_status' => 'publish',
+            ]
+        );
+        wp_set_object_terms($nonGuestPostId, [$eventAId], 'evento', false);
+
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+
+        self::assertSame([], \\WEM_Authorization::get_authorized_event_ids($adminId));
+
+        self::assertTrue(\\WEM_Authorization::can_view_guest($adminId, $guestA));
+        self::assertTrue(\\WEM_Authorization::can_view_guest($adminId, $guestB));
+        self::assertTrue(\\WEM_Authorization::can_operate_guest($adminId, $guestA));
+        self::assertTrue(\\WEM_Authorization::can_operate_guest($adminId, $guestB));
+
+        self::assertFalse(\\WEM_Authorization::can_view_guest($adminId, $noEventGuest));
+        self::assertFalse(\\WEM_Authorization::can_operate_guest($adminId, $noEventGuest));
+        self::assertFalse(\\WEM_Authorization::can_view_guest($adminId, $multiEventGuest));
+        self::assertFalse(\\WEM_Authorization::can_operate_guest($adminId, $multiEventGuest));
+        self::assertFalse(\\WEM_Authorization::can_view_guest($adminId, $nonGuestPostId));
+        self::assertFalse(\\WEM_Authorization::can_operate_guest($adminId, $nonGuestPostId));
+    }
+
     private function createEvent(string $name): int
     {
         $term = wp_insert_term($name, 'evento');
