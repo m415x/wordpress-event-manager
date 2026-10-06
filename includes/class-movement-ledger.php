@@ -8,6 +8,8 @@ final class WEM_Movement_Ledger
 {
     public function append($movement)
     {
+        $this->assert_canonical_movement($movement);
+
         global $wpdb;
 
         $movement_id = wp_generate_uuid4();
@@ -36,6 +38,43 @@ final class WEM_Movement_Ledger
             'sequence' => (int) $wpdb->insert_id,
             'movement_id' => $movement_id,
         );
+    }
+
+    private function assert_canonical_movement($movement)
+    {
+        if (!is_array($movement)) {
+            throw new InvalidArgumentException('Movement must be an array.');
+        }
+
+        foreach (array('guest_id', 'event_term_id', 'movement_type', 'occurred_at', 'actor_user_id', 'source', 'decision') as $required) {
+            if (!array_key_exists($required, $movement)) {
+                throw new InvalidArgumentException('Missing movement field: ' . $required);
+            }
+        }
+
+        if ((int) $movement['guest_id'] <= 0) {
+            throw new InvalidArgumentException('guest_id must be a positive integer.');
+        }
+
+        if ((int) $movement['event_term_id'] <= 0) {
+            throw new InvalidArgumentException('event_term_id must be a positive integer.');
+        }
+
+        if ((int) $movement['actor_user_id'] <= 0) {
+            throw new InvalidArgumentException('actor_user_id must be a positive integer.');
+        }
+
+        if (!in_array((string) $movement['movement_type'], array('checkin', 'checkout', 'reentry'), true)) {
+            throw new InvalidArgumentException('Unsupported movement_type.');
+        }
+
+        if ((string) $movement['source'] !== 'staff_web') {
+            throw new InvalidArgumentException('Unsupported movement source.');
+        }
+
+        if ((string) $movement['decision'] !== 'accepted') {
+            throw new InvalidArgumentException('Movement ledger stores accepted decisions only.');
+        }
     }
 
     public function find_by_guest_event($guest_id, $event_term_id)
