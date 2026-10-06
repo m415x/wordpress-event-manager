@@ -39,6 +39,86 @@ final class WEM_Movement_Service
         );
     }
 
+    public function reassign_event($guest_id, $current_event_term_id, $new_event_term_id)
+    {
+        global $wpdb;
+
+        $guest_id = (int) $guest_id;
+        $current_event_term_id = (int) $current_event_term_id;
+        $new_event_term_id = (int) $new_event_term_id;
+
+        $wpdb->query('START TRANSACTION');
+
+        try {
+            $locked_guest_id = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts} WHERE ID = %d FOR UPDATE",
+                    $guest_id
+                )
+            );
+
+            if ((int) $locked_guest_id !== $guest_id) {
+                throw new RuntimeException('Guest could not be serialized.');
+            }
+
+            $canonical_event_id = WEM_Authorization::get_guest_event_term_id($guest_id);
+            if ((int) $canonical_event_id !== $current_event_term_id) {
+                throw new RuntimeException('Guest event scope changed before reassignment.');
+            }
+
+            $projection_checkin = (bool) get_post_meta($guest_id, 'wem_checkin', true);
+            $projection_checkout = (bool) get_post_meta($guest_id, 'wem_checkout', true);
+
+            $ledger = new WEM_Movement_Ledger();
+            $history = $ledger->find_by_guest_event($guest_id, $current_event_term_id);
+
+            if (!$this->projection_matches_ledger($history, $projection_checkin, $projection_checkout)) {
+                throw new RuntimeException('Movement ledger and projection are inconsistent.');
+            }
+
+            if ($projection_checkin && !$projection_checkout) {
+                throw new RuntimeException('Guest must be outside before event reassignment.');
+            }
+
+            $new_event = get_term($new_event_term_id, 'evento');
+            if (!$new_event || is_wp_error($new_event)) {
+                throw new RuntimeException('Target event is invalid.');
+            }
+
+            $assigned = wp_set_object_terms(
+                $guest_id,
+                array($new_event_term_id),
+                'evento',
+                false
+            );
+
+            if (is_wp_error($assigned)) {
+                throw new RuntimeException('Unable to reassign guest event.');
+            }
+
+            delete_post_meta($guest_id, 'wem_checkin');
+            delete_post_meta($guest_id, 'wem_checkin_at');
+            delete_post_meta($guest_id, 'wem_checkin_by');
+            delete_post_meta($guest_id, 'wem_checkout');
+            delete_post_meta($guest_id, 'wem_checkout_at');
+            delete_post_meta($guest_id, 'wem_checkout_by');
+
+            $wpdb->query('COMMIT');
+
+            return array(
+                'ok' => true,
+                'state' => 'outside',
+                'event_term_id' => $new_event_term_id,
+            );
+        } catch (Throwable $exception) {
+            $wpdb->query('ROLLBACK');
+            clean_object_term_cache($guest_id, 'invitado');
+            wp_cache_delete($guest_id, 'post_meta');
+
+            throw $exception;
+        }
+    }
+
     private function transition($guest_id, $event_term_id, $actor_user_id, $source, $movement_type)
     {
         global $wpdb;
