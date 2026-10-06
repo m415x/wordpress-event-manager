@@ -77,6 +77,34 @@ final class StaffOperationalClosureTest extends WP_Ajax_UnitTestCase
     }
 
 
+
+    public function testListCheckinSuccessReloadsTheOperationalPage(): void
+    {
+        $event = wp_insert_term('WEM-24 List Refresh Event', 'evento');
+        self::assertNotWPError($event);
+
+        $eventId = (int) $event['term_id'];
+
+        $staffId = self::factory()->user->create(['role' => 'subscriber']);
+        $staff = get_user_by('id', $staffId);
+        self::assertInstanceOf(\WP_User::class, $staff);
+
+        $staff->add_cap('wem_view_event_guests');
+        self::assertTrue(\WEM_Authorization::set_authorized_event_ids($staffId, [$eventId]));
+        wp_set_current_user($staffId);
+
+        $term = get_term($eventId, 'evento');
+        self::assertInstanceOf(\WP_Term::class, $term);
+
+        $list = do_shortcode('[wem_list event="' . $term->slug . '"]');
+
+        self::assertStringContainsString(
+            "if(res.success){\n                                location.reload();",
+            $list,
+            'A successful list check-in must refresh the whole operational page so colocated guest detail stays in sync.'
+        );
+    }
+
     public function testAuthenticatedStaffSessionCoversListCheckinCheckoutAndReentry(): void
     {
         $event = wp_insert_term('WEM-24 Lifecycle Event', 'evento');
