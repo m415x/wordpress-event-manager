@@ -17,6 +17,17 @@ final class WEM_Movement_Service
         $wpdb->query('START TRANSACTION');
 
         try {
+            $locked_guest_id = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts} WHERE ID = %d FOR UPDATE",
+                    $guest_id
+                )
+            );
+
+            if ((int) $locked_guest_id !== $guest_id) {
+                throw new RuntimeException('Guest could not be serialized.');
+            }
+
             $already_inside = get_post_meta($guest_id, 'wem_checkin', true)
                 && !get_post_meta($guest_id, 'wem_checkout', true);
 
