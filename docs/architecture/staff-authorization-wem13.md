@@ -1,7 +1,7 @@
 # WEM-13 — Staff event-scoped authorization contract
 
-Status: **approved and frozen before runtime implementation** (2026-10-05).
-Jira: WEM-13. This contract replaces no WEM-11 public fail-closed guard by itself.
+Status: **implemented and verified for authenticated staff/admin operations** (2026-10-06). The authorization model was frozen before runtime implementation on 2026-10-05.
+Jira: WEM-13. WEM-11 remains the public fail-closed boundary; WEM-13 relaxes only the explicitly tested authenticated staff/admin paths.
 
 ## Purpose
 
