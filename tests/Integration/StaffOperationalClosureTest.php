@@ -101,7 +101,8 @@ final class StaffOperationalClosureTest extends WP_Ajax_UnitTestCase
         self::assertStringContainsString(
             "if(res.success){\n                                location.reload();",
             $list,
-            'A successful list check-in must refresh the whole operational page so colocated guest detail stays in sync.'
+            'A successful list check-in must refresh the whole operational page '
+            . 'so colocated guest detail stays in sync.'
         );
     }
 
