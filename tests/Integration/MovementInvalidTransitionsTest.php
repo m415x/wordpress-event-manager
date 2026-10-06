@@ -128,8 +128,16 @@ final class MovementInvalidTransitionsTest extends WP_UnitTestCase
 
         $history = $ledger->find_by_guest_event($guestId, $eventId);
 
-        self::assertSame($expectedTypes, array_column($history, 'movement_type'));
-        self::assertSame($expectedProjection, $this->projectionSnapshot($guestId));
+        self::assertSame(
+            $expectedTypes,
+            array_column($history, 'movement_type'),
+            'Rejected transition changed ledger history.'
+        );
+        self::assertSame(
+            $expectedProjection,
+            $this->projectionSnapshot($guestId),
+            'Rejected transition changed the mutable projection.'
+        );
     }
 
     private function projectionSnapshot(int $guestId): array
