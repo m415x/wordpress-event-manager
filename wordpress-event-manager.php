@@ -38,6 +38,8 @@ spl_autoload_register(function ($class) {
 
 require_once WEM_PATH . 'includes/helpers.php';
 
+register_activation_hook(__FILE__, array('WEM_Movement_Schema', 'install'));
+
 add_action('plugins_loaded', function () {
     new WEM_CPT_Manager();
     new WEM_Taxonomy_Manager();
