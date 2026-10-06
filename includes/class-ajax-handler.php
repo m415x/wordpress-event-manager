@@ -250,8 +250,11 @@ class WEM_Ajax_Handler {
         $evento_name = $terms ? $terms[0]->name : '';
         $evento_slug = $terms ? $terms[0]->slug : '';
         
-        $checkin_url = $evento_slug ? 
-            home_url("/{$evento_slug}/?ticket=" . $post->post_title) : '#';
+        $event_page = $evento_slug ? get_page_by_path($evento_slug, OBJECT, 'page') : null;
+        $ticket = $data['ticket'] ?: $post->post_title;
+        $checkin_url = $event_page
+            ? add_query_arg('ticket', $ticket, get_permalink($event_page))
+            : '#';
         ?>
         
         <tr class="wem-clickable-row" data-href="<?php echo esc_url($checkin_url); ?>" style="cursor: pointer;">
