@@ -168,17 +168,26 @@ final class WEM_Movement_Service
 
     private function project_inside($guest_id, $occurred_at, $operator)
     {
-        if (update_post_meta($guest_id, 'wem_checkin', 1) === false) {
-            throw new RuntimeException('Unable to update checkin projection.');
-        }
+        $this->write_projection_meta(
+            $guest_id,
+            'wem_checkin',
+            1,
+            'Unable to update checkin projection.'
+        );
 
-        if (update_post_meta($guest_id, 'wem_checkin_at', $occurred_at) === false) {
-            throw new RuntimeException('Unable to update checkin time projection.');
-        }
+        $this->write_projection_meta(
+            $guest_id,
+            'wem_checkin_at',
+            $occurred_at,
+            'Unable to update checkin time projection.'
+        );
 
-        if (update_post_meta($guest_id, 'wem_checkin_by', $operator) === false) {
-            throw new RuntimeException('Unable to update checkin actor projection.');
-        }
+        $this->write_projection_meta(
+            $guest_id,
+            'wem_checkin_by',
+            $operator,
+            'Unable to update checkin actor projection.'
+        );
 
         delete_post_meta($guest_id, 'wem_checkout');
         delete_post_meta($guest_id, 'wem_checkout_at');
@@ -187,17 +196,43 @@ final class WEM_Movement_Service
 
     private function project_checkout($guest_id, $occurred_at, $operator)
     {
-        if (update_post_meta($guest_id, 'wem_checkout', 1) === false) {
-            throw new RuntimeException('Unable to update checkout projection.');
+        $this->write_projection_meta(
+            $guest_id,
+            'wem_checkout',
+            1,
+            'Unable to update checkout projection.'
+        );
+
+        $this->write_projection_meta(
+            $guest_id,
+            'wem_checkout_at',
+            $occurred_at,
+            'Unable to update checkout time projection.'
+        );
+
+        $this->write_projection_meta(
+            $guest_id,
+            'wem_checkout_by',
+            $operator,
+            'Unable to update checkout actor projection.'
+        );
+    }
+
+    private function write_projection_meta($guest_id, $meta_key, $value, $error_message)
+    {
+        $updated = update_post_meta($guest_id, $meta_key, $value);
+
+        if ($updated !== false) {
+            return;
         }
 
-        if (update_post_meta($guest_id, 'wem_checkout_at', $occurred_at) === false) {
-            throw new RuntimeException('Unable to update checkout time projection.');
+        $stored = get_post_meta($guest_id, $meta_key, true);
+
+        if ((string) $stored === (string) $value) {
+            return;
         }
 
-        if (update_post_meta($guest_id, 'wem_checkout_by', $operator) === false) {
-            throw new RuntimeException('Unable to update checkout actor projection.');
-        }
+        throw new RuntimeException($error_message);
     }
 
     private function operator_label($actor_user_id)
