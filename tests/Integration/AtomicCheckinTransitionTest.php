@@ -13,6 +13,15 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
         parent::setUp();
 
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+
+        if (!taxonomy_exists('evento')) {
+            register_taxonomy('evento', 'invitado');
+        }
+
+        if (!post_type_exists('invitado')) {
+            register_post_type('invitado', ['public' => false]);
+        }
+
         \WEM_Movement_Schema::install();
     }
 
