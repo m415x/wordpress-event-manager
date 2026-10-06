@@ -91,6 +91,12 @@ final class WEM_Movement_Service
             );
         } catch (Throwable $exception) {
             $wpdb->query('ROLLBACK');
+
+            // WordPress metadata writes update object cache before the SQL
+            // transaction outcome is known. After rollback, discard that
+            // cache so subsequent reads reflect the restored database state.
+            wp_cache_delete($guest_id, 'post_meta');
+
             throw $exception;
         }
     }
