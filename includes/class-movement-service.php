@@ -8,6 +8,39 @@ final class WEM_Movement_Service
 {
     public function checkin($guest_id, $event_term_id, $actor_user_id, $source)
     {
+        return $this->transition(
+            $guest_id,
+            $event_term_id,
+            $actor_user_id,
+            $source,
+            'checkin'
+        );
+    }
+
+    public function checkout($guest_id, $event_term_id, $actor_user_id, $source)
+    {
+        return $this->transition(
+            $guest_id,
+            $event_term_id,
+            $actor_user_id,
+            $source,
+            'checkout'
+        );
+    }
+
+    public function reentry($guest_id, $event_term_id, $actor_user_id, $source)
+    {
+        return $this->transition(
+            $guest_id,
+            $event_term_id,
+            $actor_user_id,
+            $source,
+            'reentry'
+        );
+    }
+
+    private function transition($guest_id, $event_term_id, $actor_user_id, $source, $movement_type)
+    {
         global $wpdb;
 
         $guest_id = (int) $guest_id;
@@ -30,7 +63,6 @@ final class WEM_Movement_Service
 
             $projection_checkin = (bool) get_post_meta($guest_id, 'wem_checkin', true);
             $projection_checkout = (bool) get_post_meta($guest_id, 'wem_checkout', true);
-            $already_inside = $projection_checkin && !$projection_checkout;
 
             $ledger = new WEM_Movement_Ledger();
             $history = $ledger->find_by_guest_event($guest_id, $event_term_id);
@@ -39,9 +71,12 @@ final class WEM_Movement_Service
                 throw new RuntimeException('Movement ledger and projection are inconsistent.');
             }
 
-            if ($already_inside) {
-                throw new RuntimeException('Guest is already inside.');
-            }
+            $this->assert_transition_is_valid(
+                $movement_type,
+                $history,
+                $projection_checkin,
+                $projection_checkout
+            );
 
             $occurred_at = current_time('Y-m-d H:i:s');
 
@@ -49,7 +84,7 @@ final class WEM_Movement_Service
                 array(
                     'guest_id' => $guest_id,
                     'event_term_id' => $event_term_id,
-                    'movement_type' => 'checkin',
+                    'movement_type' => $movement_type,
                     'occurred_at' => $occurred_at,
                     'actor_user_id' => $actor_user_id,
                     'source' => (string) $source,
@@ -61,44 +96,117 @@ final class WEM_Movement_Service
                 throw new RuntimeException('Unable to append movement.');
             }
 
-            if (update_post_meta($guest_id, 'wem_checkin', 1) === false) {
-                throw new RuntimeException('Unable to update checkin projection.');
+            $operator = $this->operator_label($actor_user_id);
+
+            if ($movement_type === 'checkout') {
+                $this->project_checkout($guest_id, $occurred_at, $operator);
+                $state = 'outside';
+            } else {
+                $this->project_inside($guest_id, $occurred_at, $operator);
+                $state = 'inside';
             }
-
-            if (update_post_meta($guest_id, 'wem_checkin_at', $occurred_at) === false) {
-                throw new RuntimeException('Unable to update checkin time projection.');
-            }
-
-            $actor = get_userdata($actor_user_id);
-            $operator = $actor && $actor->exists()
-                ? ($actor->display_name ?: $actor->user_login)
-                : (string) $actor_user_id;
-
-            if (update_post_meta($guest_id, 'wem_checkin_by', $operator) === false) {
-                throw new RuntimeException('Unable to update checkin actor projection.');
-            }
-
-            delete_post_meta($guest_id, 'wem_checkout');
-            delete_post_meta($guest_id, 'wem_checkout_at');
-            delete_post_meta($guest_id, 'wem_checkout_by');
 
             $wpdb->query('COMMIT');
 
             return array(
                 'ok' => true,
-                'state' => 'inside',
+                'state' => $state,
                 'movement' => $movement,
             );
         } catch (Throwable $exception) {
             $wpdb->query('ROLLBACK');
-
-            // WordPress metadata writes update object cache before the SQL
-            // transaction outcome is known. After rollback, discard that
-            // cache so subsequent reads reflect the restored database state.
             wp_cache_delete($guest_id, 'post_meta');
 
             throw $exception;
         }
+    }
+
+    private function assert_transition_is_valid($movement_type, $history, $projection_checkin, $projection_checkout)
+    {
+        $inside = $projection_checkin && !$projection_checkout;
+        $outside_after_checkout = $projection_checkin && $projection_checkout;
+
+        if ($movement_type === 'checkin') {
+            if ($inside) {
+                throw new RuntimeException('Guest is already inside.');
+            }
+
+            if ($outside_after_checkout) {
+                throw new RuntimeException('Guest must reenter after checkout.');
+            }
+
+            if (!empty($history)) {
+                throw new RuntimeException('Guest cannot perform an initial checkin after movement history exists.');
+            }
+
+            return;
+        }
+
+        if ($movement_type === 'checkout') {
+            if (!$inside) {
+                throw new RuntimeException('Guest is not inside.');
+            }
+
+            return;
+        }
+
+        if ($movement_type === 'reentry') {
+            if (!$outside_after_checkout) {
+                throw new RuntimeException('Guest cannot reenter.');
+            }
+
+            $last = $history[count($history) - 1] ?? array();
+            if (($last['movement_type'] ?? '') !== 'checkout') {
+                throw new RuntimeException('Guest cannot reenter.');
+            }
+
+            return;
+        }
+
+        throw new RuntimeException('Unsupported movement transition.');
+    }
+
+    private function project_inside($guest_id, $occurred_at, $operator)
+    {
+        if (update_post_meta($guest_id, 'wem_checkin', 1) === false) {
+            throw new RuntimeException('Unable to update checkin projection.');
+        }
+
+        if (update_post_meta($guest_id, 'wem_checkin_at', $occurred_at) === false) {
+            throw new RuntimeException('Unable to update checkin time projection.');
+        }
+
+        if (update_post_meta($guest_id, 'wem_checkin_by', $operator) === false) {
+            throw new RuntimeException('Unable to update checkin actor projection.');
+        }
+
+        delete_post_meta($guest_id, 'wem_checkout');
+        delete_post_meta($guest_id, 'wem_checkout_at');
+        delete_post_meta($guest_id, 'wem_checkout_by');
+    }
+
+    private function project_checkout($guest_id, $occurred_at, $operator)
+    {
+        if (update_post_meta($guest_id, 'wem_checkout', 1) === false) {
+            throw new RuntimeException('Unable to update checkout projection.');
+        }
+
+        if (update_post_meta($guest_id, 'wem_checkout_at', $occurred_at) === false) {
+            throw new RuntimeException('Unable to update checkout time projection.');
+        }
+
+        if (update_post_meta($guest_id, 'wem_checkout_by', $operator) === false) {
+            throw new RuntimeException('Unable to update checkout actor projection.');
+        }
+    }
+
+    private function operator_label($actor_user_id)
+    {
+        $actor = get_userdata($actor_user_id);
+
+        return $actor && $actor->exists()
+            ? ($actor->display_name ?: $actor->user_login)
+            : (string) $actor_user_id;
     }
 
     private function projection_matches_ledger($history, $projection_checkin, $projection_checkout)
