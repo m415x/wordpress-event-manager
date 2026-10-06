@@ -78,6 +78,60 @@ final class StaffOperationalClosureTest extends WP_Ajax_UnitTestCase
 
 
 
+
+    public function testListRowUsesTheRealEventPagePermalink(): void
+    {
+        update_option('permalink_structure', '');
+
+        $event = wp_insert_term('WEM-24 Permalink Event', 'evento');
+        self::assertNotWPError($event);
+
+        $eventId = (int) $event['term_id'];
+        $term = get_term($eventId, 'evento');
+        self::assertInstanceOf(\WP_Term::class, $term);
+
+        $pageId = self::factory()->post->create(
+            [
+                'post_type' => 'page',
+                'post_title' => 'WEM-24 Permalink Event',
+                'post_name' => $term->slug,
+                'post_status' => 'publish',
+            ]
+        );
+
+        $this->createGuest('WEM-24-PERMALINK', 'permalink-guest', $eventId);
+
+        $staffId = self::factory()->user->create(['role' => 'subscriber']);
+        $staff = get_user_by('id', $staffId);
+        self::assertInstanceOf(\WP_User::class, $staff);
+
+        $staff->add_cap('wem_view_event_guests');
+        self::assertTrue(\WEM_Authorization::set_authorized_event_ids($staffId, [$eventId]));
+        wp_set_current_user($staffId);
+
+        $_POST = [
+            'action' => 'wem_list_ajax',
+            'evento' => $term->slug,
+            'q' => '',
+            'mesa' => '',
+        ];
+        $_REQUEST = $_POST;
+
+        try {
+            $this->_handleAjax('wem_list_ajax');
+        } catch (\WPAjaxDieContinueException $exception) {
+            // HTML response is captured by WP_Ajax_UnitTestCase.
+        }
+
+        $expectedUrl = add_query_arg('ticket', 'WEM-24-PERMALINK', get_permalink($pageId));
+
+        self::assertStringContainsString(
+            esc_url($expectedUrl),
+            $this->_last_response,
+            'Operational row navigation must honor the active WordPress permalink mode.'
+        );
+    }
+
     public function testListCheckinSuccessReloadsTheOperationalPage(): void
     {
         $event = wp_insert_term('WEM-24 List Refresh Event', 'evento');
