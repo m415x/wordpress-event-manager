@@ -28,8 +28,16 @@ final class WEM_Movement_Service
                 throw new RuntimeException('Guest could not be serialized.');
             }
 
-            $already_inside = get_post_meta($guest_id, 'wem_checkin', true)
-                && !get_post_meta($guest_id, 'wem_checkout', true);
+            $projection_checkin = (bool) get_post_meta($guest_id, 'wem_checkin', true);
+            $projection_checkout = (bool) get_post_meta($guest_id, 'wem_checkout', true);
+            $already_inside = $projection_checkin && !$projection_checkout;
+
+            $ledger = new WEM_Movement_Ledger();
+            $history = $ledger->find_by_guest_event($guest_id, $event_term_id);
+
+            if (!$this->projection_matches_ledger($history, $projection_checkin, $projection_checkout)) {
+                throw new RuntimeException('Movement ledger and projection are inconsistent.');
+            }
 
             if ($already_inside) {
                 throw new RuntimeException('Guest is already inside.');
@@ -37,7 +45,6 @@ final class WEM_Movement_Service
 
             $occurred_at = current_time('Y-m-d H:i:s');
 
-            $ledger = new WEM_Movement_Ledger();
             $movement = $ledger->append(
                 array(
                     'guest_id' => $guest_id,
@@ -86,5 +93,25 @@ final class WEM_Movement_Service
             $wpdb->query('ROLLBACK');
             throw $exception;
         }
+    }
+
+    private function projection_matches_ledger($history, $projection_checkin, $projection_checkout)
+    {
+        if (empty($history)) {
+            return !$projection_checkin && !$projection_checkout;
+        }
+
+        $last = $history[count($history) - 1];
+        $movement_type = isset($last['movement_type']) ? (string) $last['movement_type'] : '';
+
+        if ($movement_type === 'checkout') {
+            return $projection_checkin && $projection_checkout;
+        }
+
+        if ($movement_type === 'checkin' || $movement_type === 'reentry') {
+            return $projection_checkin && !$projection_checkout;
+        }
+
+        return false;
     }
 }
