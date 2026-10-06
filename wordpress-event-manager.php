@@ -47,6 +47,9 @@ add_action('plugins_loaded', function () {
     $admin_columns = new WEM_Admin_Columns();
     $admin_columns->setup_columns();
 
+    $staff_assignment = new WEM_Staff_Assignment_Manager();
+    $staff_assignment->register_hooks();
+
     // WEM-11: register guest AJAX routes only with deny-all handlers.
     $ajax = new WEM_Ajax_Handler();
     $ajax->register_ajax_handlers();

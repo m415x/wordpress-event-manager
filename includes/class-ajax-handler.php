@@ -13,27 +13,49 @@ class WEM_Ajax_Handler {
     }
     
     public function handle_checkin_ajax() {
-        // WEM-11: deny all guest access until WEM-13 establishes authorization.
-        wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
+
+        $post_id = $this->get_valid_post_id();
+        $user_id = get_current_user_id();
+
+        if (!WEM_Authorization::can_operate_guest($user_id, $post_id)) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
 
         $this->verify_nonce('wem_checkin_nonce');
-        
-        $post_id = $this->get_valid_post_id();
+
         $observ = $this->get_sanitized_observ();
         $check_action = $this->get_check_action();
-        
+
         $this->process_checkin_action($post_id, $observ, $check_action);
     }
     
     public function handle_list_ajax() {
-        // WEM-11: deny all guest access until WEM-13 establishes authorization.
-        wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        if (!is_user_logged_in()) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
 
         $q = isset($_POST['q']) ? wem_sanitize_search_query($_POST['q']) : '';
         $evento = isset($_POST['evento']) ? wem_sanitize_search_query($_POST['evento']) : '';
         $mesa = isset($_POST['mesa']) ? wem_sanitize_search_query($_POST['mesa']) : '';
-        
-        $posts = $this->get_filtered_invitados($q, $evento, $mesa);
+
+        $event_id = $this->get_authorized_list_event_id($evento);
+        if (!$event_id) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
+        }
+
+        $posts = $this->get_filtered_invitados($q, $event_id, $mesa);
+        $posts = array_values(
+            array_filter(
+                $posts,
+                static function ($post) use ($event_id) {
+                    return WEM_Authorization::get_guest_event_term_id($post->ID) === $event_id;
+                }
+            )
+        );
+
         $this->render_list_table($posts);
     }
     
@@ -47,8 +69,9 @@ class WEM_Ajax_Handler {
     private function get_valid_post_id() {
         $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         if (!$post_id || get_post_type($post_id) !== 'invitado') {
-            wp_send_json_error('Ticket inválido');
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
         }
+
         return $post_id;
     }
     
@@ -115,19 +138,47 @@ class WEM_Ajax_Handler {
     }
     
     private function process_checkin_again($post_id, $current_time, $operator) {
+        $checked_in = get_post_meta($post_id, 'wem_checkin', true);
         $checked_out = get_post_meta($post_id, 'wem_checkout', true);
-        if (!$checked_out) wp_send_json_error('Invitado no ha salido');
-        
+
+        if (!$checked_in || !$checked_out) {
+            wp_send_json_error('Invitado no puede reingresar');
+        }
+
         update_post_meta($post_id, 'wem_checkin_at', $current_time);
         update_post_meta($post_id, 'wem_checkin_by', $operator);
-        
+
         // Limpiar checkout para permitir re-ingreso
         delete_post_meta($post_id, 'wem_checkout');
         delete_post_meta($post_id, 'wem_checkout_at');
         delete_post_meta($post_id, 'wem_checkout_by');
     }
     
-    private function get_filtered_invitados($q, $evento, $mesa) {
+    private function get_authorized_list_event_id($event_slug) {
+        if (!$event_slug) {
+            return 0;
+        }
+
+        $term = get_term_by('slug', $event_slug, 'evento');
+        if (!$term || is_wp_error($term)) {
+            return 0;
+        }
+
+        $user_id = get_current_user_id();
+        if (
+            !user_can($user_id, 'manage_options')
+            && (
+                !user_can($user_id, 'wem_view_event_guests')
+                || !in_array((int) $term->term_id, WEM_Authorization::get_authorized_event_ids($user_id), true)
+            )
+        ) {
+            return 0;
+        }
+
+        return (int) $term->term_id;
+    }
+
+    private function get_filtered_invitados($q, $event_id, $mesa) {
         $args = array(
             'post_type' => 'invitado',
             'posts_per_page' => 200,
@@ -161,14 +212,11 @@ class WEM_Ajax_Handler {
             }
         }
         
-        // Filtro por evento
-        if ($evento) {
-            $args['tax_query'] = array(array(
-                'taxonomy' => 'evento',
-                'field' => 'slug',
-                'terms' => $evento
-            ));
-        }
+        $args['tax_query'] = array(array(
+            'taxonomy' => 'evento',
+            'field' => 'term_id',
+            'terms' => $event_id
+        ));
         
         return get_posts($args);
     }
@@ -202,8 +250,11 @@ class WEM_Ajax_Handler {
         $evento_name = $terms ? $terms[0]->name : '';
         $evento_slug = $terms ? $terms[0]->slug : '';
         
-        $checkin_url = $evento_slug ? 
-            home_url("/{$evento_slug}/?ticket=" . $post->post_title) : '#';
+        $event_page = $evento_slug ? get_page_by_path($evento_slug, OBJECT, 'page') : null;
+        $ticket = $data['ticket'] ?: $post->post_title;
+        $checkin_url = $event_page
+            ? add_query_arg('ticket', $ticket, get_permalink($event_page))
+            : '#';
         ?>
         
         <tr class="wem-clickable-row" data-href="<?php echo esc_url($checkin_url); ?>" style="cursor: pointer;">

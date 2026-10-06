@@ -8,29 +8,61 @@ class WEM_Shortcode_Manager {
     }
     
     public function render_checkin_shortcode($atts) {
-        // WEM-11: deny guest access until WEM-13 authorizes event-scoped reads.
-        return '<p>Guest access is temporarily unavailable.</p>';
-
         $atts = shortcode_atts(array('event' => ''), $atts);
+
+        if (!is_user_logged_in()) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
+        $event_slug = isset($atts['event']) ? sanitize_title($atts['event']) : '';
+        $term = $event_slug ? get_term_by('slug', $event_slug, 'evento') : false;
+
+        if (!$term || is_wp_error($term)) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
         $ticket = $this->get_ticket_from_query();
-        
         if (!$ticket) {
-            return '<p>No se especificó ticket.</p>';
+            return '<p>Guest access is temporarily unavailable.</p>';
         }
-        
-        $invitado = $this->find_invitado($ticket, $atts['event']);
-        if (!$invitado) {
-            return '<p>Invitado no encontrado para el ticket: ' . esc_html($ticket) . '</p>';
+
+        $invitado = $this->find_invitado($ticket, $event_slug);
+        if (
+            !$invitado
+            || !WEM_Authorization::can_operate_guest(get_current_user_id(), $invitado->ID)
+            || WEM_Authorization::get_guest_event_term_id($invitado->ID) !== (int) $term->term_id
+        ) {
+            return '<p>Guest access is temporarily unavailable.</p>';
         }
-        
-        return $this->render_checkin_interface($invitado, $atts['event']);
+
+        return $this->render_checkin_interface($invitado, $event_slug);
     }
     
     public function render_list_shortcode($atts) {
-        // WEM-11: do not query or render guest details until WEM-13.
-        return '<p>Guest access is temporarily unavailable.</p>';
-
         $atts = shortcode_atts(array('event' => ''), $atts);
+
+        if (!is_user_logged_in()) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
+        $event_slug = isset($atts['event']) ? sanitize_title($atts['event']) : '';
+        $term = $event_slug ? get_term_by('slug', $event_slug, 'evento') : false;
+
+        if (!$term || is_wp_error($term)) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
+        $user_id = get_current_user_id();
+        if (
+            !user_can($user_id, 'manage_options')
+            && (
+                !user_can($user_id, 'wem_view_event_guests')
+                || !in_array((int) $term->term_id, WEM_Authorization::get_authorized_event_ids($user_id), true)
+            )
+        ) {
+            return '<p>Guest access is temporarily unavailable.</p>';
+        }
+
         ob_start();
         ?>
         <div class="wem-list-wrap">
@@ -134,12 +166,6 @@ class WEM_Shortcode_Manager {
             <button class="wem-btn checkout" id="wem_btn_checkout" data-postid="<?php echo esc_attr($post_id); ?>">
                 🚪 Registrar salida
             </button>
-            <?php
-        endif;
-        
-        if ($data['observaciones']):
-            ?>
-            <p class="wem-field-observaciones"><strong>Observaciones:</strong><br><?php echo nl2br(esc_html($data['observaciones'])); ?></p>
             <?php
         endif;
     }
@@ -318,8 +344,7 @@ class WEM_Shortcode_Manager {
                             body:data.toString()
                         }).then(r=>r.json()).then(res=>{
                             if(res.success){
-                                btn.classList.add('green');
-                                btn.textContent = 'Ingresó';
+                                location.reload();
                             } else {
                                 alert('Error: ' + (res.data || ''));
                                 btn.disabled = false;
