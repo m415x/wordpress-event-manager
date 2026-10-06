@@ -344,8 +344,7 @@ class WEM_Shortcode_Manager {
                             body:data.toString()
                         }).then(r=>r.json()).then(res=>{
                             if(res.success){
-                                btn.classList.add('green');
-                                btn.textContent = 'Ingresó';
+                                location.reload();
                             } else {
                                 alert('Error: ' + (res.data || ''));
                                 btn.disabled = false;
