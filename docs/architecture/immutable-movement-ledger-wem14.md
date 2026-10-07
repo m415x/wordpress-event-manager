@@ -1,6 +1,6 @@
 # WEM-14 — Immutable guest movement ledger and state projection
 
-Status: **contract implemented; closure verification pending** (2026-10-07).
+Status: **implemented, verified and integrated into `dev`** (2026-10-07).
 Jira: WEM-14. This contract extends the WEM-13 authenticated staff/admin transition boundary without replacing or duplicating its authorization rules.
 
 ## Purpose
@@ -181,4 +181,4 @@ The WEM-14 implementation now consists of:
 
 Focused integration evidence covers schema installation/rerun, append/read persistence, canonical ledger validation, transaction rollback, drift detection, guest serialization, valid and invalid transition cycles, event reassignment history preservation, and authorized/rejected AJAX boundaries.
 
-Final story closure still requires the WEM-30 full-suite, quality, HTTP/manual and CI/merge evidence. No statement in this section supersedes Jira execution evidence.
+Closure evidence is complete: local unit/integration and quality gates were GREEN; anonymous HTTP guards and the authenticated Event A lifecycle/cross-event denial walkthrough were GREEN; exact-head GitHub Actions run `37625472731` passed both required jobs; PR #4 merged into `dev` at `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`. Jira remains the authority for execution evidence.
