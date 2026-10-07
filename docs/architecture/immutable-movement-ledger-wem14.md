@@ -1,6 +1,6 @@
 # WEM-14 — Immutable guest movement ledger and state projection
 
-Status: **contract frozen; persistence implementation pending** (2026-10-06).
+Status: **contract implemented; closure verification pending** (2026-10-07).
 Jira: WEM-14. This contract extends the WEM-13 authenticated staff/admin transition boundary without replacing or duplicating its authorization rules.
 
 ## Purpose
@@ -166,3 +166,19 @@ Out of scope:
 - complete WordPress role redesign.
 
 Anonymous/public and legacy QR paths remain fail-closed until independently specified and verified.
+
+
+## Implemented runtime shape
+
+The WEM-14 implementation now consists of:
+
+- `WEM_Movement_Schema` creating the dedicated `wem_guest_movements` table through the plugin activation path;
+- `WEM_Movement_Ledger` exposing append/read persistence with canonical movement validation and UUID generation;
+- `WEM_Movement_Service` owning guest-serialized transactional checkin, checkout, reentry and outside-only event reassignment;
+- post-meta projection writes that distinguish a real write failure from WordPress's unchanged-value `false` return;
+- rollback cache invalidation so post-rollback reads observe restored database state;
+- AJAX operational integration that preserves the WEM-13 authorization and nonce preconditions before invoking the movement service.
+
+Focused integration evidence covers schema installation/rerun, append/read persistence, canonical ledger validation, transaction rollback, drift detection, guest serialization, valid and invalid transition cycles, event reassignment history preservation, and authorized/rejected AJAX boundaries.
+
+Final story closure still requires the WEM-30 full-suite, quality, HTTP/manual and CI/merge evidence. No statement in this section supersedes Jira execution evidence.
