@@ -1,4 +1,4 @@
-# Current operational handoff — WEM-14 closure
+# Current operational handoff — post WEM-14
 
 Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
@@ -8,8 +8,8 @@ Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + cur
 - WEM-12 CSV import accounting is **Listo** in Jira. PR #2 merged into `dev` at `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
 - WEM-13 event-scoped staff authorization is **Listo** and integrated into `dev` via PR #3 at merge `4f63cd01ad9583153e19c0d985394ab1267a075d`; WEM-19 through WEM-24 are closed.
 - The WEM-13 frozen contract remains in `docs/architecture/staff-authorization-wem13.md`.
-- WEM-14 is **En curso** on `feat/WEM-14-immutable-movement-ledger`, currently at closure subtask WEM-30.
-- WEM-25 through WEM-29 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface.
+- WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
+- WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -25,15 +25,14 @@ Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + cur
 - Roster navigation uses the real WordPress event-page permalink rather than assuming pretty permalinks.
 - Successful roster check-in reloads the operational page so list and colocated detail state remain synchronized.
 
-## Closure evidence
-- Final functional candidate before documentation: `b0393a3e14b67db78449f1dbe960b62e48ab392b`.
-- GitHub Actions on that SHA: PHP 8.3 lint/analysis/unit GREEN and isolated WordPress integration GREEN.
+## WEM-14 closure evidence
+- Final feature HEAD before merge: `c91220ace0b61f7b266ee26118fe987b56626663`.
+- GitHub Actions run `37625472731`: `WordPress isolated integration` SUCCESS and `PHP 8.3 lint, analysis and unit` SUCCESS.
+- Local gates GREEN: unit, full integration, TDD runner self-tests 15/15, local workflow helper, DB isolation, Composer strict, PHPCS and configured PHPStan.
 - Manual anonymous HTTP guards: `wem_checkin_ajax` and `wem_list_ajax` returned HTTP 403 with the fixed deny JSON.
-- Authenticated browser walkthrough verified Event A listing, guest detail, check-in, checkout, re-entry, Event B cross-scope denial and private-observation non-disclosure.
-- Manual follow-up defects were converted to regression tests and fixed:
-  - stale roster check-in UI → page reload on success;
-  - hardcoded pretty-permalink navigation → `get_permalink()` + `add_query_arg()`.
-- Final browser recheck confirmed both fixes.
+- Authenticated browser walkthrough verified Event A check-in → checkout → reentry, UI state updates, Event B cross-scope denial and private-observation non-disclosure.
+- Manual environment schema presence was verified explicitly as `wp_wem_guest_movements`; no historical movement reconstruction was performed.
+- PR #4 merged into `dev` at `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 
 ## Fresh-chat behavior
 A fresh chat should not carry operational workflow in its prompt. Follow `AGENTS.md`.
@@ -42,7 +41,7 @@ A fresh chat should not carry operational workflow in its prompt. Follow `AGENTS
 - Use GitHub/Jira connectors directly for remote evidence.
 - Ask the user only for genuinely local/manual evidence or a real product/domain decision.
 - Do not repeat tests/CI/walkthroughs merely to recreate exact-SHA evidence.
-- Resume WEM-14 from Jira and the immutable movement-ledger contract. Do not bypass WEM-13 authorization or invent legacy history.
+- Treat WEM-14 as integrated baseline. Select the next story from current Jira state; do not reopen WEM-14 unless a verified regression or approved follow-up requires it.
 
 ## Current testing workflow
 See `docs/testing.md` for authoritative commands.
@@ -55,7 +54,7 @@ See `docs/testing.md` for authoritative commands.
 ## Product boundaries still in force
 - WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
 - Public invitation/token/QR capability is still not implemented.
-- WEM-14 runtime movement persistence and authenticated AJAX integration are implemented. WEM-30 still owns full-suite/quality gates, real HTTP/manual boundary verification, CI/PR evidence, merge to `dev` and final Jira closure.
+- WEM-14 runtime movement persistence and authenticated AJAX integration are implemented, verified and integrated into `dev`.
 - No production deployment or production guest data is implied by completed local/CI evidence.
 
 ## WEM-14 active contract
@@ -83,17 +82,3 @@ See `docs/testing.md` for authoritative commands.
 - `wem_checkin_ajax` keeps WEM-13 authentication/capability/event-scope and nonce checks before delegating to the movement service.
 - Rejected authorization/request/transition attempts are not ledger movements.
 - Public/anonymous/legacy QR behavior remains outside WEM-14 and must stay fail-closed.
-
-## WEM-30 closure still required
-
-Run the authoritative commands from `docs/testing.md` on the final branch HEAD. Required evidence includes:
-
-- full unit and integration GREEN;
-- helper regression checks;
-- Composer strict validation;
-- configured PHPCS and PHPStan gates;
-- real HTTP anonymous guards on the manual environment;
-- bounded authenticated browser walkthrough for checkin → checkout → reentry and cross-event denial;
-- exact-head GitHub Actions success, PR review/merge evidence, and post-merge reconciliation in Jira/docs.
-
-Do not reuse pre-documentation evidence as final-head closure evidence if a relevant code/configuration change occurs.
