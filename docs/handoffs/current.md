@@ -10,7 +10,7 @@ Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + cur
 - The WEM-13 frozen contract remains in `docs/architecture/staff-authorization-wem13.md`.
 - WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 - WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
-- WEM-32 is **En curso** on `feat/WEM-32-staff-capability-provisioning`. WEM-44 freezes the provisioning contract; WEM-45–WEM-49 own implementation through closure.
+- WEM-32 is **En curso** on `feat/WEM-32-staff-capability-provisioning`. WEM-44 through WEM-48 are **Listo**; WEM-49 is **En curso** at final closure.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -96,3 +96,14 @@ See `docs/testing.md` for authoritative commands.
 - `wem_checkin_ajax` keeps WEM-13 authentication/capability/event-scope and nonce checks before delegating to the movement service.
 - Rejected authorization/request/transition attempts are not ledger movements.
 - Public/anonymous/legacy QR behavior remains outside WEM-14 and must stay fail-closed.
+
+
+## WEM-32 closure evidence in progress
+
+- Candidate HEAD before final documentation: `37e680cafdad6355525d5a220b3289851c6b6b99`.
+- GitHub Actions run `37641449272`: `WordPress isolated integration` SUCCESS and `PHP 8.3 lint, analysis and unit` SUCCESS.
+- Automated lifecycle coverage includes canonical/non-canonical detection, explicit None/Viewer/Operator convergence, role/non-WEM capability preservation, no automatic grants to built-in roles, activation/reactivation/deactivation non-mutation, external-role convergence and deleted/unknown users.
+- Operational regressions using real provisioning cover scoped Viewer/Operator behavior, revoke with persisted scope, cross-event denial, guest cardinality and public fail-closed boundaries.
+- Real WordPress walkthrough passed user creation, Viewer grant, Viewer→Operator, check-in→checkout→reentry, Operator→Viewer immediate downgrade, revoke to None with scope retained, unchanged WordPress role, ordinary-user denial and deleted-user cleanup.
+- Manual anonymous HTTP guards GREEN: `wem_checkin_ajax` and `wem_list_ajax` returned HTTP 403 with the fixed deny-all JSON.
+- Remaining closure steps: final documentation commit, exact-head CI, PR merge to `dev`, post-merge reconciliation and Jira closure.
