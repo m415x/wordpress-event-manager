@@ -1,4 +1,4 @@
-# Current operational handoff — WEM-32 staff provisioning
+# Current operational handoff — post WEM-32
 
 Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
@@ -10,7 +10,7 @@ Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + cur
 - The WEM-13 frozen contract remains in `docs/architecture/staff-authorization-wem13.md`.
 - WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 - WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
-- WEM-32 is **En curso** on `feat/WEM-32-staff-capability-provisioning`. WEM-44 through WEM-48 are **Listo**; WEM-49 is **En curso** at final closure.
+- WEM-32 is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`; WEM-44 through WEM-49 are complete.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -106,4 +106,7 @@ See `docs/testing.md` for authoritative commands.
 - Operational regressions using real provisioning cover scoped Viewer/Operator behavior, revoke with persisted scope, cross-event denial, guest cardinality and public fail-closed boundaries.
 - Real WordPress walkthrough passed user creation, Viewer grant, Viewer→Operator, check-in→checkout→reentry, Operator→Viewer immediate downgrade, revoke to None with scope retained, unchanged WordPress role, ordinary-user denial and deleted-user cleanup.
 - Manual anonymous HTTP guards GREEN: `wem_checkin_ajax` and `wem_list_ajax` returned HTTP 403 with the fixed deny-all JSON.
-- Remaining closure steps: final documentation commit, exact-head CI, PR merge to `dev`, post-merge reconciliation and Jira closure.
+- Final feature HEAD before merge: `c2b8f01c451741979bfd75e88391724e0df8064d`.
+- GitHub Actions run `37645179459`: both required jobs SUCCESS on that exact HEAD.
+- PR #5 merged into `dev` at `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`.
+- WEM-32 closure is complete; future work must select the next story from current Jira state rather than reopening WEM-32 without a verified regression or approved follow-up.
