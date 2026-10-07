@@ -44,4 +44,13 @@ final class StaffCapabilityProvisioningContractTest extends TestCase
             'WEM-45 requires provisioning-state detection before preset mutation.'
         );
     }
+
+    public function testProvisioningBoundaryExposesExplicitPresetApplication(): void
+    {
+        self::assertStringContainsString(
+            'function apply_preset',
+            $this->source,
+            'WEM-45 requires explicit preset application to converge WEM-managed capabilities.'
+        );
+    }
 }
