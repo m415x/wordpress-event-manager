@@ -1,14 +1,15 @@
-# Current operational handoff — post WEM-13
+# Current operational handoff — WEM-14 closure
 
-Updated: 2026-10-06. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
+Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
 ## Current baseline
 - Canonical integration branch: `dev`; stable `main` remains separate.
 - Foundation WEM-1/WEM-2 is closed. PR #1 integrated Foundation into `dev`.
 - WEM-12 CSV import accounting is **Listo** in Jira. PR #2 merged into `dev` at `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
-- WEM-13 event-scoped staff authorization is implementation-complete on `feat/WEM-13-event-scoped-authorization`; T1–T6 (WEM-19 through WEM-24) are reconciled for closure.
-- The frozen contract remains in `docs/architecture/staff-authorization-wem13.md`.
-- WEM-14 remains **Por hacer** and is the next independent security/history story to evaluate after WEM-13 is merged.
+- WEM-13 event-scoped staff authorization is **Listo** and integrated into `dev` via PR #3 at merge `4f63cd01ad9583153e19c0d985394ab1267a075d`; WEM-19 through WEM-24 are closed.
+- The WEM-13 frozen contract remains in `docs/architecture/staff-authorization-wem13.md`.
+- WEM-14 is **En curso** on `feat/WEM-14-immutable-movement-ledger`, currently at closure subtask WEM-30.
+- WEM-25 through WEM-29 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -41,7 +42,7 @@ A fresh chat should not carry operational workflow in its prompt. Follow `AGENTS
 - Use GitHub/Jira connectors directly for remote evidence.
 - Ask the user only for genuinely local/manual evidence or a real product/domain decision.
 - Do not repeat tests/CI/walkthroughs merely to recreate exact-SHA evidence.
-- Before starting the next story, inspect Jira WEM-14 completely and reconcile it against current `dev`.
+- Resume WEM-14 from Jira and the immutable movement-ledger contract. Do not bypass WEM-13 authorization or invent legacy history.
 
 ## Current testing workflow
 See `docs/testing.md` for authoritative commands.
@@ -54,5 +55,45 @@ See `docs/testing.md` for authoritative commands.
 ## Product boundaries still in force
 - WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
 - Public invitation/token/QR capability is still not implemented.
-- WEM-14 has not introduced append-only movement history yet.
+- WEM-14 runtime movement persistence and authenticated AJAX integration are implemented. WEM-30 still owns full-suite/quality gates, real HTTP/manual boundary verification, CI/PR evidence, merge to `dev` and final Jira closure.
 - No production deployment or production guest data is implied by completed local/CI evidence.
+
+## WEM-14 active contract
+
+- Dedicated WEM table: append-only accepted movement ledger and historical source of truth.
+- Existing post meta remains a mutable current-state projection for efficient reads.
+- Every movement has UUID movement_id plus a monotonic internal sequence; occurred_at alone does not define total order.
+- guest_id + captured canonical event_term_id are immutable historical scope.
+- The operational guest is the serialization unit for state reread, validation, append and projection update.
+- checkin, checkout and reentry are distinct movement types.
+- Event reassignment is allowed only while outside and never rewrites historical movement event_term_id.
+- Append + projection update are one transaction; partial commits are forbidden.
+- Ledger/projection drift causes controlled failure; there is no silent autorepair.
+- The ledger is accepted-only. Rejected attempts remain outside WEM-14.
+- New installations only; no reconstruction, backfill or historical migration.
+
+
+## WEM-14 implementation state
+
+- Dedicated table: `{$wpdb->prefix}wem_guest_movements`, keyed by monotonic `sequence` with unique `movement_id`.
+- Accepted movement types are `checkin`, `checkout` and `reentry`; source is currently `staff_web`; decision is `accepted`.
+- `WEM_Movement_Service` serializes the guest row with `SELECT ... FOR UPDATE`, rereads projection/history, rejects drift, validates transition, appends one movement and updates projection in one SQL transaction.
+- Failed projection writes roll back the movement; post-meta cache is invalidated after rollback so WordPress reads do not expose stale transactional state.
+- Event reassignment is explicit, guest-serialized, allowed only outside, changes current taxonomy scope and clears the mutable movement projection without rewriting prior ledger facts.
+- `wem_checkin_ajax` keeps WEM-13 authentication/capability/event-scope and nonce checks before delegating to the movement service.
+- Rejected authorization/request/transition attempts are not ledger movements.
+- Public/anonymous/legacy QR behavior remains outside WEM-14 and must stay fail-closed.
+
+## WEM-30 closure still required
+
+Run the authoritative commands from `docs/testing.md` on the final branch HEAD. Required evidence includes:
+
+- full unit and integration GREEN;
+- helper regression checks;
+- Composer strict validation;
+- configured PHPCS and PHPStan gates;
+- real HTTP anonymous guards on the manual environment;
+- bounded authenticated browser walkthrough for checkin → checkout → reentry and cross-event denial;
+- exact-head GitHub Actions success, PR review/merge evidence, and post-merge reconciliation in Jira/docs.
+
+Do not reuse pre-documentation evidence as final-head closure evidence if a relevant code/configuration change occurs.

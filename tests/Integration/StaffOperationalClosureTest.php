@@ -22,6 +22,8 @@ final class StaffOperationalClosureTest extends WP_Ajax_UnitTestCase
             register_post_type('invitado', ['public' => false]);
         }
 
+        \WEM_Movement_Schema::install();
+
         $ajax = new \WEM_Ajax_Handler();
         $ajax->register_ajax_handlers();
 

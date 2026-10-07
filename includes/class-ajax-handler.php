@@ -84,74 +84,44 @@ class WEM_Ajax_Handler {
     }
     
     private function process_checkin_action($post_id, $observ, $check_action) {
-        $current_time = current_time('Y-m-d H:i:s');
-        $operator = wem_get_current_operator();
-        
-        switch($check_action) {
-            case 'checkin':
-                $this->process_checkin($post_id, $observ, $current_time, $operator);
-                break;
-                
-            case 'checkout':
-                $this->process_checkout($post_id, $current_time, $operator);
-                break;
-                
-            case 'checkin_again':
-                $this->process_checkin_again($post_id, $current_time, $operator);
-                break;
-                
-            default:
-                wp_send_json_error('Acción no válida');
-        }
-        
-        wp_send_json_success(array('message' => 'Operación completada: ' . $current_time));
-    }
-    
-    private function process_checkin($post_id, $observ, $current_time, $operator) {
-        $already = get_post_meta($post_id, 'wem_checkin', true);
-        if ($already) wp_send_json_error('Invitado ya ingresado');
-        
-        update_post_meta($post_id, 'wem_checkin', 1);
-        update_post_meta($post_id, 'wem_checkin_at', $current_time);
-        update_post_meta($post_id, 'wem_checkin_by', $operator);
-        
-        // Limpiar checkout si existe
-        delete_post_meta($post_id, 'wem_checkout');
-        delete_post_meta($post_id, 'wem_checkout_at');
-        delete_post_meta($post_id, 'wem_checkout_by');
-        
-        if ($observ) {
-            update_post_meta($post_id, 'wem_observaciones_checkin', $observ);
-        }
-    }
-    
-    private function process_checkout($post_id, $current_time, $operator) {
-        $checked_in = get_post_meta($post_id, 'wem_checkin', true);
-        if (!$checked_in) wp_send_json_error('Invitado no ha ingresado');
-        
-        $already_checked_out = get_post_meta($post_id, 'wem_checkout', true);
-        if ($already_checked_out) wp_send_json_error('Invitado ya salió');
-        
-        update_post_meta($post_id, 'wem_checkout', 1);
-        update_post_meta($post_id, 'wem_checkout_at', $current_time);
-        update_post_meta($post_id, 'wem_checkout_by', $operator);
-    }
-    
-    private function process_checkin_again($post_id, $current_time, $operator) {
-        $checked_in = get_post_meta($post_id, 'wem_checkin', true);
-        $checked_out = get_post_meta($post_id, 'wem_checkout', true);
-
-        if (!$checked_in || !$checked_out) {
-            wp_send_json_error('Invitado no puede reingresar');
+        $event_id = WEM_Authorization::get_guest_event_term_id($post_id);
+        if ($event_id === null) {
+            wp_send_json_error(array('code' => 'guest_access_unavailable'), 403);
         }
 
-        update_post_meta($post_id, 'wem_checkin_at', $current_time);
-        update_post_meta($post_id, 'wem_checkin_by', $operator);
+        $service = new WEM_Movement_Service();
+        $actor_user_id = get_current_user_id();
 
-        // Limpiar checkout para permitir re-ingreso
-        delete_post_meta($post_id, 'wem_checkout');
-        delete_post_meta($post_id, 'wem_checkout_at');
-        delete_post_meta($post_id, 'wem_checkout_by');
+        try {
+            switch($check_action) {
+                case 'checkin':
+                    $result = $service->checkin($post_id, $event_id, $actor_user_id, 'staff_web');
+                    if ($observ) {
+                        update_post_meta($post_id, 'wem_observaciones_checkin', $observ);
+                    }
+                    break;
+
+                case 'checkout':
+                    $result = $service->checkout($post_id, $event_id, $actor_user_id, 'staff_web');
+                    break;
+
+                case 'checkin_again':
+                    $result = $service->reentry($post_id, $event_id, $actor_user_id, 'staff_web');
+                    break;
+
+                default:
+                    wp_send_json_error('Acción no válida');
+            }
+        } catch (RuntimeException $exception) {
+            wp_send_json_error($exception->getMessage());
+        }
+
+        wp_send_json_success(
+            array(
+                'message' => 'Operación completada',
+                'state' => $result['state'],
+            )
+        );
     }
     
     private function get_authorized_list_event_id($event_slug) {
