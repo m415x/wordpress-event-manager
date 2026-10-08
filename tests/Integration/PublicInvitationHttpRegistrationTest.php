@@ -69,7 +69,10 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
             'wem_invitation' => $issued['token'],
         ];
 
-        $route = new \WEM_Public_Invitation_Route(static function (): void {});
+        $route = new \WEM_Public_Invitation_Route(
+            static function (): void {
+            }
+        );
 
         self::assertSame(
             [
@@ -100,7 +103,10 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
         $service = new \WEM_Invitation_Credential_Service();
         $issued = $service->issue($guestId, $adminId);
 
-        $route = new \WEM_Public_Invitation_Route(static function (): void {});
+        $route = new \WEM_Public_Invitation_Route(
+            static function (): void {
+            }
+        );
 
         $requests = [
             ['wem_invitation' => $issued['token'], 'ticket' => 'WEM-59-HTTP-STRICT'],
@@ -141,7 +147,10 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
             'wem_invitation' => $issued['token'],
         ];
 
-        $route = new \WEM_Public_Invitation_Route(static function (): void {});
+        $route = new \WEM_Public_Invitation_Route(
+            static function (): void {
+            }
+        );
         $output = $route->render_request();
 
         self::assertStringContainsString('Vista Pública', $output);
@@ -159,7 +168,10 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
             'wem_invitation' => str_repeat('A', 43),
         ];
 
-        $route = new \WEM_Public_Invitation_Route(static function (): void {});
+        $route = new \WEM_Public_Invitation_Route(
+            static function (): void {
+            }
+        );
 
         self::assertSame('', $route->render_request());
     }
