@@ -65,4 +65,7 @@ add_action('plugins_loaded', function () {
 
     $qr = new WEM_QR_Generator();
     $qr->register_shortcodes();
+
+    $public_invitation_route = new WEM_Public_Invitation_Route();
+    $public_invitation_route->register_hooks();
 });
