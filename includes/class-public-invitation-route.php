@@ -38,6 +38,29 @@ final class WEM_Public_Invitation_Route
         return $this->resolve_request($request);
     }
 
+    public function render_request()
+    {
+        $resolved = $this->handle_request();
+
+        if (!is_array($resolved)) {
+            return '';
+        }
+
+        $projection = new WEM_Public_Invitation_Projection();
+        $public_data = $projection->build(
+            $resolved['guest_id'],
+            $resolved['event_term_id']
+        );
+
+        if (!is_array($public_data)) {
+            return '';
+        }
+
+        $renderer = new WEM_Public_Invitation_Renderer();
+
+        return $renderer->render($public_data);
+    }
+
     public function resolve_request(array $request)
     {
         $allowed_keys = array('wem_invitation');
