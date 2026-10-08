@@ -1,6 +1,6 @@
 # WEM-33 — Secure public invitation credential and read-only view
 
-Status: **contract frozen; implementation in progress**.
+Status: **implementation complete; WEM-62 closure acceptance in progress**.
 Jira: WEM-33. This story introduces a public read-only invitation capability without weakening WEM-13 authenticated staff authorization or WEM-14 movement-history invariants.
 
 ## Purpose
@@ -200,3 +200,18 @@ Implementation proceeds through WEM-57 through WEM-62:
 6. real story closure.
 
 Each behavioral slice uses focused RED -> GREEN where applicable. Final acceptance includes clean-install/rerun verification, simple-permalink routing, issue -> read -> rotate -> revoke -> explicit reissue, indistinguishable denial behavior, header verification, no third-party leakage, no public mutation authority and preservation of existing anonymous operational guards.
+
+
+## Implementation and closure candidate
+
+WEM-57 through WEM-61 are implemented and verified on the feature branch.
+
+- Dedicated credential storage, digest uniqueness, generation uniqueness and single-active physical defense are implemented.
+- Lifecycle operations implement initial issue, atomic rotate, revoke and explicit reissue with `manage_options` authority, guest-row serialization and semantic status/active-slot validation.
+- Public resolution accepts only a 43-character Base64URL bearer, hashes it with SHA-256 and resolves only an active credential for a valid `invitado` with exactly one `evento`.
+- The simple-permalink route is `?wem_invitation=<bearer>`; ticket, event slug, guest ID and mixed query authority fail closed.
+- The projection exposes only `guest_name` from `wem_nombre` and `event_name`; the renderer is escaped, self-contained and read-only.
+- Public invitation requests emit `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow, noarchive`.
+- The last fully verified pre-closure implementation HEAD is `fe2ae3e15afc63733cfa1338b1c8faf010803285`; GitHub Actions run `37795451779` completed successfully in both required jobs.
+
+WEM-62 remains open until the real WordPress lifecycle/browser walkthrough, anonymous operational guards and final exact-HEAD closure gates are recorded. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
