@@ -49,4 +49,20 @@ final class PublicInvitationSecurityHeadersTest extends WP_UnitTestCase
             self::assertStringNotContainsStringIgnoringCase($externalSurface, $html);
         }
     }
+
+    public function testPublicBearerHandlerAppliesSecurityHeadersToValidAndDeniedRequests(): void
+    {
+        $route = new \WEM_Public_Invitation_Route();
+
+        $route->apply_security_headers();
+
+        $headers = headers_list();
+
+        self::assertContains('Referrer-Policy: no-referrer', $headers);
+        self::assertContains('Cache-Control: private, no-store', $headers);
+        self::assertContains(
+            'X-Robots-Tag: noindex, nofollow, noarchive',
+            $headers
+        );
+    }
 }
