@@ -6,6 +6,13 @@ if (!defined('ABSPATH')) {
 
 final class WEM_Public_Invitation_Route
 {
+    private $header_emitter;
+
+    public function __construct($header_emitter = null)
+    {
+        $this->header_emitter = $header_emitter;
+    }
+
     public function register_hooks()
     {
         add_filter('query_vars', array($this, 'register_query_var'));
@@ -50,7 +57,14 @@ final class WEM_Public_Invitation_Route
     public function apply_security_headers()
     {
         foreach ($this->security_headers() as $name => $value) {
-            header($name . ': ' . $value, true);
+            $line = $name . ': ' . $value;
+
+            if (is_callable($this->header_emitter)) {
+                call_user_func($this->header_emitter, $line);
+                continue;
+            }
+
+            header($line, true);
         }
     }
 
