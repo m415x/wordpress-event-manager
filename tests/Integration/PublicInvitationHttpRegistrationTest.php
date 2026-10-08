@@ -114,4 +114,53 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
             self::assertNull($route->handle_request());
         }
     }
+
+    public function testHttpHandlerRendersMinimalReadOnlyViewForValidBearer(): void
+    {
+        update_option('permalink_structure', '');
+
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        $guestId = self::factory()->post->create([
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'SECRET-HTTP-TICKET',
+        ]);
+        update_post_meta($guestId, 'wem_nombre', 'Vista Pública');
+        update_post_meta($guestId, 'wem_observaciones', 'Private note');
+
+        $eventId = self::factory()->term->create([
+            'taxonomy' => 'evento',
+            'name' => 'Evento Visible',
+        ]);
+        wp_set_object_terms($guestId, [$eventId], 'evento', false);
+
+        $service = new \WEM_Invitation_Credential_Service();
+        $issued = $service->issue($guestId, $adminId);
+
+        $_GET = [
+            'wem_invitation' => $issued['token'],
+        ];
+
+        $route = new \WEM_Public_Invitation_Route();
+        $output = $route->render_request();
+
+        self::assertStringContainsString('Vista Pública', $output);
+        self::assertStringContainsString('Evento Visible', $output);
+        self::assertStringNotContainsString('SECRET-HTTP-TICKET', $output);
+        self::assertStringNotContainsString('Private note', $output);
+        self::assertStringNotContainsString('wem_observaciones', $output);
+        self::assertStringNotContainsStringIgnoringCase('<form', $output);
+        self::assertStringNotContainsStringIgnoringCase('<button', $output);
+    }
+
+    public function testHttpHandlerReturnsEmptyBodyForDeniedBearer(): void
+    {
+        $_GET = [
+            'wem_invitation' => str_repeat('A', 43),
+        ];
+
+        $route = new \WEM_Public_Invitation_Route();
+
+        self::assertSame('', $route->render_request());
+    }
 }
