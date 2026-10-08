@@ -15,6 +15,11 @@ final class InvitationCredentialLifecycleTest extends WP_UnitTestCase
 
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         \WEM_Invitation_Credential_Schema::install();
+
+        global $wpdb;
+
+        $tableName = \WEM_Invitation_Credential_Schema::table_name();
+        $wpdb->query("DELETE FROM {$tableName}");
     }
 
     public function testIssueCreatesOneOpaqueActiveCredentialWithoutPersistingBearerSecret(): void
