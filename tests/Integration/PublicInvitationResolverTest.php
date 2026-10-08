@@ -15,6 +15,9 @@ final class PublicInvitationResolverTest extends WP_UnitTestCase
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         \WEM_Invitation_Credential_Schema::install();
 
+        $taxonomy = new \WEM_Taxonomy_Manager();
+        $taxonomy->register_taxonomy();
+
         global $wpdb;
 
         $tableName = \WEM_Invitation_Credential_Schema::table_name();
