@@ -15,6 +15,12 @@ final class PublicInvitationSecurityHeadersTest extends WP_UnitTestCase
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
     }
 
+    protected function tearDown(): void
+    {
+        $_GET = [];
+        parent::tearDown();
+    }
+
     public function testPublicBearerResponsesDeclareNonLeakingCacheAndIndexPolicy(): void
     {
         $route = new \WEM_Public_Invitation_Route();
