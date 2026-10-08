@@ -69,4 +69,51 @@ final class InvitationCredentialLifecycleTest extends WP_UnitTestCase
         $this->expectException(RuntimeException::class);
         $service->issue($guestId, $adminId);
     }
+
+    public function testRotateInvalidatesPreviousGenerationAndCreatesNewActiveCredential(): void
+    {
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        $guestId = self::factory()->post->create([
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'WEM-58-ROTATE-001',
+        ]);
+
+        $service = new \WEM_Invitation_Credential_Service();
+        $first = $service->issue($guestId, $adminId);
+        $second = $service->rotate($guestId, $adminId);
+
+        self::assertSame(2, $second['generation']);
+        self::assertNotSame($first['token'], $second['token']);
+
+        global $wpdb;
+
+        $tableName = \WEM_Invitation_Credential_Schema::table_name();
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT generation, token_digest, status, active_slot, invalidated_at, invalidated_by_user_id
+                 FROM {$tableName}
+                 WHERE guest_id = %d
+                 ORDER BY generation ASC",
+                $guestId
+            ),
+            ARRAY_A
+        );
+
+        self::assertCount(2, $rows);
+
+        self::assertSame(1, (int) $rows[0]['generation']);
+        self::assertSame(hash('sha256', $first['token']), $rows[0]['token_digest']);
+        self::assertSame('rotated', $rows[0]['status']);
+        self::assertNull($rows[0]['active_slot']);
+        self::assertNotNull($rows[0]['invalidated_at']);
+        self::assertSame($adminId, (int) $rows[0]['invalidated_by_user_id']);
+
+        self::assertSame(2, (int) $rows[1]['generation']);
+        self::assertSame(hash('sha256', $second['token']), $rows[1]['token_digest']);
+        self::assertSame('active', $rows[1]['status']);
+        self::assertSame(1, (int) $rows[1]['active_slot']);
+        self::assertNull($rows[1]['invalidated_at']);
+        self::assertNull($rows[1]['invalidated_by_user_id']);
+    }
 }
