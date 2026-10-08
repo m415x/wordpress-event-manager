@@ -38,6 +38,19 @@ final class WEM_Invitation_Credential_Service
             $table_name = WEM_Invitation_Credential_Schema::table_name();
             $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
 
+            $existing_count = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*)
+                    FROM {$table_name}
+                    WHERE guest_id = %d",
+                    $guest_id
+                )
+            );
+
+            if ($existing_count > 0) {
+                throw new RuntimeException('Invitation credential has already been issued.');
+            }
+
             $active_sequence = $wpdb->get_var(
                 $wpdb->prepare(
                     "SELECT sequence
