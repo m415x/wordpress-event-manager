@@ -42,8 +42,66 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
 
         self::assertContains('wem_invitation', $queryVars);
         self::assertNotFalse(
-            has_action('template_redirect', [$route, 'handle_request'])
+            has_action('template_redirect', [$route, 'dispatch_request'])
         );
+    }
+
+    public function testTemplateRedirectDispatchRendersPublicViewForValidBearer(): void
+    {
+        update_option('permalink_structure', '');
+
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        $guestId = self::factory()->post->create([
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'SECRET-DISPATCH-TICKET',
+        ]);
+        update_post_meta($guestId, 'wem_nombre', 'Invitado Dispatch');
+
+        $eventId = self::factory()->term->create([
+            'taxonomy' => 'evento',
+            'name' => 'Evento Dispatch',
+        ]);
+        wp_set_object_terms($guestId, [$eventId], 'evento', false);
+
+        $service = new \WEM_Invitation_Credential_Service();
+        $issued = $service->issue($guestId, $adminId);
+
+        $_GET = [
+            'wem_invitation' => $issued['token'],
+        ];
+
+        $route = new \WEM_Public_Invitation_Route(
+            static function (): void {
+            }
+        );
+
+        ob_start();
+        $handled = $route->dispatch_request();
+        $output = ob_get_clean();
+
+        self::assertTrue($handled);
+        self::assertIsString($output);
+        self::assertStringContainsString('Invitado Dispatch', $output);
+        self::assertStringContainsString('Evento Dispatch', $output);
+        self::assertStringNotContainsString('SECRET-DISPATCH-TICKET', $output);
+    }
+
+    public function testTemplateRedirectDispatchIgnoresUnrelatedRequests(): void
+    {
+        $_GET = [];
+
+        $route = new \WEM_Public_Invitation_Route(
+            static function (): void {
+            }
+        );
+
+        ob_start();
+        $handled = $route->dispatch_request();
+        $output = ob_get_clean();
+
+        self::assertFalse($handled);
+        self::assertSame('', $output);
     }
 
     public function testTemplateRedirectHandlerResolvesBearerFromSimpleQueryString(): void
