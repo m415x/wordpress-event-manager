@@ -1,4 +1,4 @@
-# Current operational handoff — WEM-33 in progress
+# Current operational handoff — WEM-33 closure candidate
 
 Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
@@ -11,7 +11,7 @@ Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + cur
 - WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 - WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
 - WEM-32 is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`; WEM-44 through WEM-49 are complete.
-- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-62 are the approved T1→T7 decomposition. WEM-56 freezes the contract; WEM-57 is the next behavioral slice.
+- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-61 are complete; WEM-62 is the active closure task. Last fully verified implementation HEAD before closure documentation: `fe2ae3e15afc63733cfa1338b1c8faf010803285`, GitHub Actions run `37795451779` SUCCESS in both required jobs.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -85,7 +85,7 @@ See `docs/testing.md` for authoritative commands.
 
 ## Product boundaries still in force
 - WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
-- WEM-33 public invitation capability is in progress; token/QR capability is not yet implemented on the integrated `dev` baseline. QR remains WEM-34.
+- WEM-33 public invitation capability is implemented on its feature branch and awaiting WEM-62 manual/final closure; it is not yet integrated into `dev`. QR remains WEM-34.
 - WEM-14 runtime movement persistence and authenticated AJAX integration are implemented, verified and integrated into `dev`.
 - No production deployment or production guest data is implied by completed local/CI evidence.
 
@@ -128,3 +128,17 @@ See `docs/testing.md` for authoritative commands.
 - GitHub Actions run `37645179459`: both required jobs SUCCESS on that exact HEAD.
 - PR #5 merged into `dev` at `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`.
 - WEM-32 closure is complete; future work must select the next story from current Jira state rather than reopening WEM-32 without a verified regression or approved follow-up.
+
+
+## WEM-33 closure candidate
+
+- WEM-56 contract freeze: complete.
+- WEM-57 dedicated credential storage: complete.
+- WEM-58 atomic lifecycle and administrative authority: complete.
+- WEM-59 bearer-only resolver and simple-permalink route: complete.
+- WEM-60 minimal read-only projection/renderer: complete.
+- WEM-61 public HTTP hardening: complete.
+- Last verified implementation HEAD: `fe2ae3e15afc63733cfa1338b1c8faf010803285`.
+- GitHub Actions run `37795451779`: `PHP 8.3 lint, analysis and unit` SUCCESS; `WordPress isolated integration` SUCCESS.
+- Draft PR #6 remains open, mergeable and unmerged. It must not merge until WEM-62 acceptance is complete.
+- WEM-62 still requires real WordPress acceptance: issue → public read → rotate old denied/new valid → revoke denied → explicit reissue new valid; simple-permalink routing; response headers; indistinguishable denials; no public mutation authority; no third-party bearer leakage; anonymous operational guards.
