@@ -35,7 +35,7 @@ final class PublicInvitationRendererTest extends WP_UnitTestCase
         );
         self::assertStringContainsString('Evento &amp; Privado', $html);
 
-        foreach ([
+        $forbiddenFragments = [
             '<form',
             '<button',
             'check-in',
@@ -46,7 +46,9 @@ final class PublicInvitationRendererTest extends WP_UnitTestCase
             'guest_id',
             'event_term_id',
             'wem_',
-        ] as $forbidden) {
+        ];
+
+        foreach ($forbiddenFragments as $forbidden) {
             self::assertStringNotContainsStringIgnoringCase($forbidden, $html);
         }
     }
