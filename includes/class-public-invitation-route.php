@@ -38,6 +38,15 @@ final class WEM_Public_Invitation_Route
         return $this->resolve_request($request);
     }
 
+    public function security_headers()
+    {
+        return array(
+            'Referrer-Policy' => 'no-referrer',
+            'Cache-Control' => 'private, no-store',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        );
+    }
+
     public function render_request()
     {
         $resolved = $this->handle_request();
