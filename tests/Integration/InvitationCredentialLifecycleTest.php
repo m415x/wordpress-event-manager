@@ -330,4 +330,59 @@ final class InvitationCredentialLifecycleTest extends WP_UnitTestCase
 
         self::assertSame($before, $after);
     }
+
+    public function testIssueIsInitialOnlyAndCannotReplaceExplicitReissueAfterRevocation(): void
+    {
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        $guestId = self::factory()->post->create([
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'WEM-58-ISSUE-INITIAL-ONLY',
+        ]);
+
+        $service = new \WEM_Invitation_Credential_Service();
+        $service->issue($guestId, $adminId);
+        $service->revoke($guestId, $adminId);
+
+        global $wpdb;
+
+        $tableName = \WEM_Invitation_Credential_Schema::table_name();
+        $before = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT generation, token_digest, status, active_slot, invalidated_at, invalidated_by_user_id
+                 FROM {$tableName}
+                 WHERE guest_id = %d
+                 ORDER BY generation ASC",
+                $guestId
+            ),
+            ARRAY_A
+        );
+
+        self::assertCount(1, $before);
+        self::assertSame('revoked', $before[0]['status']);
+        self::assertNull($before[0]['active_slot']);
+
+        try {
+            $service->issue($guestId, $adminId);
+            self::fail('Issue must be initial-only; historical credentials require explicit reissue.');
+        } catch (RuntimeException $exception) {
+            self::assertSame(
+                'Invitation credential has already been issued.',
+                $exception->getMessage()
+            );
+        }
+
+        $after = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT generation, token_digest, status, active_slot, invalidated_at, invalidated_by_user_id
+                 FROM {$tableName}
+                 WHERE guest_id = %d
+                 ORDER BY generation ASC",
+                $guestId
+            ),
+            ARRAY_A
+        );
+
+        self::assertSame($before, $after);
+    }
 }
