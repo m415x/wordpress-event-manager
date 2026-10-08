@@ -16,7 +16,7 @@ final class WEM_Public_Invitation_Route
     public function register_hooks()
     {
         add_filter('query_vars', array($this, 'register_query_var'));
-        add_action('template_redirect', array($this, 'handle_request'));
+        add_action('template_redirect', array($this, 'dispatch_request'));
     }
 
     public function register_query_var($query_vars)
@@ -68,6 +68,24 @@ final class WEM_Public_Invitation_Route
 
             header($line, true);
         }
+    }
+
+    public function dispatch_request()
+    {
+        if (!isset($_GET['wem_invitation'])) {
+            return false;
+        }
+
+        $output = $this->render_request();
+
+        // The renderer owns escaping for this dedicated public response.
+        echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+        if (!is_callable($this->header_emitter)) {
+            exit;
+        }
+
+        return true;
     }
 
     public function render_request()
