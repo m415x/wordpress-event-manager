@@ -25,11 +25,17 @@ final class WEM_Public_Invitation_Route
             return null;
         }
 
-        return $this->resolve_request(
-            array(
-                'wem_invitation' => wp_unslash($_GET['wem_invitation']),
-            )
-        );
+        $request = array();
+
+        foreach ($_GET as $key => $value) {
+            if (!is_string($key) || !is_scalar($value)) {
+                return null;
+            }
+
+            $request[$key] = wp_unslash((string) $value);
+        }
+
+        return $this->resolve_request($request);
     }
 
     public function resolve_request(array $request)
