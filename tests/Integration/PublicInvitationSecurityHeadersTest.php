@@ -52,11 +52,14 @@ final class PublicInvitationSecurityHeadersTest extends WP_UnitTestCase
 
     public function testPublicBearerHandlerAppliesSecurityHeadersToValidAndDeniedRequests(): void
     {
-        $route = new \WEM_Public_Invitation_Route();
+        $headers = [];
+        $route = new \WEM_Public_Invitation_Route(
+            static function ($line) use (&$headers): void {
+                $headers[] = $line;
+            }
+        );
 
         $route->apply_security_headers();
-
-        $headers = headers_list();
 
         self::assertContains('Referrer-Policy: no-referrer', $headers);
         self::assertContains('Cache-Control: private, no-store', $headers);
