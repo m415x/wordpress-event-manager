@@ -212,6 +212,6 @@ WEM-57 through WEM-61 are implemented and verified on the feature branch.
 - The simple-permalink route is `?wem_invitation=<bearer>`; ticket, event slug, guest ID and mixed query authority fail closed.
 - The projection exposes only `guest_name` from `wem_nombre` and `event_name`; the renderer is escaped, self-contained and read-only.
 - Public invitation requests emit `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow, noarchive`.
-- The last fully verified pre-closure implementation HEAD is `fe2ae3e15afc63733cfa1338b1c8faf010803285`; GitHub Actions run `37795451779` completed successfully in both required jobs.
+- The last fully verified pre-closure implementation candidate passed GitHub Actions run `37795451779` successfully in both required jobs.
 
 WEM-62 remains open until the real WordPress lifecycle/browser walkthrough, anonymous operational guards and final exact-HEAD closure gates are recorded. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
