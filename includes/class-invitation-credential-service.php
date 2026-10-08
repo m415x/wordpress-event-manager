@@ -35,7 +35,7 @@ final class WEM_Invitation_Credential_Service
                 throw new RuntimeException('Invitation guest could not be serialized.');
             }
 
-            $table_name = WEM_Invitation_Credential_Schema::table_name();
+            $table_name = WEM_Invitation_Credential_Schema::table_name();            $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
 
             $active_sequence = $wpdb->get_var(
                 $wpdb->prepare(
@@ -131,6 +131,7 @@ final class WEM_Invitation_Credential_Service
             }
 
             $table_name = WEM_Invitation_Credential_Schema::table_name();
+            $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
             $active = $wpdb->get_row(
                 $wpdb->prepare(
                     "SELECT sequence, generation, status, active_slot
@@ -330,6 +331,7 @@ final class WEM_Invitation_Credential_Service
             }
 
             $table_name = WEM_Invitation_Credential_Schema::table_name();
+            $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
 
             $active_sequence = $wpdb->get_var(
                 $wpdb->prepare(
@@ -393,6 +395,44 @@ final class WEM_Invitation_Credential_Service
             $wpdb->query('ROLLBACK');
 
             throw $exception;
+        }
+    }
+
+    private function assert_guest_credential_state_is_consistent($table_name, $guest_id)
+    {
+        global $wpdb;
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT status, active_slot
+                FROM {$table_name}
+                WHERE guest_id = %d",
+                $guest_id
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $status = (string) $row['status'];
+            $active_slot = $row['active_slot'];
+
+            if ($status === 'active') {
+                if ((int) $active_slot !== 1) {
+                    throw new RuntimeException('Invitation credential state is inconsistent.');
+                }
+
+                continue;
+            }
+
+            if (in_array($status, array('rotated', 'revoked'), true)) {
+                if ($active_slot !== null) {
+                    throw new RuntimeException('Invitation credential state is inconsistent.');
+                }
+
+                continue;
+            }
+
+            throw new RuntimeException('Invitation credential state is inconsistent.');
         }
     }
 
