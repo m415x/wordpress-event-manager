@@ -68,4 +68,50 @@ final class PublicInvitationSecurityHeadersTest extends WP_UnitTestCase
             $headers
         );
     }
+
+    public function testTemplateRedirectAppliesHardeningOnlyForPublicInvitationRequests(): void
+    {
+        $headers = [];
+        $route = new \WEM_Public_Invitation_Route(
+            static function ($line) use (&$headers): void {
+                $headers[] = $line;
+            }
+        );
+
+        $_GET = [];
+        $route->handle_request();
+        self::assertSame([], $headers);
+
+        $_GET = [
+            'wem_invitation' => str_repeat('A', 43),
+        ];
+        $route->handle_request();
+
+        self::assertSame(
+            [
+                'Referrer-Policy: no-referrer',
+                'Cache-Control: private, no-store',
+                'X-Robots-Tag: noindex, nofollow, noarchive',
+            ],
+            $headers
+        );
+
+        $_GET = [
+            'wem_invitation' => str_repeat('A', 43),
+            'ticket' => 'forbidden-extra-authority',
+        ];
+        $route->handle_request();
+
+        self::assertSame(
+            [
+                'Referrer-Policy: no-referrer',
+                'Cache-Control: private, no-store',
+                'X-Robots-Tag: noindex, nofollow, noarchive',
+                'Referrer-Policy: no-referrer',
+                'Cache-Control: private, no-store',
+                'X-Robots-Tag: noindex, nofollow, noarchive',
+            ],
+            $headers
+        );
+    }
 }
