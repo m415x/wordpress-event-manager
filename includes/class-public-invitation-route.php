@@ -47,6 +47,13 @@ final class WEM_Public_Invitation_Route
         );
     }
 
+    public function apply_security_headers()
+    {
+        foreach ($this->security_headers() as $name => $value) {
+            header($name . ': ' . $value, true);
+        }
+    }
+
     public function render_request()
     {
         $resolved = $this->handle_request();
