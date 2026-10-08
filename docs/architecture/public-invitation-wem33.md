@@ -1,6 +1,6 @@
 # WEM-33 — Secure public invitation credential and read-only view
 
-Status: **implementation complete; WEM-62 closure acceptance in progress**.
+Status: **implementation and manual acceptance complete; final exact-HEAD closure verification in progress**.
 Jira: WEM-33. This story introduces a public read-only invitation capability without weakening WEM-13 authenticated staff authorization or WEM-14 movement-history invariants.
 
 ## Purpose
@@ -214,4 +214,6 @@ WEM-57 through WEM-61 are implemented and verified on the feature branch.
 - Public invitation requests emit `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow, noarchive`.
 - The last fully verified pre-closure implementation candidate passed GitHub Actions run `37795451779` successfully in both required jobs.
 
-WEM-62 remains open until the real WordPress lifecycle/browser walkthrough, anonymous operational guards and final exact-HEAD closure gates are recorded. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
+WEM-62 manual acceptance is GREEN on real local WordPress: clean activation/rerun created the credential table, issue rendered the minimal public view through a simple permalink, rotate denied the old bearer and activated the next generation, revoke denied that bearer, explicit reissue activated a new generation, lifecycle persistence matched the frozen invariant, anonymous operational AJAX guards remained HTTP 403, malformed/unknown/rotated/revoked/mixed-authority requests were publicly indistinguishable with empty bodies, and denied responses retained the mandatory hardening headers.
+
+The runtime dispatch correction is verified on implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`; GitHub Actions run `37800964347` completed successfully in both required jobs. Final story closure now requires only exact-HEAD CI after this documentation update. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
