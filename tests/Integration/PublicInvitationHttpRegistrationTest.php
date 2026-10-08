@@ -102,12 +102,14 @@ final class PublicInvitationHttpRegistrationTest extends WP_UnitTestCase
 
         $route = new \WEM_Public_Invitation_Route();
 
-        foreach ([
+        $requests = [
             ['wem_invitation' => $issued['token'], 'ticket' => 'WEM-59-HTTP-STRICT'],
             ['wem_invitation' => $issued['token'], 'event' => 'http-strict-event'],
             ['wem_invitation' => $issued['token'], 'guest_id' => (string) $guestId],
             ['wem_invitation' => $issued['token'], 'unexpected' => '1'],
-        ] as $request) {
+        ];
+
+        foreach ($requests as $request) {
             $_GET = $request;
             self::assertNull($route->handle_request());
         }
