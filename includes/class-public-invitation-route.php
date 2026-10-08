@@ -32,6 +32,8 @@ final class WEM_Public_Invitation_Route
             return null;
         }
 
+        $this->apply_security_headers();
+
         $request = array();
 
         foreach ($_GET as $key => $value) {
