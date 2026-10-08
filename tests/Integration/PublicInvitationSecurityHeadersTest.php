@@ -37,7 +37,7 @@ final class PublicInvitationSecurityHeadersTest extends WP_UnitTestCase
             'event_name' => 'Evento',
         ]);
 
-        foreach ([
+        $externalSurfaces = [
             'http://',
             'https://',
             '<script',
@@ -45,7 +45,9 @@ final class PublicInvitationSecurityHeadersTest extends WP_UnitTestCase
             '<iframe',
             '<link',
             '<form',
-        ] as $externalSurface) {
+        ];
+
+        foreach ($externalSurfaces as $externalSurface) {
             self::assertStringNotContainsStringIgnoringCase($externalSurface, $html);
         }
     }
