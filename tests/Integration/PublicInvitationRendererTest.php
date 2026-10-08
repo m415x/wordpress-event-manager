@@ -8,6 +8,13 @@ use WP_UnitTestCase;
 
 final class PublicInvitationRendererTest extends WP_UnitTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+    }
+
     public function testRendererOutputsOnlyMinimalReadOnlyProjection(): void
     {
         self::assertTrue(
