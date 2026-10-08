@@ -1,4 +1,4 @@
-# Current operational handoff — WEM-33 closure candidate
+# Current operational handoff — WEM-33 final closure verification
 
 Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
@@ -11,7 +11,7 @@ Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + cur
 - WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 - WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
 - WEM-32 is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`; WEM-44 through WEM-49 are complete.
-- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-61 are complete; WEM-62 is the active closure task. The last implementation candidate before closure documentation passed GitHub Actions run `37795451779` in both required jobs.
+- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-61 are complete; WEM-62 manual acceptance is GREEN and only final exact-HEAD CI over closure documentation remains.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -138,7 +138,7 @@ See `docs/testing.md` for authoritative commands.
 - WEM-59 bearer-only resolver and simple-permalink route: complete.
 - WEM-60 minimal read-only projection/renderer: complete.
 - WEM-61 public HTTP hardening: complete.
-- Last verified implementation candidate: GitHub Actions run `37795451779` SUCCESS in both required jobs.
+- Dispatch-corrected implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`: GitHub Actions run `37800964347` SUCCESS in both required jobs.
 - GitHub Actions run `37795451779`: `PHP 8.3 lint, analysis and unit` SUCCESS; `WordPress isolated integration` SUCCESS.
 - Draft PR #6 remains open, mergeable and unmerged. It must not merge until WEM-62 acceptance is complete.
-- WEM-62 still requires real WordPress acceptance: issue → public read → rotate old denied/new valid → revoke denied → explicit reissue new valid; simple-permalink routing; response headers; indistinguishable denials; no public mutation authority; no third-party bearer leakage; anonymous operational guards.
+- WEM-62 real WordPress acceptance is GREEN: issue → public read → rotate old denied/new valid → revoke denied → explicit reissue new valid; simple-permalink routing; mandatory response headers; indistinguishable denials; anonymous operational guards; and no public mutation authority. Final exact-HEAD CI after closure documentation remains.
