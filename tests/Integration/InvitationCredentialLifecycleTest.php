@@ -274,4 +274,60 @@ final class InvitationCredentialLifecycleTest extends WP_UnitTestCase
 
         $service->reissue($guestId, $adminId);
     }
+
+    public function testCredentialLifecycleRequiresManageOptionsAndDoesNotMutateOnDenial(): void
+    {
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        $viewerId = self::factory()->user->create(['role' => 'subscriber']);
+        $guestId = self::factory()->post->create([
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'WEM-58-AUTH-001',
+        ]);
+
+        $service = new \WEM_Invitation_Credential_Service();
+        $issued = $service->issue($guestId, $adminId);
+
+        global $wpdb;
+
+        $tableName = \WEM_Invitation_Credential_Schema::table_name();
+        $before = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT generation, token_digest, status, active_slot, invalidated_at, invalidated_by_user_id
+                 FROM {$tableName}
+                 WHERE guest_id = %d
+                 ORDER BY generation ASC",
+                $guestId
+            ),
+            ARRAY_A
+        );
+
+        self::assertCount(1, $before);
+        self::assertSame(hash('sha256', $issued['token']), $before[0]['token_digest']);
+
+        foreach (['issue', 'rotate', 'revoke', 'reissue'] as $operation) {
+            try {
+                $service->{$operation}($guestId, $viewerId);
+                self::fail($operation . ' must require manage_options.');
+            } catch (RuntimeException $exception) {
+                self::assertSame(
+                    'Credential administration is not authorized.',
+                    $exception->getMessage()
+                );
+            }
+        }
+
+        $after = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT generation, token_digest, status, active_slot, invalidated_at, invalidated_by_user_id
+                 FROM {$tableName}
+                 WHERE guest_id = %d
+                 ORDER BY generation ASC",
+                $guestId
+            ),
+            ARRAY_A
+        );
+
+        self::assertSame($before, $after);
+    }
 }
