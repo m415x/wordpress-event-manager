@@ -35,7 +35,8 @@ final class WEM_Invitation_Credential_Service
                 throw new RuntimeException('Invitation guest could not be serialized.');
             }
 
-            $table_name = WEM_Invitation_Credential_Schema::table_name();            $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
+            $table_name = WEM_Invitation_Credential_Schema::table_name();
+            $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
 
             $active_sequence = $wpdb->get_var(
                 $wpdb->prepare(
@@ -246,6 +247,7 @@ final class WEM_Invitation_Credential_Service
             }
 
             $table_name = WEM_Invitation_Credential_Schema::table_name();
+            $this->assert_guest_credential_state_is_consistent($table_name, $guest_id);
             $active = $wpdb->get_row(
                 $wpdb->prepare(
                     "SELECT sequence, status, active_slot
