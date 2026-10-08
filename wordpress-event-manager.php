@@ -39,6 +39,7 @@ spl_autoload_register(function ($class) {
 require_once WEM_PATH . 'includes/helpers.php';
 
 register_activation_hook(__FILE__, array('WEM_Movement_Schema', 'install'));
+register_activation_hook(__FILE__, array('WEM_Invitation_Credential_Schema', 'install'));
 
 add_action('plugins_loaded', function () {
     new WEM_CPT_Manager();
@@ -64,4 +65,7 @@ add_action('plugins_loaded', function () {
 
     $qr = new WEM_QR_Generator();
     $qr->register_shortcodes();
+
+    $public_invitation_route = new WEM_Public_Invitation_Route();
+    $public_invitation_route->register_hooks();
 });

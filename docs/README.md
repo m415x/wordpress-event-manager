@@ -17,6 +17,7 @@ Read `../AGENTS.md` before starting a story.
 - **WEM-13 event-scoped staff authorization** is **Listo** and integrated into `dev` via PR #3 at merge `4f63cd01ad9583153e19c0d985394ab1267a075d`. WEM-19 through WEM-24 cover the frozen contract, authorization kernel, staff-scoped listing, state transitions, staff assignment and final WEM-11 boundary reconciliation. Public invitation/token/QR behavior remains out of scope and fail-closed.
 - **WEM-14 immutable movement history** is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`. WEM-25 through WEM-30 cover the frozen contract, append-only storage, atomic transitions, guest serialization, drift fail-closed behavior, checkout/reentry cycles, outside-only event reassignment, WEM-13-scoped AJAX integration and final closure. Exact-head GitHub Actions run `37625472731` passed both required jobs before merge.
 - **WEM-32 staff capability provisioning** is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`. WEM-44 through WEM-49 are complete. Final feature HEAD `c2b8f01c451741979bfd75e88391724e0df8064d` passed both required GitHub Actions jobs in run `37645179459`; real WordPress lifecycle acceptance and anonymous HTTP guards were GREEN.
+- **WEM-33 secure public invitation credentials** is in **final closure verification** on `feat/WEM-33-secure-public-invitations`. WEM-56 through WEM-61 are complete and WEM-62 manual lifecycle/browser acceptance is GREEN. Dispatch-corrected implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009` passed both required GitHub Actions jobs in run `37800964347`; only exact-HEAD CI after final closure documentation remains before Jira closure and merge preparation.
 
 ## Durable documents
 - [Testing](testing.md) — initial PHPUnit harness, Docker commands, limits and pending integration coverage.
@@ -24,6 +25,7 @@ Read `../AGENTS.md` before starting a story.
 - [WEM-13 staff authorization contract](architecture/staff-authorization-wem13.md) — frozen event-scoped staff/admin authorization model; public surfaces remain fail-closed.
 - [WEM-14 immutable movement ledger contract](architecture/immutable-movement-ledger-wem14.md) — frozen append-only history, mutable projection, transaction, serialization and new-installation-only rules.
 - [WEM-32 staff capability provisioning contract](architecture/staff-provisioning-wem32.md) — frozen None/Viewer/Operator provisioning model over WEM-13 capabilities, non-canonical state handling, lifecycle and activation/deactivation boundaries.
+- [WEM-33 public invitation credential contract](architecture/public-invitation-wem33.md) — frozen 256-bit opaque bearer credential, digest-only persistence, immutable generations, single-active lifecycle, dedicated public resolver, minimal read-only projection and no-leak HTTP boundary.
 - [Current handoff](handoffs/current.md) — operational state for resuming the active story.
 - `architecture/` — add domain contracts only when accepted and implemented. Do not treat preliminary ideas as production design.
 

@@ -1,6 +1,6 @@
-# Current operational handoff — post WEM-32
+# Current operational handoff — WEM-33 final closure verification
 
-Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
+Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
 ## Current baseline
 - Canonical integration branch: `dev`; stable `main` remains separate.
@@ -11,6 +11,7 @@ Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + cur
 - WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 - WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
 - WEM-32 is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`; WEM-44 through WEM-49 are complete.
+- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-61 are complete; WEM-62 manual acceptance is GREEN and only final exact-HEAD CI over closure documentation remains.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -48,6 +49,23 @@ Updated: 2026-10-07. This is an orientation document; remote GitHub + Jira + cur
 - The `class-cpt-manager.php` use of `administrator` as a role-like capability is not a WEM-32 blocker and remains WEM-35 debt; Viewer/Operator do not gain generic CPT administration authority.
 - Durable contract: `docs/architecture/staff-provisioning-wem32.md`.
 
+## WEM-33 frozen public invitation contract
+
+- Public authority is one opaque 256-bit CSPRNG bearer token bound to one invitation; it never derives from guest/post ID, ticket, event slug or timestamp.
+- The bearer secret is never persisted in cleartext. WEM stores only deterministic lookup/verification material; the full bearer is exposed only by the administrative operation that creates it.
+- Lifecycle is immutable by generation: issue creates the first active generation; rotate invalidates it and creates a new generation; revoke leaves none active; explicit reissue always creates a new token/digest/generation. Rotated/revoked rows never become active again.
+- Only `status=active` may carry `active_slot=1`; rotated/revoked rows require NULL. A unique `(guest_id, active_slot)` index is the physical single-active defense and the API must also validate semantic consistency.
+- There is no implicit time expiration.
+- Credential persistence uses a dedicated WEM table, not post meta. The guest is the lifecycle serialization unit.
+- Credential administration remains `manage_options` in WEM-33; WEM-32 Viewer/Operator provisioning does not grant it.
+- The public resolver is separate from `[wem_checkin]`, `[wem_list]` and staff AJAX. WordPress login, nonce, ticket, slug, page or guest ID do not amplify public authority.
+- Public routing must work under simple permalinks, require no event slug and require no manually created WordPress page.
+- The public projection is exactly `guest_name` from `wem_nombre` plus `event_name` from the exactly-one canonical event. Never fall back to post title/ticket.
+- Missing/malformed/unknown/rotated/revoked/inconsistent credentials and invalid guest/event cardinality are publicly indistinguishable.
+- Public responses require `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and no third-party resources that receive the bearer URL.
+- QR/Google Charts remain WEM-34; self-check-in remains WEM-38; admin UX remains WEM-35; CSV authorization remains WEM-36.
+- Durable contract: `docs/architecture/public-invitation-wem33.md`.
+
 ## Fresh-chat behavior
 A fresh chat should not carry operational workflow in its prompt. Follow `AGENTS.md`.
 
@@ -67,7 +85,7 @@ See `docs/testing.md` for authoritative commands.
 
 ## Product boundaries still in force
 - WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
-- Public invitation/token/QR capability is still not implemented.
+- WEM-33 public invitation capability is implemented on its feature branch and awaiting WEM-62 manual/final closure; it is not yet integrated into `dev`. QR remains WEM-34.
 - WEM-14 runtime movement persistence and authenticated AJAX integration are implemented, verified and integrated into `dev`.
 - No production deployment or production guest data is implied by completed local/CI evidence.
 
@@ -110,3 +128,17 @@ See `docs/testing.md` for authoritative commands.
 - GitHub Actions run `37645179459`: both required jobs SUCCESS on that exact HEAD.
 - PR #5 merged into `dev` at `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`.
 - WEM-32 closure is complete; future work must select the next story from current Jira state rather than reopening WEM-32 without a verified regression or approved follow-up.
+
+
+## WEM-33 closure candidate
+
+- WEM-56 contract freeze: complete.
+- WEM-57 dedicated credential storage: complete.
+- WEM-58 atomic lifecycle and administrative authority: complete.
+- WEM-59 bearer-only resolver and simple-permalink route: complete.
+- WEM-60 minimal read-only projection/renderer: complete.
+- WEM-61 public HTTP hardening: complete.
+- Dispatch-corrected implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`: GitHub Actions run `37800964347` SUCCESS in both required jobs.
+- GitHub Actions run `37795451779`: `PHP 8.3 lint, analysis and unit` SUCCESS; `WordPress isolated integration` SUCCESS.
+- Draft PR #6 remains open, mergeable and unmerged. It must not merge until WEM-62 acceptance is complete.
+- WEM-62 real WordPress acceptance is GREEN: issue → public read → rotate old denied/new valid → revoke denied → explicit reissue new valid; simple-permalink routing; mandatory response headers; indistinguishable denials; anonymous operational guards; and no public mutation authority. Final exact-HEAD CI after closure documentation remains.

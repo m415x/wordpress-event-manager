@@ -1,0 +1,133 @@
+<?php
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+final class WEM_Public_Invitation_Route
+{
+    private $header_emitter;
+
+    public function __construct($header_emitter = null)
+    {
+        $this->header_emitter = $header_emitter;
+    }
+
+    public function register_hooks()
+    {
+        add_filter('query_vars', array($this, 'register_query_var'));
+        add_action('template_redirect', array($this, 'dispatch_request'));
+    }
+
+    public function register_query_var($query_vars)
+    {
+        $query_vars[] = 'wem_invitation';
+
+        return $query_vars;
+    }
+
+    public function handle_request()
+    {
+        if (!isset($_GET['wem_invitation'])) {
+            return null;
+        }
+
+        $this->apply_security_headers();
+
+        $request = array();
+
+        foreach ($_GET as $key => $value) {
+            if (!is_string($key) || !is_scalar($value)) {
+                return null;
+            }
+
+            $request[$key] = wp_unslash((string) $value);
+        }
+
+        return $this->resolve_request($request);
+    }
+
+    public function security_headers()
+    {
+        return array(
+            'Referrer-Policy' => 'no-referrer',
+            'Cache-Control' => 'private, no-store',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        );
+    }
+
+    public function apply_security_headers()
+    {
+        foreach ($this->security_headers() as $name => $value) {
+            $line = $name . ': ' . $value;
+
+            if (is_callable($this->header_emitter)) {
+                call_user_func($this->header_emitter, $line);
+                continue;
+            }
+
+            header($line, true);
+        }
+    }
+
+    public function dispatch_request()
+    {
+        if (!isset($_GET['wem_invitation'])) {
+            return false;
+        }
+
+        $output = $this->render_request();
+
+        // The renderer owns escaping for this dedicated public response.
+        echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+        if (!is_callable($this->header_emitter)) {
+            exit;
+        }
+
+        return true;
+    }
+
+    public function render_request()
+    {
+        $resolved = $this->handle_request();
+
+        if (!is_array($resolved)) {
+            return '';
+        }
+
+        $projection = new WEM_Public_Invitation_Projection();
+        $public_data = $projection->build(
+            $resolved['guest_id'],
+            $resolved['event_term_id']
+        );
+
+        if (!is_array($public_data)) {
+            return '';
+        }
+
+        $renderer = new WEM_Public_Invitation_Renderer();
+
+        return $renderer->render($public_data);
+    }
+
+    public function resolve_request(array $request)
+    {
+        $allowed_keys = array('wem_invitation');
+        $keys = array_keys($request);
+
+        if ($keys !== $allowed_keys) {
+            return null;
+        }
+
+        $token = $request['wem_invitation'] ?? null;
+
+        if (!is_string($token)) {
+            return null;
+        }
+
+        $resolver = new WEM_Public_Invitation_Resolver();
+
+        return $resolver->resolve($token);
+    }
+}
