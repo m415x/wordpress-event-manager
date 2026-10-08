@@ -6,6 +6,32 @@ if (!defined('ABSPATH')) {
 
 final class WEM_Public_Invitation_Route
 {
+    public function register_hooks()
+    {
+        add_filter('query_vars', array($this, 'register_query_var'));
+        add_action('template_redirect', array($this, 'handle_request'));
+    }
+
+    public function register_query_var($query_vars)
+    {
+        $query_vars[] = 'wem_invitation';
+
+        return $query_vars;
+    }
+
+    public function handle_request()
+    {
+        if (!isset($_GET['wem_invitation'])) {
+            return null;
+        }
+
+        return $this->resolve_request(
+            array(
+                'wem_invitation' => wp_unslash($_GET['wem_invitation']),
+            )
+        );
+    }
+
     public function resolve_request(array $request)
     {
         $allowed_keys = array('wem_invitation');
