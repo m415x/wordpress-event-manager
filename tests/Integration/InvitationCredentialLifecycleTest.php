@@ -236,4 +236,42 @@ final class InvitationCredentialLifecycleTest extends WP_UnitTestCase
 
         self::assertSame(1, $activeCount);
     }
+
+    public function testLifecycleFailsClosedOnSemanticStatusActiveSlotDrift(): void
+    {
+        $adminId = self::factory()->user->create(['role' => 'administrator']);
+        $guestId = self::factory()->post->create([
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'WEM-58-DRIFT-001',
+        ]);
+
+        global $wpdb;
+
+        $tableName = \WEM_Invitation_Credential_Schema::table_name();
+        $inserted = $wpdb->insert(
+            $tableName,
+            [
+                'guest_id' => $guestId,
+                'generation' => 1,
+                'token_digest' => str_repeat('f', 64),
+                'status' => 'active',
+                'active_slot' => null,
+                'issued_at' => '2026-10-08 12:00:00',
+                'issued_by_user_id' => $adminId,
+                'invalidated_at' => null,
+                'invalidated_by_user_id' => null,
+            ],
+            ['%d', '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%d']
+        );
+
+        self::assertSame(1, $inserted);
+
+        $service = new \WEM_Invitation_Credential_Service();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invitation credential state is inconsistent.');
+
+        $service->reissue($guestId, $adminId);
+    }
 }
