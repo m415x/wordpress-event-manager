@@ -1,6 +1,6 @@
 # WEM-33 — Secure public invitation credential and read-only view
 
-Status: **implementation and manual acceptance complete; final exact-HEAD closure verification in progress**.
+Status: **Listo; merged into `dev` via PR #6 on 2026-10-08**. Feature HEAD `1f5c36fde226277b3174450e6e689f466f1eb2f7` passed CI `37803963686`; post-merge `dev@79b6ec8dde1b0302f47ee0617e9361675ac04c55` passed CI `37804454592`.
 Jira: WEM-33. This story introduces a public read-only invitation capability without weakening WEM-13 authenticated staff authorization or WEM-14 movement-history invariants.
 
 ## Purpose
@@ -217,3 +217,7 @@ WEM-57 through WEM-61 are implemented and verified on the feature branch.
 WEM-62 manual acceptance is GREEN on real local WordPress: clean activation/rerun created the credential table, issue rendered the minimal public view through a simple permalink, rotate denied the old bearer and activated the next generation, revoke denied that bearer, explicit reissue activated a new generation, lifecycle persistence matched the frozen invariant, anonymous operational AJAX guards remained HTTP 403, malformed/unknown/rotated/revoked/mixed-authority requests were publicly indistinguishable with empty bodies, and denied responses retained the mandatory hardening headers.
 
 The runtime dispatch correction is verified on implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`; GitHub Actions run `37800964347` completed successfully in both required jobs. Final story closure now requires only exact-HEAD CI after this documentation update. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
+
+## Final integration evidence
+
+WEM-33/WEM-56–WEM-62 are `Listo` in Jira. PR #6 was merged to `dev` at `79b6ec8dde1b0302f47ee0617e9361675ac04c55`. Feature SHA `1f5c36fde226277b3174450e6e689f466f1eb2f7` passed both GitHub Actions jobs in run `37803963686`; post-merge push to `dev` passed both in run `37804454592`. QR generation is a separate WEM-34 administrative orchestration layer, never a modification of WEM-33 bearer persistence or public authority.

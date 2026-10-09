@@ -21,6 +21,10 @@ if (!defined('ABSPATH')) {
 define('WEM_PATH', plugin_dir_path(__FILE__));
 define('WEM_URL', plugin_dir_url(__FILE__));
 
+// Composer runtime dependencies are bundled in the distributable plugin ZIP.
+// Never depend on Composer CLI or a PHPUnit-only bootstrap on the WordPress host.
+require_once WEM_PATH . 'vendor/autoload.php';
+
 spl_autoload_register(function ($class) {
     $prefix = 'WEM_';
     $base_dir = WEM_PATH . 'includes/';
@@ -65,6 +69,9 @@ add_action('plugins_loaded', function () {
 
     $qr = new WEM_QR_Generator();
     $qr->register_shortcodes();
+
+    $admin_qr_delivery = new WEM_Admin_Invitation_QR_Delivery();
+    $admin_qr_delivery->register_hooks();
 
     $public_invitation_route = new WEM_Public_Invitation_Route();
     $public_invitation_route->register_hooks();
