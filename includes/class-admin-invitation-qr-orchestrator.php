@@ -56,7 +56,15 @@ final class WEM_Admin_Invitation_QR_Orchestrator
 
         // Only the WEM-33 read-only endpoint: compatible with simple permalinks.
         $url = add_query_arg('wem_invitation', $token, home_url('/'));
-        $svg = $this->encoder->render_svg($url);
+        try {
+            $svg = $this->encoder->render_svg($url);
+        } catch (Throwable $error) {
+            // WEM-33 has already committed. Do not compensate or expose the
+            // secret through the encoder's potentially sensitive exception.
+            throw new RuntimeException(
+                'Invitation credential committed, but QR presentation failed.'
+            );
+        }
 
         return array(
             'url' => $url,
