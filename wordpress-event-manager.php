@@ -21,6 +21,10 @@ if (!defined('ABSPATH')) {
 define('WEM_PATH', plugin_dir_path(__FILE__));
 define('WEM_URL', plugin_dir_url(__FILE__));
 
+// Composer runtime dependencies are bundled in the distributable plugin ZIP.
+// Never depend on Composer CLI or a PHPUnit-only bootstrap on the WordPress host.
+require_once WEM_PATH . 'vendor/autoload.php';
+
 spl_autoload_register(function ($class) {
     $prefix = 'WEM_';
     $base_dir = WEM_PATH . 'includes/';
