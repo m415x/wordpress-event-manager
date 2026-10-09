@@ -74,7 +74,7 @@ namespace WEM\Tests\Unit {
                 }
             };
 
-            $constructor = (new \\ReflectionClass(\\WEM_Admin_Invitation_QR_Delivery::class))->getConstructor();
+            $constructor = (new \ReflectionClass(\WEM_Admin_Invitation_QR_Delivery::class))->getConstructor();
             self::assertNotNull($constructor, 'Delivery must accept an orchestrator dependency.');
             self::assertGreaterThanOrEqual(
                 1,
