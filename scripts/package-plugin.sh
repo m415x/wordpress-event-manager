@@ -2,11 +2,13 @@
 set -euo pipefail
 
 # WEM-34: create a clean, self-contained WordPress plugin release archive.
-# Run in a PHP 8.3+ environment with composer, ext-mbstring, git, tar and zip.
+# Run in a PHP 8.3+ environment with composer, ext-mbstring, tar and zip.
+# Package a strictly allowlisted plugin tree, including from wp-env CLI containers
+# that do not ship Git. Never copy the development working directory wholesale.
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-for tool in git tar composer php zip; do
+for tool in tar composer php zip; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     printf 'ERROR: packaging requires %s.\n' "$tool" >&2
     exit 1
@@ -18,27 +20,29 @@ if ! php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'; then
   exit 1
 fi
 
-# Never package a modified/index-only version or untracked local artifacts.
-# HEAD must contain the audited and committed composer.lock.
-if ! git diff --quiet HEAD -- composer.json composer.lock; then
-  printf 'ERROR: commit composer.json and composer.lock before packaging.\n' >&2
-  exit 1
-fi
-
+# Copy only WordPress runtime files. Never include local untracked files,
+# test configuration, credentials, docs, development tools, or preexisting vendor.
+# Release versioning remains tied to the validated composer.lock input.
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 plugin="$stage/wordpress-event-manager"
 mkdir -p "$plugin"
-git archive --format=tar HEAD | tar -xf - -C "$plugin"
 
-# No credentials, local wp-env state, development suites, or historical tools.
-rm -rf "$plugin/.github" "$plugin/docs" "$plugin/tests" "$plugin/scripts" \
-  "$plugin/.gitignore" "$plugin/.gitattributes" "$plugin/.wp-env.json" \
-  "$plugin/.wp-env.test.json" "$plugin/.wp-env.phpunit.json" \
-  "$plugin/node_modules" "$plugin/package-lock.json" "$plugin/pnpm-lock.yaml" \
-  "$plugin/package.json" "$plugin/phpunit.xml.dist" \
-  "$plugin/phpunit.integration.xml.dist" "$plugin/phpstan.neon.dist" \
-  "$plugin/phpcs.xml.dist" "$plugin/AGENTS.md"
+runtime_paths=(wordpress-event-manager.php composer.json composer.lock includes)
+optional_paths=(assets languages templates admin public css js images)
+for path in "${optional_paths[@]}"; do
+  if [[ -e "$repo_root/$path" ]]; then
+    runtime_paths+=("$path")
+  fi
+done
+for path in "${runtime_paths[@]}"; do
+  if [[ ! -e "$repo_root/$path" ]]; then
+    printf 'ERROR: required runtime path missing: %s\\n' "$path" >&2
+    exit 1
+  fi
+done
+
+tar -cf - "${runtime_paths[@]}" | tar -xf - -C "$plugin"
 
 (
   cd "$plugin"
