@@ -2,18 +2,23 @@
 set -euo pipefail
 
 # WEM-34: create a clean, self-contained WordPress plugin release archive.
-# Run in a PHP 8.3+ environment with composer, ext-mbstring, tar and zip.
+# Run in a PHP 8.3+ environment with composer, ext-mbstring, ext-zip and tar.
 # Package a strictly allowlisted plugin tree, including from wp-env CLI containers
 # that do not ship Git. Never copy the development working directory wholesale.
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-for tool in tar composer php zip; do
+for tool in tar composer php; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     printf 'ERROR: packaging requires %s.\n' "$tool" >&2
     exit 1
   fi
 done
+
+if ! php -r 'exit(extension_loaded("zip") ? 0 : 1);'; then
+  printf 'ERROR: PHP ext-zip is required to create the distributable archive.\n' >&2
+  exit 1
+fi
 
 if ! php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'; then
   printf 'ERROR: ext-mbstring is required by the QR runtime.\n' >&2
@@ -69,6 +74,36 @@ php -r 'require $argv[1]; exit(class_exists("chillerlan\\QRCode\\QRCode") ? 0 : 
 mkdir -p "$repo_root/dist"
 out="$repo_root/dist/wordpress-event-manager.zip"
 rm -f "$out"
-(cd "$stage" && zip -q -r "$out" wordpress-event-manager)
+php -r '
+$archive = new ZipArchive();
+if ($archive->open($argv[1], ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+    fwrite(STDERR, "ERROR: cannot create ZIP.\\n");
+    exit(1);
+}
+$root = realpath($argv[2]);
+$parent = dirname($root);
+$files = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+$archive->addEmptyDir(basename($root));
+foreach ($files as $file) {
+    $path = $file->getPathname();
+    if ($file->isLink()) {
+        fwrite(STDERR, "ERROR: symlink in production package.\\n");
+        exit(1);
+    }
+    $relative = substr($path, strlen($parent) + 1);
+    if ($file->isDir()) {
+        $archive->addEmptyDir($relative);
+    } else {
+        $archive->addFile($path, $relative);
+    }
+}
+if (!$archive->close()) {
+    fwrite(STDERR, "ERROR: ZIP close failed.\\n");
+    exit(1);
+}
+' "$out" "$plugin"
 test -s "$out"
 printf 'Production ZIP created: %s\n' "$out"
