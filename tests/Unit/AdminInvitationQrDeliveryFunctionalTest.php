@@ -55,6 +55,10 @@ namespace WEM\Tests\Unit {
             require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-delivery.php';
         }
 
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
         public function testAuthorizedRequestDelegatesExactlyOnceToInjectedOrchestrator(): void
         {
             $fake = new class {
