@@ -22,7 +22,7 @@ final class LocalQrRuntimeDependencyTest extends TestCase
         );
 
         self::assertSame(
-            '6.0.1',
+            '^6.0.1',
             $manifest['require']['chillerlan/php-qrcode'] ?? null,
             'WEM-34 must pin the maintained QR encoder as a runtime dependency.'
         );
