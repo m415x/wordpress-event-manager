@@ -22,7 +22,7 @@ final class WEM_Admin_Invitation_QR_Orchestrator
     }
 
     /**
-     * @return array{url: string, svg: string, generation: int}
+     * @return array{url: string, svg: string, generation: int, headers: array<string, string>}
      */
     public function issue($guest_id, $actor_user_id): array
     {
@@ -62,6 +62,13 @@ final class WEM_Admin_Invitation_QR_Orchestrator
             'url' => $url,
             'svg' => $svg,
             'generation' => (int) $issued['generation'],
+            // The authenticated transport must emit these on its one-shot response.
+            // No credential-bearing response may be cached or indexed.
+            'headers' => array(
+                'Cache-Control' => 'private, no-store',
+                'Referrer-Policy' => 'no-referrer',
+                'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+            ),
         );
     }
 }
