@@ -193,5 +193,84 @@ namespace WEM\Tests\Unit {
             self::assertSame(0, $fake->calls);
         }
 
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testRotateDelegatesExactlyOnceAndReturnsItsGeneration(): void
+        {
+            $fake = new class {
+                public $calls = array();
+                public function rotate($guest_id, $actor_id)
+                {
+                    $this->calls[] = array($guest_id, $actor_id);
+                    return array(
+                        'url' => 'https://example.test/?wem_invitation=' . str_repeat('B', 43),
+                        'svg' => '<svg>rotation</svg>',
+                        'generation' => 2,
+                    );
+                }
+            };
+
+            (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_rotate();
+            self::assertSame(array(array(17, 42)), $fake->calls);
+            self::assertSame(2, $GLOBALS['wem34_delivery_response']['generation'] ?? null);
+            self::assertSame('<svg>rotation</svg>', $GLOBALS['wem34_delivery_response']['svg'] ?? null);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testReissueDelegatesExactlyOnceAndReturnsItsGeneration(): void
+        {
+            $fake = new class {
+                public $calls = array();
+                public function reissue($guest_id, $actor_id)
+                {
+                    $this->calls[] = array($guest_id, $actor_id);
+                    return array(
+                        'url' => 'https://example.test/?wem_invitation=' . str_repeat('C', 43),
+                        'svg' => '<svg>reissue</svg>',
+                        'generation' => 3,
+                    );
+                }
+            };
+
+            (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_reissue();
+            self::assertSame(array(array(17, 42)), $fake->calls);
+            self::assertSame(3, $GLOBALS['wem34_delivery_response']['generation'] ?? null);
+            self::assertSame('<svg>reissue</svg>', $GLOBALS['wem34_delivery_response']['svg'] ?? null);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testPostCommitPresentationExceptionIsSanitizedWithoutAutomaticRetry(): void
+        {
+            $secret = str_repeat('D', 43);
+            $fake = new class($secret) {
+                public $calls = 0;
+                private $secret;
+                public function __construct($secret) { $this->secret = $secret; }
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    throw new \RuntimeException('Encoder failed with bearer ' . $this->secret);
+                }
+            };
+
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_issue();
+                self::fail('Post-commit presentation error must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:500', $error->getMessage());
+                self::assertStringNotContainsString($secret, $error->getMessage());
+            }
+            self::assertSame(1, $fake->calls);
+            self::assertArrayNotHasKey('wem34_delivery_response', $GLOBALS);
+        }
+
     }
 }
