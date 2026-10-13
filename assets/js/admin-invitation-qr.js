@@ -51,6 +51,11 @@
                     output.textContent = 'An invitation credential already exists. Issue cannot recover the old QR or URL. Use Rotate only if you intend to invalidate the active credential.';
                     return;
                 }
+                if (response.status === 409 && payload?.data?.code === 'invitation_qr_active_reissue_conflict') {
+                    clearPresentation();
+                    output.textContent = 'Reissue is unavailable while an active invitation credential exists. Revoke the credential explicitly before reissuing; no changes were made.';
+                    return;
+                }
                 if (!response.ok || !payload.success ||
                     typeof payload.data?.svg !== 'string' ||
                     typeof payload.data?.url !== 'string') {
