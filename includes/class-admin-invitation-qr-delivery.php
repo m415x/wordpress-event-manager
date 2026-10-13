@@ -83,6 +83,9 @@ final class WEM_Admin_Invitation_QR_Delivery
 
         try {
             $result = $orchestrator->{$operation}($guest_id, get_current_user_id());
+        } catch (WEM_Invitation_QR_Already_Issued $error) {
+            wp_send_json_error(array('code' => 'invitation_qr_already_issued'), 409);
+            return;
         } catch (Throwable $error) {
             // A credential may already be committed. Never leak tokens,
             // exception messages or offer an implicit retry/rotation.
