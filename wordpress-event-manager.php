@@ -70,6 +70,9 @@ add_action('plugins_loaded', function () {
     $qr = new WEM_QR_Generator();
     $qr->register_shortcodes();
 
+    $admin_qr_panel = new WEM_Admin_Invitation_QR_Panel();
+    $admin_qr_panel->register_hooks();
+
     $admin_qr_delivery = new WEM_Admin_Invitation_QR_Delivery();
     $admin_qr_delivery->register_hooks();
 
