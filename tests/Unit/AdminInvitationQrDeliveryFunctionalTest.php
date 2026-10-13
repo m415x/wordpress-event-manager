@@ -145,5 +145,53 @@ namespace WEM\Tests\Unit {
             self::assertSame(0, $fake->calls, 'DENY must never issue a credential.');
         }
 
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testViewerDeniedBeforeCredentialInvocation(): void
+        {
+            $GLOBALS['wem34_delivery_authorized'] = false;
+            $fake = new class {
+                public $calls = 0;
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 1);
+                }
+            };
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_issue();
+                self::fail('Unprivileged caller must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:403', $error->getMessage());
+            }
+            self::assertSame(0, $fake->calls);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testGetRequestDeniedBeforeCredentialInvocation(): void
+        {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $fake = new class {
+                public $calls = 0;
+                public function rotate($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 2);
+                }
+            };
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_rotate();
+                self::fail('GET must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:403', $error->getMessage());
+            }
+            self::assertSame(0, $fake->calls);
+        }
+
     }
 }
