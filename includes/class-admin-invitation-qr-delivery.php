@@ -61,9 +61,16 @@ final class WEM_Admin_Invitation_QR_Delivery
 
         check_ajax_referer('wem_invitation_qr_admin', 'nonce');
 
-        $guest_id = isset($_POST['guest_id']) && is_scalar($_POST['guest_id'])
-            ? absint(wp_unslash((string) $_POST['guest_id']))
-            : 0;
+        $raw_guest_id = isset($_POST['guest_id']) && is_string($_POST['guest_id'])
+            ? wp_unslash($_POST['guest_id'])
+            : '';
+        $guest_id = 0;
+        if (
+            preg_match('/^[1-9][0-9]*$/D', $raw_guest_id)
+            && filter_var($raw_guest_id, FILTER_VALIDATE_INT) !== false
+        ) {
+            $guest_id = (int) $raw_guest_id;
+        }
         if ($guest_id <= 0) {
             wp_send_json_error(array('code' => 'invitation_qr_unavailable'), 400);
             return;
