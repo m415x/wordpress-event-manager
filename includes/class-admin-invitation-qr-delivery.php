@@ -10,6 +10,13 @@ if (!defined('ABSPATH')) {
  */
 final class WEM_Admin_Invitation_QR_Delivery
 {
+    private $orchestrator;
+
+    public function __construct($orchestrator = null)
+    {
+        $this->orchestrator = $orchestrator;
+    }
+
     public function register_hooks()
     {
         foreach (array('issue', 'rotate', 'reissue') as $operation) {
@@ -62,7 +69,7 @@ final class WEM_Admin_Invitation_QR_Delivery
             return;
         }
 
-        $orchestrator = new WEM_Admin_Invitation_QR_Orchestrator();
+        $orchestrator = $this->orchestrator ?? new WEM_Admin_Invitation_QR_Orchestrator();
 
         try {
             $result = $orchestrator->{$operation}($guest_id, get_current_user_id());
