@@ -10,6 +10,10 @@ if (!defined('ABSPATH')) {
  * WEM-33 remains the sole authority for credential persistence and lifecycle.
  * No bearer or QR is retained, logged, or made recoverable.
  */
+final class WEM_Invitation_QR_Already_Issued extends RuntimeException
+{
+}
+
 final class WEM_Admin_Invitation_QR_Orchestrator
 {
     private $credential_service;
@@ -48,7 +52,17 @@ final class WEM_Admin_Invitation_QR_Orchestrator
 
         // This commits the WEM-33 credential before QR rendering starts.
         // Rendering failures never revoke, rotate, or compensate the commit.
-        $issued = $this->credential_service->{$operation}((int) $guest_id, $actor_user_id);
+        try {
+            $issued = $this->credential_service->{$operation}((int) $guest_id, $actor_user_id);
+        } catch (RuntimeException $error) {
+            // Exact WEM-33 pre-commit duplicate rejection only. Other failures
+            // must not be misclassified as safely pre-commit.
+            if ($operation === 'issue'
+                && $error->getMessage() === 'Invitation credential has already been issued.') {
+                throw new WEM_Invitation_QR_Already_Issued('Invitation QR already issued.');
+            }
+            throw $error;
+        }
         $token = $issued['token'] ?? null;
         if (!is_string($token) || !preg_match('/^[A-Za-z0-9_-]{43}$/D', $token)) {
             throw new RuntimeException('Credential issuance did not provide a valid bearer.');
