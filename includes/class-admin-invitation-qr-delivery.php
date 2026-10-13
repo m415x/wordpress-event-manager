@@ -59,7 +59,10 @@ final class WEM_Admin_Invitation_QR_Delivery
             return;
         }
 
-        check_ajax_referer('wem_invitation_qr_admin', 'nonce');
+        if (false === check_ajax_referer('wem_invitation_qr_admin', 'nonce', false)) {
+            wp_send_json_error(array('code' => 'invitation_qr_unavailable'), 403);
+            return;
+        }
 
         $raw_guest_id = isset($_POST['guest_id']) && is_string($_POST['guest_id'])
             ? wp_unslash($_POST['guest_id'])
