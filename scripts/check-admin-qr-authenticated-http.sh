@@ -17,6 +17,19 @@ curl -fsS -c "$tmp/cookies" -b "$tmp/cookies" -o /dev/null \
   --data-urlencode 'testcookie=1' \
   "$base_url/wp-login.php"
 
+# WordPress login may return HTTP 200 with an error page; verify the cookie
+# against a protected endpoint before testing WEM request semantics.
+if ! grep -Eq '^[^#[:space:]].*wordpress_logged_in_' "$tmp/cookies"; then
+  printf 'ERROR: WordPress did not issue a logged-in cookie; check test credentials.\n' >&2
+  exit 1
+fi
+auth_status=$(curl -sS -b "$tmp/cookies" -o /dev/null -w '%{http_code}' "$base_url/wp-admin/profile.php")
+if [[ "$auth_status" != 200 ]]; then
+  printf 'ERROR: authenticated WordPress profile check returned HTTP %s; check login/session.\n' "$auth_status" >&2
+  exit 1
+fi
+printf 'PASS: WordPress authentication preflight\n'
+
 for operation in issue rotate reissue; do
   for method in GET POST; do
     action="wem_invitation_qr_${operation}"
