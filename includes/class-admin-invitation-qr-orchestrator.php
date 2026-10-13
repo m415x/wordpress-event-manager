@@ -14,6 +14,10 @@ final class WEM_Invitation_QR_Already_Issued extends RuntimeException
 {
 }
 
+final class WEM_Invitation_QR_Active_Reissue_Conflict extends RuntimeException
+{
+}
+
 final class WEM_Admin_Invitation_QR_Orchestrator
 {
     private $credential_service;
@@ -60,6 +64,12 @@ final class WEM_Admin_Invitation_QR_Orchestrator
             if ($operation === 'issue'
                 && $error->getMessage() === 'Invitation credential has already been issued.') {
                 throw new WEM_Invitation_QR_Already_Issued('Invitation QR already issued.');
+            }
+            if ($operation === 'reissue'
+                && $error->getMessage() === 'Invitation already has an active credential.') {
+                throw new WEM_Invitation_QR_Active_Reissue_Conflict(
+                    'Reissue requires no active invitation credential.'
+                );
             }
             throw $error;
         }
