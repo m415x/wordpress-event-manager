@@ -106,9 +106,12 @@ namespace WEM\Tests\Unit {
             };
 
             $delivery = new \WEM_Admin_Invitation_QR_Delivery($fake);
-            $this->expectException(\RuntimeException::class);
-            $this->expectExceptionMessage('denied:400');
-            $delivery->handle_issue();
+            try {
+                $delivery->handle_issue();
+                self::fail('Malformed guest ID must be rejected.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:400', $error->getMessage());
+            }
             self::assertSame(0, $fake->calls);
         }
 
