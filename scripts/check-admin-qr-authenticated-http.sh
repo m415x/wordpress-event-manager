@@ -9,6 +9,8 @@ base_url='http://localhost:8892'
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
+curl -fsS -c "$tmp/cookies" -b "$tmp/cookies" -o /dev/null "$base_url/wp-login.php"
+
 curl -fsS -c "$tmp/cookies" -b "$tmp/cookies" -o /dev/null \
   --data-urlencode "log=$WEM_QR_HTTP_USER" \
   --data-urlencode "pwd=$WEM_QR_HTTP_PASSWORD" \
@@ -19,7 +21,7 @@ curl -fsS -c "$tmp/cookies" -b "$tmp/cookies" -o /dev/null \
 
 # WordPress login may return HTTP 200 with an error page; verify the cookie
 # against a protected endpoint before testing WEM request semantics.
-if ! grep -Eq '^[^#[:space:]].*wordpress_logged_in_' "$tmp/cookies"; then
+if ! grep -Eq '(^#HttpOnly_|^[^#[:space:]]).*wordpress_logged_in_' "$tmp/cookies"; then
   printf 'ERROR: WordPress did not issue a logged-in cookie; check test credentials.\n' >&2
   exit 1
 fi
