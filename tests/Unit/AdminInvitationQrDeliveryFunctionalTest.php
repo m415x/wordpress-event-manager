@@ -272,5 +272,37 @@ namespace WEM\Tests\Unit {
             self::assertArrayNotHasKey('wem34_delivery_response', $GLOBALS);
         }
 
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testTypedDuplicateIssueReturnsFixedConflictWithoutBearer(): void
+        {
+            $secret = str_repeat('Z', 43);
+            require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-orchestrator.php';
+
+            $fake = new class($secret) {
+                public $calls = 0;
+                private $secret;
+                public function __construct($secret) { $this->secret = $secret; }
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    throw new \WEM_Invitation_QR_Already_Issued('duplicate ' . $this->secret);
+                }
+            };
+
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_issue();
+                self::fail('Duplicate issue must not succeed.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:409', $error->getMessage());
+                self::assertStringNotContainsString($secret, $error->getMessage());
+            }
+
+            self::assertSame(1, $fake->calls);
+            self::assertArrayNotHasKey('wem34_delivery_response', $GLOBALS);
+        }
+
     }
 }
