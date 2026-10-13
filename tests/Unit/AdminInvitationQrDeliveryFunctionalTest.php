@@ -88,5 +88,29 @@ namespace WEM\Tests\Unit {
             self::assertSame(array(array(17, 42)), $fake->calls);
             self::assertSame('<svg></svg>', $GLOBALS['wem34_delivery_response']['svg'] ?? null);
         }
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testMalformedGuestIdIsDeniedBeforeCredentialIssuance(): void
+        {
+            $_POST['guest_id'] = '17garbage';
+
+            $fake = new class {
+                public $calls = 0;
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 1);
+                }
+            };
+
+            $delivery = new \\WEM_Admin_Invitation_QR_Delivery($fake);
+            $this->expectException(\\RuntimeException::class);
+            $this->expectExceptionMessage('denied:400');
+            $delivery->handle_issue();
+            self::assertSame(0, $fake->calls);
+        }
+
     }
 }
