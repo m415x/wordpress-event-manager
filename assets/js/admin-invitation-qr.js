@@ -46,6 +46,11 @@
                     body: body.toString()
                 });
                 const payload = await response.json();
+                if (response.status === 409 && payload?.data?.code === 'invitation_qr_already_issued') {
+                    clearPresentation();
+                    output.textContent = 'An invitation credential already exists. Issue cannot recover the old QR or URL. Use Rotate only if you intend to invalidate the active credential.';
+                    return;
+                }
                 if (!response.ok || !payload.success ||
                     typeof payload.data?.svg !== 'string' ||
                     typeof payload.data?.url !== 'string') {
