@@ -16,10 +16,11 @@ namespace {
         function current_user_can($capability) { return $capability === 'manage_options' && ($GLOBALS['wem34_delivery_authorized'] ?? false); }
     }
     if (!function_exists('check_ajax_referer')) {
-        function check_ajax_referer($action, $field) {
+        function check_ajax_referer($action, $field, $stop = true) {
             if ($action !== 'wem_invitation_qr_admin' || $field !== 'nonce') {
                 throw new \RuntimeException('Unexpected nonce contract');
             }
+            return ($_POST['nonce'] ?? '') === 'valid';
         }
     }
     if (!function_exists('absint')) {
@@ -113,6 +114,35 @@ namespace WEM\Tests\Unit {
                 self::assertSame('denied:400', $error->getMessage());
             }
             self::assertSame(0, $fake->calls);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testInvalidNonceIsDeniedWithoutInvokingCredentialService(): void
+        {
+            $_POST['nonce'] = 'invalid';
+
+            $fake = new class {
+                public $calls = 0;
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 1);
+                }
+            };
+
+            $delivery = new \WEM_Admin_Invitation_QR_Delivery($fake);
+            $denied = false;
+            try {
+                $delivery->handle_issue();
+            } catch (\RuntimeException $error) {
+                $denied = $error->getMessage() === 'denied:403';
+            }
+
+            self::assertTrue($denied, 'Invalid nonce must produce fixed 403 JSON denial.');
+            self::assertSame(0, $fake->calls, 'DENY must never issue a credential.');
         }
 
     }
