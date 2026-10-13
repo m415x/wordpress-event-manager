@@ -105,8 +105,8 @@ namespace WEM\Tests\Unit {
                 }
             };
 
-            $delivery = new \\WEM_Admin_Invitation_QR_Delivery($fake);
-            $this->expectException(\\RuntimeException::class);
+            $delivery = new \WEM_Admin_Invitation_QR_Delivery($fake);
+            $this->expectException(\RuntimeException::class);
             $this->expectExceptionMessage('denied:400');
             $delivery->handle_issue();
             self::assertSame(0, $fake->calls);
