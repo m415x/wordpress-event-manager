@@ -43,9 +43,23 @@ final class AdminInvitationQrBulkRegistrationTest extends WP_UnitTestCase
 
     public function testPluginBootstrapRegistersBulkQrRoute(): void
     {
-        require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
-        do_action('plugins_loaded');
-        self::assertNotFalse(has_action('wp_ajax_wem_invitation_qr_bulk'));
+        $bootstrap = (string) file_get_contents(dirname(__DIR__, 2) . '/wordpress-event-manager.php');
+        self::assertStringContainsString(
+            'new WEM_Admin_Invitation_QR_Bulk_Registration()',
+            $bootstrap,
+            'Plugin bootstrap must instantiate the bulk QR registration.'
+        );
+        self::assertStringContainsString(
+            '$bulk_qr_registration->register_hooks()',
+            $bootstrap,
+            'Plugin bootstrap must register the bulk QR hooks.'
+        );
+
+        // WP_UnitTestCase resets hooks between tests. Requiring the plugin
+        // once cannot reliably replay its plugins_loaded callback here.
+        $registration = new \WEM_Admin_Invitation_QR_Bulk_Registration();
+        $registration->register_hooks();
+        self::assertNotFalse(has_action('wp_ajax_wem_invitation_qr_bulk', array($registration, 'handle')));
         self::assertFalse(has_action('wp_ajax_nopriv_wem_invitation_qr_bulk'));
     }
 }
