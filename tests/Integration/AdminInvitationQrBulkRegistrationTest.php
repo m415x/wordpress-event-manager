@@ -13,6 +13,7 @@ final class AdminInvitationQrBulkRegistrationTest extends WP_UnitTestCase
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
+        self::assertTrue(class_exists(\WEM_Admin_Invitation_QR_Bulk_Registration::class), 'Bulk route registration class is missing.');
         $registration = new \WEM_Admin_Invitation_QR_Bulk_Registration();
         $registration->register_hooks();
 
