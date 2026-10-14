@@ -11,10 +11,16 @@ use PHPUnit\Framework\TestCase;
  */
 final class AdminInvitationQrBulkEligibilityTest extends TestCase
 {
+    public static function setUpBeforeClass(): void
+    {
+        if (!defined('ABSPATH')) {
+            define('ABSPATH', '/tmp/wem66-bulk-eligibility-unit/');
+        }
+        require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-bulk-eligibility.php';
+    }
+
     public function testNeverIssuedGuestIsEligibleOnlyForIssue(): void
     {
-        require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-bulk-eligibility.php';
-
         self::assertSame(
             'never_issued',
             \WEM_Admin_Invitation_QR_Bulk_Eligibility::classify(true, array())
