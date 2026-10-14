@@ -23,7 +23,7 @@ final class WEM_Admin_Invitation_QR_Panel
 
         add_meta_box(
             'wem_invitation_qr',
-            __('Invitation QR', 'wordpress-event-manager'),
+            __('QR de invitación', 'wordpress-event-manager'),
             array($this, 'render_metabox'),
             'invitado',
             'side',
@@ -40,10 +40,10 @@ final class WEM_Admin_Invitation_QR_Panel
         echo '<div id="wem-invitation-qr-panel" data-guest-id="' . esc_attr((string) $post->ID) . '"';
         echo ' data-nonce="' . esc_attr(wp_create_nonce('wem_invitation_qr_admin')) . '"';
         echo ' data-ajax-url="' . esc_url(admin_url('admin-ajax.php')) . '">';
-        echo '<p>' . esc_html__('Each action creates a new credential. The QR and URL are available only in this response. Save them securely now.', 'wordpress-event-manager') . '</p>';
-        echo '<p><button type="button" class="button button-primary" data-wem-qr-action="issue">' . esc_html__('Issue QR', 'wordpress-event-manager') . '</button></p>';
-        echo '<p><button type="button" class="button" data-wem-qr-action="rotate">' . esc_html__('Rotate QR', 'wordpress-event-manager') . '</button> ';
-        echo '<button type="button" class="button" data-wem-qr-action="reissue">' . esc_html__('Reissue QR', 'wordpress-event-manager') . '</button></p>';
+        echo '<p>' . esc_html__('Cada acción crea una nueva credencial. El QR y la URL solo están disponibles en esta respuesta. Guardalos de forma segura ahora.', 'wordpress-event-manager') . '</p>';
+        echo '<p><button type="button" class="button button-primary" data-wem-qr-action="issue">' . esc_html__('Emitir QR', 'wordpress-event-manager') . '</button></p>';
+        echo '<p><button type="button" class="button" data-wem-qr-action="rotate">' . esc_html__('Rotar QR', 'wordpress-event-manager') . '</button> ';
+        echo '<button type="button" class="button" data-wem-qr-action="reissue">' . esc_html__('Reemitir QR', 'wordpress-event-manager') . '</button></p>';
         echo '<div data-wem-qr-output role="status" aria-live="polite"></div>';
         echo '</div>';
     }
