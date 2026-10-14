@@ -25,11 +25,11 @@
         button.addEventListener('click', async function () {
             const operation = button.dataset.wemQrAction;
             if (!['issue', 'rotate', 'reissue'].includes(operation)) return;
-            if (!window.confirm('This action creates a new invitation credential. Continue?')) return;
+            if (!window.confirm('Esta acción crea una nueva credencial de invitación. ¿Querés continuar?')) return;
 
             clearPresentation();
             buttons.forEach((item) => { item.disabled = true; });
-            output.textContent = 'Generating invitation QR…';
+            output.textContent = 'Generando QR de invitación…';
 
             try {
                 const body = new URLSearchParams({
@@ -48,23 +48,23 @@
                 const payload = await response.json();
                 if (response.status === 409 && payload?.data?.code === 'invitation_qr_already_issued') {
                     clearPresentation();
-                    output.textContent = 'An invitation credential already exists. Issue cannot recover the old QR or URL. Use Rotate only if you intend to invalidate the active credential.';
+                    output.textContent = 'Ya existe una credencial de invitación. No se puede recuperar el QR ni la URL anteriores. Usá Rotar QR solo si querés invalidar la credencial activa.';
                     return;
                 }
                 if (response.status === 409 && payload?.data?.code === 'invitation_qr_active_reissue_conflict') {
                     clearPresentation();
-                    output.textContent = 'Reissue is unavailable while an active invitation credential exists. Revoke the credential explicitly before reissuing; no changes were made.';
+                    output.textContent = 'No se puede reemitir mientras exista una credencial activa. Revocá expresamente la credencial antes de reemitir. No se realizaron cambios.';
                     return;
                 }
                 if (!response.ok || !payload.success ||
                     typeof payload.data?.svg !== 'string' ||
                     typeof payload.data?.url !== 'string') {
-                    throw new Error('QR presentation is unavailable.');
+                    throw new Error('No se puede mostrar el QR.');
                 }
 
                 clearPresentation();
                 const qr = document.createElement('img');
-                qr.alt = 'Invitation QR code';
+                qr.alt = 'Código QR de invitación';
                 qr.width = 220;
                 qr.height = 220;
                 activeObjectUrl = URL.createObjectURL(
@@ -73,19 +73,19 @@
                 qr.src = activeObjectUrl;
 
                 const label = document.createElement('p');
-                label.textContent = 'Invitation URL (copy and save securely):';
+                label.textContent = 'URL de invitación (copiala y guardala de forma segura):';
                 const url = document.createElement('input');
                 url.type = 'text';
                 url.readOnly = true;
                 url.value = payload.data.url;
-                url.setAttribute('aria-label', 'Invitation URL');
+                url.setAttribute('aria-label', 'URL de invitación');
                 url.style.width = '100%';
                 const hint = document.createElement('p');
-                hint.textContent = 'Copy the URL now. It cannot be recovered from the stored credential.';
+                hint.textContent = 'Copiá la URL ahora. No se puede recuperar a partir de la credencial almacenada.';
                 output.append(qr, label, url, hint);
             } catch (_error) {
                 clearPresentation();
-                output.textContent = 'QR presentation failed. A credential may already have been issued. Do not retry without checking its status.';
+                output.textContent = 'No se pudo mostrar el QR. Es posible que la credencial ya se haya emitido. No vuelvas a intentar la operación sin verificar su estado.';
             } finally {
                 buttons.forEach((item) => { item.disabled = false; });
             }
