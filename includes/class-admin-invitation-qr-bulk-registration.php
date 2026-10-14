@@ -12,6 +12,7 @@ final class WEM_Admin_Invitation_QR_Bulk_Registration
     public function register_hooks()
     {
         add_action('wp_ajax_wem_invitation_qr_bulk', array($this, 'handle'));
+        add_action('wp_ajax_wem_invitation_qr_bulk_preview', array($this, 'handle_preview'));
     }
 
     public function build_processor()
@@ -24,6 +25,21 @@ final class WEM_Admin_Invitation_QR_Bulk_Registration
             $validator,
             new WEM_Admin_Invitation_QR_Orchestrator()
         );
+    }
+
+    public function build_preview()
+    {
+        return new WEM_Admin_Invitation_QR_Bulk_Preview(
+            new WEM_Admin_Invitation_QR_Bulk_WordPress_Reader()
+        );
+    }
+
+    public function handle_preview()
+    {
+        $delivery = new WEM_Admin_Invitation_QR_Bulk_Preview_Ajax(
+            $this->build_preview()
+        );
+        $delivery->handle();
     }
 
     public function handle()
