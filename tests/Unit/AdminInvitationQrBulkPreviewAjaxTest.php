@@ -21,6 +21,7 @@ namespace WEM\Tests\Unit {
         protected function setUp(): void
         {
             $GLOBALS['wem66_preview_authorized'] = true;
+            $GLOBALS['wem66_ajax_authorized'] = true;
             unset($GLOBALS['wem66_preview_response']);
             $_SERVER['REQUEST_METHOD'] = 'POST';
             $_POST = array('nonce' => 'valid', 'guest_ids' => array('11', '12'));
@@ -39,7 +40,8 @@ namespace WEM\Tests\Unit {
             };
             (new \WEM_Admin_Invitation_QR_Bulk_Preview_Ajax($preview))->handle();
             self::assertSame(array(array(11, 12)), $preview->calls);
-            self::assertSame(array(array('guest_id' => 11, 'eligibility' => 'never_issued')), $GLOBALS['wem66_preview_response']);
+            $response = $GLOBALS['wem66_preview_response'] ?? $GLOBALS['wem66_ajax_response'] ?? null;
+            self::assertSame(array(array('guest_id' => 11, 'eligibility' => 'never_issued')), $response);
         }
 
         /** @dataProvider deniedCases
@@ -49,6 +51,7 @@ namespace WEM\Tests\Unit {
         public function testDeniedRequestsNeverReadState($admin, $nonce, $method, $ids): void
         {
             $GLOBALS['wem66_preview_authorized'] = $admin;
+            $GLOBALS['wem66_ajax_authorized'] = $admin;
             $_POST['nonce'] = $nonce;
             $_SERVER['REQUEST_METHOD'] = $method;
             $_POST['guest_ids'] = $ids;
