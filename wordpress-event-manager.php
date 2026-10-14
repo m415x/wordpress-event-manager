@@ -76,6 +76,9 @@ add_action('plugins_loaded', function () {
     $admin_qr_delivery = new WEM_Admin_Invitation_QR_Delivery();
     $admin_qr_delivery->register_hooks();
 
+    $bulk_qr_registration = new WEM_Admin_Invitation_QR_Bulk_Registration();
+    $bulk_qr_registration->register_hooks();
+
     $public_invitation_route = new WEM_Public_Invitation_Route();
     $public_invitation_route->register_hooks();
 });
