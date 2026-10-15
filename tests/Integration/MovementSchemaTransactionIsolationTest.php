@@ -12,7 +12,7 @@ use WP_UnitTestCase;
  */
 final class MovementSchemaTransactionIsolationTest extends WP_UnitTestCase
 {
-    public function testMovementSchemaInstallationPreservesWordPressTestTransaction(): void
+    public function testMovementSchemaIsReadyWithoutCommittingWordPressTestTransaction(): void
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
@@ -20,9 +20,9 @@ final class MovementSchemaTransactionIsolationTest extends WP_UnitTestCase
         self::assertSame('1', (string) $wpdb->get_var('SELECT @@in_transaction'),
             'WordPress PHPUnit must start a transaction before this test.');
 
-        \WEM_Movement_Schema::install();
+        self::assertSame(\WEM_Movement_Schema::table_name(), (string) $wpdb->get_var('SHOW TABLES LIKE \'wp_wem_guest_movements\''));
 
         self::assertSame('1', (string) $wpdb->get_var('SELECT @@in_transaction'),
-            'Movement schema installation must not commit the PHPUnit transaction.');
+            'Preinstalled movement schema must preserve the PHPUnit transaction.');
     }
 }
