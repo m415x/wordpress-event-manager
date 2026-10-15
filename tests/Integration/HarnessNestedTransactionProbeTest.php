@@ -48,7 +48,9 @@ final class HarnessNestedTransactionProbeTest extends WP_UnitTestCase
             )
         );
 
-        // Remove only this probe's synthetic marker, even when assertion fails.
+        // Isolated diagnostic file only: exit PHPUnit's transaction before
+        // deleting our marker so that teardown cannot roll back the cleanup.
+        $wpdb->query('ROLLBACK');
         $wpdb->delete($wpdb->options, array('option_name' => self::MARKER), array('%s'));
         self::assertSame(
             0,
