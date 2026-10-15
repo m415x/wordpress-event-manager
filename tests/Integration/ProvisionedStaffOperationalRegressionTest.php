@@ -22,7 +22,6 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
             register_post_type('invitado', ['public' => false]);
         }
 
-        \WEM_Movement_Schema::install();
 
         $ajax = new \WEM_Ajax_Handler();
         $ajax->register_ajax_handlers();
