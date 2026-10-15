@@ -12,6 +12,10 @@ use PHPUnit\Framework\TestCase;
  */
 final class MovementSchemaIdempotenceOutsideTransactionTest extends TestCase
 {
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
     public function testRepeatedSchemaInstallationPreservesExistingMovements(): void
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
