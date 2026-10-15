@@ -13,7 +13,6 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
         parent::setUp();
 
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
-        \WEM_Movement_Schema::install();
     }
 
     public function testAcceptedMovementsAppendWithDurableMonotonicOrder(): void
@@ -60,7 +59,7 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
         self::assertLessThan($history[1]['sequence'], $history[0]['sequence']);
     }
 
-    public function testSchemaRerunPreservesExistingMovementAndUniqueUuidConstraint(): void
+    public function testPreinstalledSchemaPreservesMovementAndUniqueUuidConstraint(): void
     {
         self::assertTrue(class_exists('WEM_Movement_Ledger'));
 
