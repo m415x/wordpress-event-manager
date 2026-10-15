@@ -14,7 +14,6 @@ final class MovementLedgerContractTest extends WP_UnitTestCase
         parent::setUp();
 
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
-        \WEM_Movement_Schema::install();
     }
 
     public function testSchemaExposesCanonicalColumnsAndIndexes(): void
