@@ -75,8 +75,6 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
             'decision' => 'accepted',
         ]);
 
-        \WEM_Movement_Schema::install();
-
         $history = $ledger->find_by_guest_event(202, 8);
 
         self::assertCount(1, $history);
@@ -99,6 +97,6 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
             ]
         );
 
-        self::assertFalse($duplicate, 'movement_id must remain unique after schema rerun.');
+        self::assertFalse($duplicate, 'movement_id must remain unique with preinstalled schema.');
     }
 }
