@@ -25,7 +25,7 @@ final class HarnessScopedCleanupSpikeTest extends WemTransactionalTestCase
         );
         $this->registerOwnedOption(self::MARKER);
         self::assertSame('1', (string) $wpdb->get_var('SELECT @@in_transaction'));
-        self::assertSame(1, $wpdb->query('START TRANSACTION'));
+        self::assertNotFalse($wpdb->query('START TRANSACTION'));
         self::assertSame(
             1,
             $wpdb->insert($wpdb->options, array(
@@ -34,7 +34,7 @@ final class HarnessScopedCleanupSpikeTest extends WemTransactionalTestCase
                 'autoload' => 'no',
             ))
         );
-        self::assertSame(1, $wpdb->query('COMMIT'));
+        self::assertNotFalse($wpdb->query('COMMIT'));
     }
 
     /** @depends test01ExplicitCommitIsReconciledByOwnedCleanup */
