@@ -36,15 +36,21 @@ final class WemServiceTransactionProbeTest extends WP_UnitTestCase
         $guestId = self::factory()->post->create(array('post_type' => 'invitado'));
         $actorId = self::factory()->user->create(array('role' => 'subscriber'));
         wp_set_object_terms($guestId, array($eventId), 'evento', false);
+        $movementId = null;
+        $preexisting = (new \WEM_Movement_Ledger())->find_by_guest_event($guestId, $eventId);
 
         try {
+            self::assertSame(array(), $preexisting, 'Probe requires an unoccupied guest/event pair.');
             self::assertSame('1', (string) $wpdb->get_var('SELECT @@in_transaction'));
-            (new \WEM_Movement_Service())->checkin($guestId, $eventId, $actorId, 'staff_web');
+            $result = (new \WEM_Movement_Service())->checkin($guestId, $eventId, $actorId, 'staff_web');
+            $movementId = $result['movement']['movement_id'];
             $after = (string) $wpdb->get_var('SELECT @@in_transaction');
         } finally {
             // The service COMMIT may have persisted factory records too.
             $wpdb->query('ROLLBACK');
-            $wpdb->delete(\WEM_Movement_Schema::table_name(), array('guest_id' => $guestId), array('%d'));
+            if ($movementId !== null) {
+                $wpdb->delete(\WEM_Movement_Schema::table_name(), array('movement_id' => $movementId), array('%s'));
+            }
             wp_delete_post($guestId, true);
             wp_delete_term($eventId, 'evento');
             require_once ABSPATH . 'wp-admin/includes/user.php';
@@ -60,15 +66,21 @@ final class WemServiceTransactionProbeTest extends WP_UnitTestCase
         $guestId = self::factory()->post->create(array('post_type' => 'invitado'));
         $actorId = self::factory()->user->create(array('role' => 'administrator'));
         $credentialTable = \WEM_Invitation_Credential_Schema::table_name();
+        $issuedDigest = null;
 
         try {
+            $existing = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$credentialTable} WHERE guest_id = %d", $guestId));
+            self::assertSame(0, $existing, 'Probe must not issue against a guest with historical credentials.');
             self::assertSame('1', (string) $wpdb->get_var('SELECT @@in_transaction'));
             $issued = (new \WEM_Invitation_Credential_Service())->issue($guestId, $actorId);
             self::assertSame(1, (int) $issued['generation']);
+            $issuedDigest = hash('sha256', $issued['token']);
             $after = (string) $wpdb->get_var('SELECT @@in_transaction');
         } finally {
             $wpdb->query('ROLLBACK');
-            $wpdb->delete($credentialTable, array('guest_id' => $guestId), array('%d'));
+            if ($issuedDigest !== null) {
+                $wpdb->delete($credentialTable, array('token_digest' => $issuedDigest), array('%s'));
+            }
             wp_delete_post($guestId, true);
             require_once ABSPATH . 'wp-admin/includes/user.php';
             wp_delete_user($actorId);
