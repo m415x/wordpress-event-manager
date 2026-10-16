@@ -9,6 +9,7 @@
             <directory>tests/Integration</directory>
             <exclude>tests/Integration/HarnessNestedTransactionProbeTest.php</exclude>
             <exclude>tests/Integration/WemServiceTransactionProbeTest.php</exclude>
+            <exclude>tests/Integration/HarnessScopedCleanupSpikeTest.php</exclude>
         </testsuite>
     </testsuites>
 </phpunit>
