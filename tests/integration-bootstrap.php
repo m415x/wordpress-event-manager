@@ -34,3 +34,8 @@ if (!is_file($wordpressBootstrap)) {
 // WEM-3 records its known fatal bootstrap error. Plugin activation
 // receives its own bounded regression coverage during remediation.
 require_once $wordpressBootstrap;
+
+// Prepare the custom movement table once, before WP_UnitTestCase starts its
+// per-test database transactions. dbDelta() may issue implicit DDL commits.
+require_once $pluginRoot . '/wordpress-event-manager.php';
+\WEM_Movement_Schema::install();

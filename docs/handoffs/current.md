@@ -1,6 +1,6 @@
-# Current operational handoff — WEM-33 final closure verification
+# Current operational handoff — WEM-34 local invitation QR
 
-Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
+Updated: 2026-10-09. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
 
 ## Current baseline
 - Canonical integration branch: `dev`; stable `main` remains separate.
@@ -11,7 +11,8 @@ Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + cur
 - WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
 - WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
 - WEM-32 is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`; WEM-44 through WEM-49 are complete.
-- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-61 are complete; WEM-62 manual acceptance is GREEN and only final exact-HEAD CI over closure documentation remains.
+- WEM-33 is **Listo** and merged into `dev` via PR #6 at `79b6ec8dde1b0302f47ee0617e9361675ac04c55`; feature HEAD `1f5c36fde226277b3174450e6e689f466f1eb2f7` passed run `37803963686` and post-merge `dev` run `37804454592` passed both required jobs.
+- WEM-34 is **En curso** on `feat/WEM-34-local-secure-invitation-qr`, based on `dev@79b6ec8dde1b0302f47ee0617e9361675ac04c55`; T1–T8 are WEM-63–WEM-70.
 
 ## WEM-13 verified behavior
 - Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
@@ -85,7 +86,7 @@ See `docs/testing.md` for authoritative commands.
 
 ## Product boundaries still in force
 - WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
-- WEM-33 public invitation capability is implemented on its feature branch and awaiting WEM-62 manual/final closure; it is not yet integrated into `dev`. QR remains WEM-34.
+- WEM-33 public invitation capability is integrated into `dev`. QR remains WEM-34.
 - WEM-14 runtime movement persistence and authenticated AJAX integration are implemented, verified and integrated into `dev`.
 - No production deployment or production guest data is implied by completed local/CI evidence.
 
@@ -142,3 +143,15 @@ See `docs/testing.md` for authoritative commands.
 - GitHub Actions run `37795451779`: `PHP 8.3 lint, analysis and unit` SUCCESS; `WordPress isolated integration` SUCCESS.
 - Draft PR #6 remains open, mergeable and unmerged. It must not merge until WEM-62 acceptance is complete.
 - WEM-62 real WordPress acceptance is GREEN: issue → public read → rotate old denied/new valid → revoke denied → explicit reissue new valid; simple-permalink routing; mandatory response headers; indistinguishable denials; anonymous operational guards; and no public mutation authority. Final exact-HEAD CI after closure documentation remains.
+
+## WEM-34 approved execution contract (2026-10-09)
+
+- WEM-34 does not change `WEM_Invitation_Credential_Service` or its WEM-33 authority/lifecycle. A separate authenticated administrative orchestrator calls `issue`, `rotate` or `reissue`, receives the newly generated bearer, builds the sole canonical `?wem_invitation=` public URL and passes it transiently to a local encoder.
+- `manage_options` is required for individual/bulk operations; WEM Viewer/Operator do not inherit bearer access.
+- QR only exists during the response for newly issued/rotated/reissued bearer. No plaintext or reversible persistence, token recovery API, QR recovery, or silent refresh of active tokens.
+- If SVG or delivery fails after credential commit, the credential remains valid. Do not compensate, revoke or rotate automatically; further lifecycle changes require an explicit admin operation.
+- Bulk separates never-issued and inactive-history guests from active-but-unrecoverable guests; only explicitly selected and confirmed operations may issue/reissue. No silent bulk rotation or reissue; no bulk active-credential rotation in this story.
+- QR payload is exactly the WEM-33 public canonical URL; no ticket, slug, guest ID or legacy query. Old QR still scans physically but must resolve to neutral WEM-33 denial after rotation/revocation. No self-check-in or expanded public projection.
+- Approved preferred runtime dependency: `chillerlan/php-qrcode` **6.0.1**, generated server-side SVG, Composer autoload and packaged production vendor, PHP 8.3 / `ext-mbstring`; no network, external QR service/CDN or handwritten encoder. Validate licenses, locked dependencies and clean ZIP in T2/T8.
+- Existing `Requires PHP: 7.4` metadata is an explicit **WEM-37 release reconciliation discrepancy**; WEM-34 does not claim PHP 7.4 compatibility or quietly change the header.
+- T1 WEM-63 contract/docs; T2 WEM-64 runtime encoder; T3 WEM-65 individual administrative flow; T4 WEM-66 explicit bulk; T5 WEM-67 lifecycle; T6 WEM-68 HTTP/security; T7 WEM-69 scan acceptance; T8 WEM-70 formal closure.

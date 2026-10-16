@@ -22,7 +22,6 @@ final class MovementCheckoutReentryTest extends WP_UnitTestCase
             register_post_type('invitado', ['public' => false]);
         }
 
-        \WEM_Movement_Schema::install();
     }
 
     public function testCheckoutAndReentryPreserveDistinctHistoricalMovements(): void

@@ -22,8 +22,6 @@ final class MovementLedgerSchemaTest extends WP_UnitTestCase
             'WEM-26 requires a dedicated movement-ledger schema installer.'
         );
 
-        \WEM_Movement_Schema::install();
-
         global $wpdb;
 
         $tableName = $wpdb->prefix . 'wem_guest_movements';
