@@ -76,8 +76,13 @@ for method in "${methods[@]}"; do
   identity || exit 2
   pending=1
   set +e
-  phpunit vendor/bin/phpunit -c phpunit.integration.xml.dist --filter "^${method}$" "$testfile"
-  result=$?
+  log="$work/phpunit-$method.log"
+  phpunit vendor/bin/phpunit -c phpunit.integration.xml.dist --filter "$method" "$testfile" 2>&1 | tee "$log"
+  result=${PIPESTATUS[0]}
+  if ! grep -Eq "^OK \([1-9][0-9]* tests?,|^OK \(1 test,|^Tests: [1-9][0-9]*," "$log"; then
+    echo "STOP: PHPUnit did not demonstrate execution of a positive test count" >&2
+    result=1
+  fi
   set -e
   restore "$method" || exit 1
   echo "METHOD_EXIT $method: $result"
