@@ -16,6 +16,7 @@ abstract class WemTransactionalTestCase extends WP_UnitTestCase
     private $ownedUsers = array();
     private $ownedEvents = array();
     private $baseline = array();
+    private $sentinels = array();
 
     protected function setUp(): void
     {
@@ -30,7 +31,23 @@ abstract class WemTransactionalTestCase extends WP_UnitTestCase
             'terms' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->terms}"),
             'movements' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$movementTable}"),
             'credentials' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$credentialTable}"),
+            'postmeta' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta}"),
+            'usermeta' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta}"),
+            'term_taxonomy' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->term_taxonomy}"),
+            'term_relationships' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->term_relationships}"),
         );
+        // Fingerprints preserve both row identities and contents, not only counts.
+        $this->sentinels = array(
+            'movements' => $this->fingerprint($movementTable, 'sequence'),
+            'credentials' => $this->fingerprint($credentialTable, 'sequence'),
+        );
+    }
+
+    private function fingerprint(string $table, string $primaryKey): string
+    {
+        global $wpdb;
+        $rows = $wpdb->get_results("SELECT * FROM {$table} ORDER BY {$primaryKey}", ARRAY_A);
+        return hash('sha256', serialize($rows));
     }
 
     protected function registerOwnedOption(string $name): void
@@ -90,6 +107,9 @@ abstract class WemTransactionalTestCase extends WP_UnitTestCase
                     'posts' => $wpdb->posts, 'options' => $wpdb->options,
                     'users' => $wpdb->users, 'terms' => $wpdb->terms,
                     'movements' => $movementTable, 'credentials' => $credentialTable,
+                    'postmeta' => $wpdb->postmeta, 'usermeta' => $wpdb->usermeta,
+                    'term_taxonomy' => $wpdb->term_taxonomy,
+                    'term_relationships' => $wpdb->term_relationships,
                 );
                 $table = $tables[$name];
                 $actual = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
@@ -97,6 +117,13 @@ abstract class WemTransactionalTestCase extends WP_UnitTestCase
                     throw new \RuntimeException(
                         "WEM transactional cleanup changed {$name} baseline: {$count} -> {$actual}"
                     );
+                }
+            }
+
+            foreach ($this->sentinels as $name => $before) {
+                $table = $name === 'movements' ? $movementTable : $credentialTable;
+                if ($this->fingerprint($table, 'sequence') !== $before) {
+                    throw new \RuntimeException("WEM transactional cleanup modified unrelated {$name} rows");
                 }
             }
 
