@@ -27,13 +27,30 @@ final class WemServiceTransactionProbeTest extends WP_UnitTestCase
         }
     }
 
+    private function createUnoccupiedGuest(): int
+    {
+        global $wpdb;
+        $movementTable = \WEM_Movement_Schema::table_name();
+        $credentialTable = \WEM_Invitation_Credential_Schema::table_name();
+        $max = (int) $wpdb->get_var("SELECT GREATEST(\n            COALESCE((SELECT MAX(guest_id) FROM {$movementTable}), 0),\n            COALESCE((SELECT MAX(guest_id) FROM {$credentialTable}), 0),\n            COALESCE((SELECT MAX(ID) FROM {$wpdb->posts}), 0)\n        )");
+        $guestId = wp_insert_post(array(
+            'import_id' => $max + 10000,
+            'post_type' => 'invitado',
+            'post_status' => 'publish',
+            'post_title' => 'WEM isolated transaction probe',
+        ), true);
+        self::assertNotWPError($guestId);
+        self::assertSame($max + 10000, (int) $guestId);
+        return (int) $guestId;
+    }
+
     public function testMovementServiceDoesNotCommitOuterWordPressTestTransaction(): void
     {
         global $wpdb;
         $event = wp_insert_term('WEM harness probe movement ' . wp_generate_uuid4(), 'evento');
         self::assertNotWPError($event);
         $eventId = (int) $event['term_id'];
-        $guestId = self::factory()->post->create(array('post_type' => 'invitado'));
+        $guestId = $this->createUnoccupiedGuest();
         $actorId = self::factory()->user->create(array('role' => 'subscriber'));
         wp_set_object_terms($guestId, array($eventId), 'evento', false);
         $movementId = null;
@@ -63,7 +80,7 @@ final class WemServiceTransactionProbeTest extends WP_UnitTestCase
     public function testCredentialServiceDoesNotCommitOuterWordPressTestTransaction(): void
     {
         global $wpdb;
-        $guestId = self::factory()->post->create(array('post_type' => 'invitado'));
+        $guestId = $this->createUnoccupiedGuest();
         $actorId = self::factory()->user->create(array('role' => 'administrator'));
         $credentialTable = \WEM_Invitation_Credential_Schema::table_name();
         $issuedDigest = null;
