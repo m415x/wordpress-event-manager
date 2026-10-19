@@ -78,6 +78,12 @@ final class WEM_Public_Invitation_Route
 
         $output = $this->render_request();
 
+        // A denied or unresolved invitation is a neutral HTTP 404, never 200.
+        // Security headers were already emitted by handle_request().
+        if ($output === '') {
+            status_header(404);
+        }
+
         // The renderer owns escaping for this dedicated public response.
         echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
