@@ -123,7 +123,15 @@ final class WEM_Invitation_Credential_Service
             }
 
             // A failed/ambiguous commit cannot safely be treated as a rollback.
-            $committed = $wpdb->query('COMMIT');
+            try {
+                $committed = $wpdb->query('COMMIT');
+            } catch (Throwable $exception) {
+                throw new WEM_Invitation_Commit_Indeterminate(
+                    'Invitation credential commit outcome is indeterminate.',
+                    0,
+                    $exception
+                );
+            }
             if ($committed === false) {
                 throw new WEM_Invitation_Commit_Indeterminate(
                     'Invitation credential commit outcome is indeterminate.'
