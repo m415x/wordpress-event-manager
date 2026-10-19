@@ -41,6 +41,10 @@ namespace WEM\Tests\Unit {
             return '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
         }
     }
+    /**
+     * @runTestsInSeparateProcesses
+     * @preserveGlobalState disabled
+     */
     final class InvitationQrDeliveryLifecycleContractTest extends TestCase {
         public function testIssueRotateReissueEncodeOnlyFreshBearer(): void {
             foreach (['issue', 'rotate', 'reissue'] as $operation) {
