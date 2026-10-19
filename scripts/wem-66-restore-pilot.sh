@@ -9,7 +9,9 @@ reference="$dir/pre-restore.sql"
 historical="$dir/phpunit-baseline.sql"
 expected_host=915c3be11d98
 testfile=tests/Integration/InvitationCredentialLifecycleTest.php
-methods=(testIssueCreatesOneOpaqueActiveCredentialWithoutPersistingBearerSecret testRotateInvalidatesPreviousGenerationAndCreatesNewActiveCredential)
+# One existing transactional test class: discover every real test method, no fixture edits.
+mapfile -t methods < <(sed -nE 's/^[[:space:]]*public function (test[A-Za-z0-9_]+)\(.*/\1/p' "tests/Integration/InvitationCredentialLifecycleTest.php")
+(( ${#methods[@]} >= 2 )) || { echo "DENY: expected multiple PHPUnit methods" >&2; exit 2; }
 [[ $(basename "$PWD") == wordpress-event-manager-clean && -s "$reference" && -s "$historical" ]] || { echo "DENY checkout/snapshots" >&2; exit 2; }
 node -e 'let c=require("./.wp-env.phpunit.json");if(c.port!==8892||c.testsEnvironment!==false||JSON.stringify(c.plugins)!=="[\".\"]")process.exit(2)' || { echo "DENY config" >&2; exit 2; }
 cli() { wp-env run cli "--config=$config" -- "$@"; }
@@ -41,6 +43,10 @@ canonical() {
 # IMPORTANT: capture an immutable reference of all rows before touching the database.
 cp "$reference" "$work/reference.sql"
 canonical "$work/reference.sql" "$work/reference.canonical.sql"
+# Abort rather than overwrite changes outside the controlled pilot baseline.
+cli wp db export "$plugin/$work/current-before.sql" || exit 2
+canonical "$work/current-before.sql" "$work/current-before.canonical.sql"
+cmp -s "$work/reference.canonical.sql" "$work/current-before.canonical.sql" || { echo "DENY: active database differs from approved operational reference" >&2; exit 2; }
 pending=0; restore_failed=0
 restore() {
   local stage=$1 after="$work/after-$1.sql"
@@ -88,4 +94,4 @@ for method in "${methods[@]}"; do
   echo "METHOD_EXIT $method: $result"
   if (( result != 0 )); then echo "STOP: test failed but restore verified" >&2; exit 1; fi
 done
-echo "ONE-SHOT PILOT PASS: both methods + restores; historic residues not intentionally cleaned."
+echo "ONE-SHOT PILOT PASS: all discovered methods + per-method restores; historic residues not intentionally cleaned."
