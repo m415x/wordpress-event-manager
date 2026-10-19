@@ -66,7 +66,7 @@ if [[ ${CI:-} != true && ${WEM_TDD_SKIP_SYNC:-0} != 1 ]]; then
 fi
 
 wp_env_bin=${WEM_WP_ENV_BIN:-wp-env}
-container_cwd='wp-content/plugins/wordpress-event-manager'
+container_cwd="wp-content/plugins/$(basename "$PWD")"
 configuration=phpunit.xml.dist
 if [[ $suite == integration ]]; then configuration=phpunit.integration.xml.dist; fi
 

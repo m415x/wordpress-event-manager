@@ -83,7 +83,10 @@ final class NeutralIdentityContractTest extends TestCase
             $lines = file($file->getPathname());
             self::assertIsArray($lines);
             foreach ($lines as $lineNumber => $line) {
-                if (preg_match($expression, $line) === 1) {
+                // Commit hashes are provenance, not historical branding.
+                // Exclude their hex bytes from the legacy-identity scan.
+                $scanLine = preg_replace('/(?<![0-9a-f])[0-9a-f]{40}(?![0-9a-f])/i', '', $line);
+                if (preg_match($expression, (string) $scanLine) === 1) {
                     $offenders[] = $relativePath . ':' . ($lineNumber + 1);
                 }
             }

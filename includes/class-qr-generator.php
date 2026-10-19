@@ -9,7 +9,7 @@ class WEM_QR_Generator {
     
     public function generate_qr_table($atts) {
         // WEM-11: deny ticket/QR disclosure pending WEM-13.
-        return '<p>Guest access is temporarily unavailable.</p>';
+        return '<p>El acceso de invitados no está disponible por el momento.</p>';
 
         $atts = shortcode_atts(array(
             'event' => '',
@@ -71,7 +71,7 @@ class WEM_QR_Generator {
     
     public function generate_single_qr($atts) {
         // WEM-11: do not generate invitation URLs before authorization review.
-        return '<p>Guest access is temporarily unavailable.</p>';
+        return '<p>El acceso de invitados no está disponible por el momento.</p>';
 
         $atts = shortcode_atts(array(
             'event' => '',

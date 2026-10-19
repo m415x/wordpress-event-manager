@@ -1,0 +1,340 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {
+    if (!defined('ABSPATH')) {
+        define('ABSPATH', '/tmp/wem34-delivery-test/');
+    }
+    if (!function_exists('nocache_headers')) {
+        function nocache_headers() {}
+    }
+    if (!function_exists('is_user_logged_in')) {
+        function is_user_logged_in() { return $GLOBALS['wem34_delivery_authorized'] ?? false; }
+    }
+    if (!function_exists('current_user_can')) {
+        function current_user_can($capability) { return $capability === 'manage_options' && ($GLOBALS['wem34_delivery_authorized'] ?? false); }
+    }
+    if (!function_exists('check_ajax_referer')) {
+        function check_ajax_referer($action, $field, $stop = true) {
+            if ($action !== 'wem_invitation_qr_admin' || $field !== 'nonce') {
+                throw new \RuntimeException('Unexpected nonce contract');
+            }
+            return ($_POST['nonce'] ?? '') === 'valid';
+        }
+    }
+    if (!function_exists('absint')) {
+        function absint($value) { return abs((int) $value); }
+    }
+    if (!function_exists('wp_unslash')) {
+        function wp_unslash($value) { return $value; }
+    }
+    if (!function_exists('get_current_user_id')) {
+        function get_current_user_id() { return 42; }
+    }
+    if (!function_exists('wp_send_json_error')) {
+        function wp_send_json_error($data, $status = 200) { throw new \RuntimeException('denied:' . $status); }
+    }
+    if (!function_exists('wp_send_json_success')) {
+        function wp_send_json_success($data) {
+            $GLOBALS['wem34_delivery_response'] = $data;
+        }
+    }
+}
+
+namespace WEM\Tests\Unit {
+    use PHPUnit\Framework\TestCase;
+
+    final class AdminInvitationQrDeliveryFunctionalTest extends TestCase
+    {
+        protected function setUp(): void
+        {
+            $GLOBALS['wem34_delivery_authorized'] = true;
+            unset($GLOBALS['wem34_delivery_response']);
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $_POST = array('guest_id' => '17', 'nonce' => 'valid');
+            require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-delivery.php';
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testAuthorizedRequestDelegatesExactlyOnceToInjectedOrchestrator(): void
+        {
+            $fake = new class {
+                public $calls = array();
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls[] = array($guest_id, $actor_id);
+                    return array(
+                        'url' => 'https://example.test/?wem_invitation=' . str_repeat('A', 43),
+                        'svg' => '<svg></svg>',
+                        'generation' => 1,
+                    );
+                }
+            };
+
+            $constructor = (new \ReflectionClass(\WEM_Admin_Invitation_QR_Delivery::class))->getConstructor();
+            self::assertNotNull($constructor, 'Delivery must accept an orchestrator dependency.');
+            self::assertGreaterThanOrEqual(
+                1,
+                $constructor->getNumberOfParameters(),
+                'Delivery must accept an injected orchestrator instead of creating one unconditionally.'
+            );
+
+            $delivery = new \WEM_Admin_Invitation_QR_Delivery($fake);
+            $delivery->handle_issue();
+
+            self::assertSame(array(array(17, 42)), $fake->calls);
+            self::assertSame('<svg></svg>', $GLOBALS['wem34_delivery_response']['svg'] ?? null);
+        }
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testMalformedGuestIdIsDeniedBeforeCredentialIssuance(): void
+        {
+            $_POST['guest_id'] = '17garbage';
+
+            $fake = new class {
+                public $calls = 0;
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 1);
+                }
+            };
+
+            $delivery = new \WEM_Admin_Invitation_QR_Delivery($fake);
+            try {
+                $delivery->handle_issue();
+                self::fail('Malformed guest ID must be rejected.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:400', $error->getMessage());
+            }
+            self::assertSame(0, $fake->calls);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testInvalidNonceIsDeniedWithoutInvokingCredentialService(): void
+        {
+            $_POST['nonce'] = 'invalid';
+
+            $fake = new class {
+                public $calls = 0;
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 1);
+                }
+            };
+
+            $delivery = new \WEM_Admin_Invitation_QR_Delivery($fake);
+            $denied = false;
+            try {
+                $delivery->handle_issue();
+            } catch (\RuntimeException $error) {
+                $denied = $error->getMessage() === 'denied:403';
+            }
+
+            self::assertTrue($denied, 'Invalid nonce must produce fixed 403 JSON denial.');
+            self::assertSame(0, $fake->calls, 'DENY must never issue a credential.');
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testViewerDeniedBeforeCredentialInvocation(): void
+        {
+            $GLOBALS['wem34_delivery_authorized'] = false;
+            $fake = new class {
+                public $calls = 0;
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 1);
+                }
+            };
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_issue();
+                self::fail('Unprivileged caller must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:403', $error->getMessage());
+            }
+            self::assertSame(0, $fake->calls);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testGetRequestDeniedBeforeCredentialInvocation(): void
+        {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $fake = new class {
+                public $calls = 0;
+                public function rotate($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    return array('url' => 'https://example.test/', 'svg' => '<svg/>', 'generation' => 2);
+                }
+            };
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_rotate();
+                self::fail('GET must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:403', $error->getMessage());
+            }
+            self::assertSame(0, $fake->calls);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testRotateDelegatesExactlyOnceAndReturnsItsGeneration(): void
+        {
+            $fake = new class {
+                public $calls = array();
+                public function rotate($guest_id, $actor_id)
+                {
+                    $this->calls[] = array($guest_id, $actor_id);
+                    return array(
+                        'url' => 'https://example.test/?wem_invitation=' . str_repeat('B', 43),
+                        'svg' => '<svg>rotation</svg>',
+                        'generation' => 2,
+                    );
+                }
+            };
+
+            (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_rotate();
+            self::assertSame(array(array(17, 42)), $fake->calls);
+            self::assertSame(2, $GLOBALS['wem34_delivery_response']['generation'] ?? null);
+            self::assertSame('<svg>rotation</svg>', $GLOBALS['wem34_delivery_response']['svg'] ?? null);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testReissueDelegatesExactlyOnceAndReturnsItsGeneration(): void
+        {
+            $fake = new class {
+                public $calls = array();
+                public function reissue($guest_id, $actor_id)
+                {
+                    $this->calls[] = array($guest_id, $actor_id);
+                    return array(
+                        'url' => 'https://example.test/?wem_invitation=' . str_repeat('C', 43),
+                        'svg' => '<svg>reissue</svg>',
+                        'generation' => 3,
+                    );
+                }
+            };
+
+            (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_reissue();
+            self::assertSame(array(array(17, 42)), $fake->calls);
+            self::assertSame(3, $GLOBALS['wem34_delivery_response']['generation'] ?? null);
+            self::assertSame('<svg>reissue</svg>', $GLOBALS['wem34_delivery_response']['svg'] ?? null);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testPostCommitPresentationExceptionIsSanitizedWithoutAutomaticRetry(): void
+        {
+            $secret = str_repeat('D', 43);
+            $fake = new class($secret) {
+                public $calls = 0;
+                private $secret;
+                public function __construct($secret) { $this->secret = $secret; }
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    throw new \RuntimeException('Encoder failed with bearer ' . $this->secret);
+                }
+            };
+
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_issue();
+                self::fail('Post-commit presentation error must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:500', $error->getMessage());
+                self::assertStringNotContainsString($secret, $error->getMessage());
+            }
+            self::assertSame(1, $fake->calls);
+            self::assertArrayNotHasKey('wem34_delivery_response', $GLOBALS);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testTypedDuplicateIssueReturnsFixedConflictWithoutBearer(): void
+        {
+            $secret = str_repeat('Z', 43);
+            require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-orchestrator.php';
+
+            $fake = new class($secret) {
+                public $calls = 0;
+                private $secret;
+                public function __construct($secret) { $this->secret = $secret; }
+                public function issue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    throw new \WEM_Invitation_QR_Already_Issued('duplicate ' . $this->secret);
+                }
+            };
+
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_issue();
+                self::fail('Duplicate issue must not succeed.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:409', $error->getMessage());
+                self::assertStringNotContainsString($secret, $error->getMessage());
+            }
+
+            self::assertSame(1, $fake->calls);
+            self::assertArrayNotHasKey('wem34_delivery_response', $GLOBALS);
+        }
+
+        /**
+         * @runInSeparateProcess
+         * @preserveGlobalState disabled
+         */
+        public function testTypedActiveReissueConflictReturnsFixed409WithoutBearer(): void
+        {
+            $secret = str_repeat('Y', 43);
+            require_once dirname(__DIR__, 2) . '/includes/class-admin-invitation-qr-orchestrator.php';
+
+            $fake = new class($secret) {
+                public $calls = 0;
+                private $secret;
+                public function __construct($secret) { $this->secret = $secret; }
+                public function reissue($guest_id, $actor_id)
+                {
+                    $this->calls++;
+                    throw new \WEM_Invitation_QR_Active_Reissue_Conflict('Active credential ' . $this->secret);
+                }
+            };
+
+            try {
+                (new \WEM_Admin_Invitation_QR_Delivery($fake))->handle_reissue();
+                self::fail('Reissue with an active credential must be denied.');
+            } catch (\RuntimeException $error) {
+                self::assertSame('denied:409', $error->getMessage());
+                self::assertStringNotContainsString($secret, $error->getMessage());
+            }
+
+            self::assertSame(1, $fake->calls);
+            self::assertArrayNotHasKey('wem34_delivery_response', $GLOBALS);
+        }
+
+    }
+}
