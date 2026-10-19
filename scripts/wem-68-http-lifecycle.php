@@ -21,6 +21,8 @@ $check = static function ($token, $expect) use ($base) {
     $url = add_query_arg('wem_invitation', $token, $base);
     $response = wp_remote_get($url, [
         'timeout' => 8, 'redirection' => 0, 'sslverify' => false,
+        // Keep the canonical external Host while connecting through Docker DNS.
+        'headers' => ['Host' => 'localhost:8890'],
     ]);
     if (is_wp_error($response)) {
         throw new RuntimeException('Local container HTTP request failed (no bearer details).');
@@ -44,6 +46,7 @@ $check = static function ($token, $expect) use ($base) {
 
 $guest = 0;
 $term = 0;
+$failure_message = null;
 try {
     $check('bad', 404);
     echo "HTTP PREFLIGHT 404: PASS\n";
@@ -79,8 +82,7 @@ try {
     echo "REISSUE / NEW 200 / PREVIOUS 404: PASS\n";
     echo "WEM-68 HTTP LIFECYCLE: PASS\n";
 } catch (Throwable $failure) {
-    fwrite(STDERR, "WEM-68 HTTP LIFECYCLE: FAIL — " . $failure->getMessage() . "\n");
-    exit(1);
+    $failure_message = $failure->getMessage();
 } finally {
     // Only remove disposable guest-specific credentials, post and event term.
     if (is_int($guest) && $guest > 0) {
@@ -89,4 +91,9 @@ try {
         wp_delete_post($guest, true);
     }
     if ($term > 0) wp_delete_term($term, 'evento');
+}
+
+if ($failure_message !== null) {
+    fwrite(STDERR, "WEM-68 HTTP LIFECYCLE: FAIL — " . $failure_message . "\n");
+    exit(1);
 }
