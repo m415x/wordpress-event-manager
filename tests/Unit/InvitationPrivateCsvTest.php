@@ -10,6 +10,7 @@ final class InvitationPrivateCsvTest extends TestCase
 {
     public function testEscapesSpreadsheetFormulaeAndPreservesIndividualUrls(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-private-csv.php';
         $writer = new \WEM_Invitation_Private_Csv();
         $url = 'https://example.test/?wem_invitation=' . str_repeat('A', 43);
         $csv = $writer->render([
