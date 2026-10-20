@@ -21,6 +21,7 @@ final class InvitationBulkCliCommandTest extends TestCase
         };
         $permissions = static fn (int $actor): bool => $actor === 42;
 
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-cli-command.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Cli_Command'));
         $command = new \WEM_Invitation_Bulk_Cli_Command($permissions, $workflow);
 
