@@ -11,6 +11,7 @@ final class InvitationBulkResumeStateTest extends TestCase
 {
     public function testMissingCustodyIsNotProofOfNeverStarted(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-resume-state.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Resume_State'));
         $resolver = new \WEM_Invitation_Bulk_Resume_State();
 
