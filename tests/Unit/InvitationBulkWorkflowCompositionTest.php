@@ -77,4 +77,28 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
             ], $events);
         }
     }
+    public function testMissingReconciliationDependencyFailsBeforePreflight(): void
+    {
+        $events = [];
+        try {
+            new \WEM_Invitation_Bulk_Workflow(
+                static function () use (&$events): array {
+                    $events[] = 'preflight';
+                    return [101];
+                },
+                static fn (int $guest, callable $callback) => $callback(),
+                static function () use (&$events): array {
+                    $events[] = 'issue';
+                    return ['guest_id' => 101];
+                },
+                static function () use (&$events): void {
+                    $events[] = 'export';
+                }
+            );
+            self::fail('Production workflow must require a reconciliation dependency.');
+        } catch (\Throwable $error) {
+            self::assertSame([], $events);
+        }
+    }
+
 }
