@@ -11,6 +11,7 @@ final class InvitationBulkPersistentResumeEvidenceTest extends TestCase
 {
     public function testNoCustodyAndUnknownDatabaseStateIsIndeterminate(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-persistent-resume-evidence.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Persistent_Resume_Evidence'));
         $resolver = new \WEM_Invitation_Bulk_Persistent_Resume_Evidence();
         self::assertSame('indeterminate', $resolver->classify(null, null));
