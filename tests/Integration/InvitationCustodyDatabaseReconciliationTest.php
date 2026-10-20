@@ -15,6 +15,9 @@ final class InvitationCustodyDatabaseReconciliationTest extends WP_UnitTestCase
     {
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         \WEM_Invitation_Credential_Schema::install();
+        // The isolated bootstrap may load the plugin after init has fired.
+        (new \WEM_Taxonomy_Manager())->register_taxonomy();
+        self::assertTrue(taxonomy_exists('evento'));
 
         $admin = self::factory()->user->create(['role' => 'administrator']);
         $event = self::factory()->term->create(['taxonomy' => 'evento', 'name' => 'WEM-73 synthetic event']);
@@ -38,7 +41,9 @@ final class InvitationCustodyDatabaseReconciliationTest extends WP_UnitTestCase
             }
         }
         self::assertGreaterThan(0, $guest, 'Could not allocate an unused synthetic guest ID.');
-        wp_set_object_terms($guest, [$event], 'evento');
+        $assigned = wp_set_object_terms($guest, [$event], 'evento');
+        self::assertNotWPError($assigned);
+        self::assertSame([$event], array_map('intval', wp_get_object_terms($guest, 'evento', ['fields' => 'ids'])));
         $issued = (new \WEM_Invitation_Credential_Service())->issue($guest, $admin);
         $custody = [
             'guest_id' => $guest,
