@@ -102,4 +102,34 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
         }
     }
 
+    public function testRevokedEarlierGuestPreventsExportAtFinalBatchReconciliation(): void
+    {
+        $active = [101 => true, 102 => true];
+        $exported = false;
+        $workflow = new \WEM_Invitation_Bulk_Workflow(
+            static fn (array $request): array => [101, 102],
+            static fn (int $guest, callable $callback) => $callback(),
+            static function (int $guest) use (&$active): array {
+                if ($guest === 102) {
+                    $active[101] = false;
+                }
+                return ['guest_id' => $guest];
+            },
+            static function (array $records) use (&$exported): void {
+                $exported = true;
+            },
+            static function (array $record) use (&$active): bool {
+                return $active[$record['guest_id']] ?? false;
+            }
+        );
+
+        try {
+            $workflow->run(['actor' => 1, 'event' => 7, 'operation' => 'run-1']);
+            self::fail('A revoked earlier invitation must not enter the exported CSV.');
+        } catch (RuntimeException $error) {
+            self::assertSame('Invitation reconciliation failed.', $error->getMessage());
+        }
+        self::assertFalse($exported);
+    }
+
 }
