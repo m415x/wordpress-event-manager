@@ -31,6 +31,7 @@ final class InvitationBulkAttemptStorageTest extends TestCase
 
     public function testMarkerIsPrivateImmutableAndRecoverableAcrossInstances(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-attempt-storage.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Attempt_Storage'));
         $storage = new \WEM_Invitation_Bulk_Attempt_Storage($this->root);
         $storage->mark_started('operation-1', 501);
