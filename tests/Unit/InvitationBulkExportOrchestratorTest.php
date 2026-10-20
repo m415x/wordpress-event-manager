@@ -27,6 +27,7 @@ final class InvitationBulkExportOrchestratorTest extends TestCase
             $calls[] = 'export:' . count($records);
         };
 
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-export-orchestrator.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Export_Orchestrator'));
         $orchestrator = new \WEM_Invitation_Bulk_Export_Orchestrator(
             $issuer,
