@@ -20,6 +20,7 @@ final class InvitationBulkCliPreflightTest extends TestCase
             return $actor === 1;
         };
 
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-cli-preflight.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Cli_Preflight'));
         $preflight = new \WEM_Invitation_Bulk_Cli_Preflight($administrator, $discover);
         foreach ([
