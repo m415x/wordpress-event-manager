@@ -11,6 +11,8 @@ final class InvitationBulkWpCliHandlerTest extends TestCase
 {
     public function testUnconfiguredHandlerFailsClosedBeforeAnyEffect(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-cli-command.php';
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-wp-cli-handler.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Wp_Cli_Handler'));
         $handler = new \WEM_Invitation_Bulk_Wp_Cli_Handler();
         try {
