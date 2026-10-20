@@ -83,4 +83,29 @@ final class InvitationPrivateJournalTest extends TestCase
             'token_digest' => hash('sha256', str_repeat('A', 43)),
         ]);
     }
+    public function testUnacknowledgedDirectorySyncFailsClosed(): void
+    {
+        $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        $record = [
+            'operation_id' => 'synthetic-sync-failure',
+            'guest_id' => 503,
+            'event_id' => 19,
+            'generation' => 1,
+            'token' => $token,
+            'token_digest' => hash('sha256', $token),
+        ];
+
+        // The adapter explicitly reports failure to persist the directory entry.
+        // The journal must never acknowledge successful custody in this state.
+        $journal = new \\WEM_Invitation_Private_Journal(
+            $this->root,
+            [],
+            static function (string $directory): bool {
+                return false;
+            }
+        );
+        $this->expectException(RuntimeException::class);
+        $journal->custody($record);
+    }
+
 }
