@@ -11,6 +11,7 @@ final class InvitationBulkRecoveredCredentialTest extends TestCase
 {
     public function testRecoveredCredentialRequiresCommittedEvidenceAndReconciliation(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-recovered-credential.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Recovered_Credential'));
         $events = [];
         $service = new \WEM_Invitation_Bulk_Recovered_Credential(
