@@ -11,6 +11,7 @@ final class InvitationBulkLockedIssuanceTest extends TestCase
 {
     public function testLockEnclosesEvidenceAttemptAndIssuance(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-locked-issuance.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Locked_Issuance'));
         $events = [];
         $lock = static function (int $guest, callable $callback) use (&$events) {
