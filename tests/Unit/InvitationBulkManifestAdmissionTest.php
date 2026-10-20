@@ -17,6 +17,7 @@ final class InvitationBulkManifestAdmissionTest extends TestCase
     {
         $events = [];
         $manifest = null;
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest-admission.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Manifest_Admission'));
         $admission = new \WEM_Invitation_Bulk_Manifest_Admission(
             static function (string $operation) use (&$manifest) { return $manifest; },
