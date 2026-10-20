@@ -31,6 +31,7 @@ final class InvitationPrivateCsvStorageTest extends TestCase
 
     public function testPrivateCsvIsExclusiveAndReadableAfterReopening(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-private-csv-storage.php';
         self::assertTrue(class_exists('WEM_Invitation_Private_Csv_Storage'), 'WEM-73 requires private CSV storage.');
         $csv = "guest_id,guest_name,event_id,invitation_url\n501,Invitado,19,https://example.test/?wem_invitation=SECRET\n";
         $storage = new \WEM_Invitation_Private_Csv_Storage($this->root);
