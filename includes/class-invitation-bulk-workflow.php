@@ -57,6 +57,14 @@ final class WEM_Invitation_Bulk_Workflow
             $records[] = $record;
         }
 
+        // Revalidate the entire batch immediately before exporting: an earlier
+        // credential may have been revoked while later guests were processed.
+        foreach ($records as $record) {
+            if (!(($this->reconcile)($record))) {
+                throw new RuntimeException('Invitation reconciliation failed.');
+            }
+        }
+
         // No partial CSV is published when a prior step fails.
         ($this->export)($records);
     }
