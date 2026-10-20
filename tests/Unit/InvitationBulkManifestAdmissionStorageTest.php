@@ -15,6 +15,7 @@ final class InvitationBulkManifestAdmissionStorageTest extends TestCase
     {
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest.php';
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest-admission.php';
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest-admission-storage.php';
         $this->directory = sys_get_temp_dir() . '/wem73-admission-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($this->directory, 0700));
     }
