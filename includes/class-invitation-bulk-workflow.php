@@ -18,7 +18,7 @@ final class WEM_Invitation_Bulk_Workflow
         callable $lock,
         callable $process,
         callable $export,
-        ?callable $reconcile = null
+        callable $reconcile
     ) {
         $this->preflight = $preflight;
         $this->lock = $lock;
@@ -49,7 +49,7 @@ final class WEM_Invitation_Bulk_Workflow
                     || ($candidate['guest_id'] ?? null) !== $guest_id) {
                     throw new RuntimeException('Invalid invitation batch result.');
                 }
-                if ($this->reconcile !== null && !(($this->reconcile)($candidate))) {
+                if (!(($this->reconcile)($candidate))) {
                     throw new RuntimeException('Invitation reconciliation failed.');
                 }
                 return $candidate;
