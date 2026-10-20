@@ -33,7 +33,8 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
             },
             static function (array $records) use (&$events): void {
                 $events[] = 'export';
-            }
+            },
+            static fn (array $record): bool => true
         );
 
         try {
