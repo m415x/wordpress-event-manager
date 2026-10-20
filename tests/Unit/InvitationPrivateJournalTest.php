@@ -15,7 +15,11 @@ final class InvitationPrivateJournalTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/wem73-journal-test-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($this->root, 0700, true));
-        require_once dirname(__DIR__, 2) . '/includes/class-invitation-private-journal.php';
+        $implementation = dirname(__DIR__, 2) . '/includes/class-invitation-private-journal.php';
+        if (is_file($implementation)) {
+            require_once $implementation;
+        }
+        self::assertTrue(class_exists('WEM_Invitation_Private_Journal'), 'WEM-73 requires a durable private journal.');
     }
 
     protected function tearDown(): void
@@ -23,6 +27,8 @@ final class InvitationPrivateJournalTest extends TestCase
         foreach (glob($this->root . '/*') ?: [] as $path) {
             if (is_file($path)) {
                 unlink($path);
+            } elseif (is_dir($path)) {
+                rmdir($path);
             }
         }
         if (is_dir($this->root)) {
