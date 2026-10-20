@@ -38,6 +38,12 @@ spl_autoload_register(function ($class) {
 
 require_once WEM_PATH . 'includes/helpers.php';
 
+// WEM-73: expose the administrative command only in WP-CLI.
+// Issuance remains disabled until the verified workflow is wired.
+if (defined('WP_CLI') && WP_CLI && class_exists('WP_CLI')) {
+    (new WEM_Invitation_Bulk_Cli_Registration())->register(true);
+}
+
 register_activation_hook(__FILE__, array('WEM_Movement_Schema', 'install'));
 register_activation_hook(__FILE__, array('WEM_Invitation_Credential_Schema', 'install'));
 
