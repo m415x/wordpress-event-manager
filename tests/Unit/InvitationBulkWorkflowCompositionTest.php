@@ -15,6 +15,7 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
 {
     public function testDeniedRequestNeverEntersIssuanceOrExport(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-workflow.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Workflow'));
         $events = [];
         $workflow = new \WEM_Invitation_Bulk_Workflow(
