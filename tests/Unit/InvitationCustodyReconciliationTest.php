@@ -14,6 +14,10 @@ final class InvitationCustodyReconciliationTest extends TestCase
 {
     public function testAmbiguousCommitRequiresExactActiveCredentialMatchBeforeExport(): void
     {
+        if (!defined('ABSPATH')) {
+            define('ABSPATH', dirname(__DIR__, 2) . '/');
+        }
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-custody-reconciler.php';
         $bearer = rtrim(strtr(base64_encode(str_repeat('a', 32)), '+/', '-_'), '=');
         $record = [
             'guest_id' => 17,
