@@ -28,6 +28,7 @@ final class InvitationBulkResumeTest extends TestCase
             $calls[] = 'export:' . count($records);
         };
 
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-resume.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Resume'));
         $runner = new \WEM_Invitation_Bulk_Resume($recover, $reconcile, $issue, $export);
         $runner->run([101, 102]);
