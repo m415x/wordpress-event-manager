@@ -19,6 +19,7 @@ final class InvitationBulkAttemptBoundaryTest extends TestCase
             $events[] = "issue:{$guest}";
         };
 
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-attempt-boundary.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Attempt_Boundary'));
         $boundary = new \WEM_Invitation_Bulk_Attempt_Boundary($mark);
         $boundary->issue('run-1', 101, $issue);
