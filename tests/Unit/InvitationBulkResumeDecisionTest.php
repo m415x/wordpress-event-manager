@@ -10,6 +10,7 @@ final class InvitationBulkResumeDecisionTest extends TestCase
 {
     public function testAttemptedWithoutRecoverableCustodyNeverAllowsIssuance(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-resume-decision.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Resume_Decision'));
         $decision = new \WEM_Invitation_Bulk_Resume_Decision();
         self::assertSame('indeterminate', $decision->decide(true, null, 0));
