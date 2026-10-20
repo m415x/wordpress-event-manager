@@ -8,10 +8,12 @@ final class WEM_Invitation_Private_Journal
 {
     private string $directory;
     private array $webroots;
+    private $directory_sync;
 
-    public function __construct(string $directory, array $webroots = [])
+    public function __construct(string $directory, array $webroots = [], ?callable $directory_sync = null)
     {
         $this->directory = $directory;
+        $this->directory_sync = $directory_sync ?? array($this, 'sync_directory');
         $this->webroots = $webroots;
         if (defined('ABSPATH')) {
             $this->webroots[] = ABSPATH;
@@ -65,7 +67,16 @@ final class WEM_Invitation_Private_Journal
             @unlink($temp);
             throw new RuntimeException('Unable to publish private custody record.');
         }
-        @unlink($temp);
+        if (!@unlink($temp)) {
+            throw new RuntimeException('Unable to finalize private custody publication.');
+        }
+        // Publication and removal of the temporary hard link both alter the
+        // directory. Both must be on stable storage before returning to issue().
+        if (!(($this->directory_sync)($this->directory))) {
+            // The final record may exist despite this failure. Never delete or
+            // overwrite it: the operation requires later reconciliation.
+            throw new RuntimeException('Private custody directory synchronization failed.');
+        }
         // Read back and verify before permitting the SQL transaction to commit.
         if ($this->recover($record['operation_id'], $record['guest_id'], $record['generation']) !== $record) {
             throw new RuntimeException('Private custody verification failed.');
@@ -99,6 +110,27 @@ final class WEM_Invitation_Private_Journal
             throw new RuntimeException('Private custody identity mismatch.');
         }
         return $record;
+    }
+
+    /**
+     * Sync directory metadata after publishing the already-fsynced file.
+     * Directory streams are supported by the Linux PHP runtime; on platforms
+     * where they cannot be opened/synced, custody fails closed.
+     */
+    private function sync_directory(string $directory): bool
+    {
+        if (!function_exists('fsync')) {
+            return false;
+        }
+        $handle = @fopen($directory, 'rb');
+        if ($handle === false) {
+            return false;
+        }
+        try {
+            return @fsync($handle);
+        } finally {
+            fclose($handle);
+        }
     }
 
     private function validate_record($record): void
