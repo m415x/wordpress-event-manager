@@ -31,6 +31,7 @@ final class InvitationBulkManifestTest extends TestCase
 
     public function testManifestIsImmutableAndRecoversExactEventGuestSelection(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Manifest'));
         $store = new \WEM_Invitation_Bulk_Manifest($this->directory);
         $store->create('run-1', 7, [101, 102, 103]);
