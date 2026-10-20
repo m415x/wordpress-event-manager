@@ -48,6 +48,7 @@ final class InvitationCustodyIssuanceBridgeTest extends TestCase
             }
         };
 
+        self::assertTrue(class_exists('WEM_Invitation_Custody_Issuance_Bridge'), 'WEM-73 needs a custody-before-commit bridge.');
         $bridge = new \WEM_Invitation_Custody_Issuance_Bridge($service, $journal);
         try {
             $bridge->issue(31, 8, 4, 'run-1');
