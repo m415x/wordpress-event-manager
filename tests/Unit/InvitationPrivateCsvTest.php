@@ -27,8 +27,7 @@ final class InvitationPrivateCsvTest extends TestCase
                 'invitation_url' => $url,
             ],
         ]);
-        self::assertStringNotContainsString('=HYPERLINK', $csv);
-        self::assertStringNotContainsString(',+SUM(', $csv);
+        // Escaped formulas still contain their literal text; validate parsed cells below.
         self::assertStringContainsString($url, $csv);
         $stream = fopen('php://temp', 'w+');
         fwrite($stream, $csv);
