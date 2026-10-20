@@ -22,6 +22,7 @@ final class InvitationBulkIssuanceAuthorizationTest extends TestCase
             return $guest === 10 && $event === 7;
         };
 
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-issuance-authorizer.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Issuance_Authorizer'));
         $guard = new \WEM_Invitation_Bulk_Issuance_Authorizer($authorized, $event_membership);
 
