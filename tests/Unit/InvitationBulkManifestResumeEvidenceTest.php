@@ -10,6 +10,7 @@ final class InvitationBulkManifestResumeEvidenceTest extends TestCase
 {
     public function testAllowsNotStartedOnlyForManifestMemberWithVerifiedAbsences(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest-resume-evidence.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Manifest_Resume_Evidence'));
         $reader = new \WEM_Invitation_Bulk_Manifest_Resume_Evidence();
         $manifest = [
