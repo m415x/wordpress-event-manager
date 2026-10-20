@@ -97,7 +97,7 @@ final class InvitationPrivateJournalTest extends TestCase
 
         // The adapter explicitly reports failure to persist the directory entry.
         // The journal must never acknowledge successful custody in this state.
-        $journal = new \\WEM_Invitation_Private_Journal(
+        $journal = new \WEM_Invitation_Private_Journal(
             $this->root,
             [],
             static function (string $directory): bool {
