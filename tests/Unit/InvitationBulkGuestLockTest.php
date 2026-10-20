@@ -31,6 +31,7 @@ final class InvitationBulkGuestLockTest extends TestCase
 
     public function testExcludesConcurrentIssuanceForSameGuestAcrossOperations(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-guest-lock.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Guest_Lock'));
         $first = new \WEM_Invitation_Bulk_Guest_Lock($this->dir);
         $second = new \WEM_Invitation_Bulk_Guest_Lock($this->dir);
