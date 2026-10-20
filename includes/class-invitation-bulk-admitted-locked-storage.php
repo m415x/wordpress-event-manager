@@ -42,7 +42,18 @@ final class WEM_Invitation_Bulk_Admitted_Locked_Storage
             static fn (string $operation, int $event, array $ids, int $id): string =>
                 $admission->admit_and_classify($operation, $event, $ids, $id),
             static fn (string $operation, int $id) => $attempts->mark_started($operation, $id),
-            static fn (int $id): array => $bridge->issue($id, $actor_id, $event_id, $operation_id)
+            static function (int $id) use ($bridge, $actor_id, $event_id, $operation_id): array {
+                $issued = $bridge->issue($id, $actor_id, $event_id, $operation_id);
+                // WEM-33 returns token and generation, not guest_id.
+                // Guest identity is bound by the call and custody callback.
+                if (!isset($issued['token'], $issued['generation'])
+                    || !is_string($issued['token']) || $issued['token'] === ''
+                    || !is_int($issued['generation']) || $issued['generation'] <= 0) {
+                    throw new RuntimeException('Invalid invitation issuance receipt.');
+                }
+                $issued['guest_id'] = $id;
+                return $issued;
+            }
         );
 
         return $coordinator->run($operation_id, $event_id, $guest_ids, $guest_id);
