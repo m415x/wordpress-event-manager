@@ -11,6 +11,7 @@ final class InvitationBulkAdmittedLockedIssuanceTest extends TestCase
 {
     public function testAdmissionAndEvidenceStayInsideGuestLockBeforeAttemptAndIssue(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-admitted-locked-issuance.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Admitted_Locked_Issuance'));
         $steps = [];
         $state = 'not_started';
