@@ -50,7 +50,24 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
             $guests = (new \WEM_Invitation_Bulk_Event_Discovery())->guests($event);
             self::assertCount(2, $guests);
 
-            (new \WEM_Invitation_Bulk_Operational_Cli())->execute([
+            // The credential table can retain IDs across WordPress test transactions.
+            // Establish that these imported fixtures are genuinely unissued before
+            // diagnosing the production fail-closed classifier.
+            global $wpdb;
+            $credentialTable = \\WEM_Invitation_Credential_Schema::table_name();
+            foreach ($guests as $guestId) {
+                $priorCount = (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$credentialTable} WHERE guest_id = %d",
+                    $guestId
+                ));
+                self::assertSame(
+                    0,
+                    $priorCount,
+                    'E2E synthetic guest ID collides with pre-existing credential history; do not auto-reissue.'
+                );
+            }
+
+            (new \\WEM_Invitation_Bulk_Operational_Cli())->execute([
                 'actor' => $admin, 'event' => $event, 'operation' => $operation, 'private_dir' => $directory,
             ]);
 
