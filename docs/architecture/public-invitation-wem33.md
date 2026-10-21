@@ -1,6 +1,6 @@
 # WEM-33 — Secure public invitation credential and read-only view
 
-Status: **implementation and manual acceptance complete; final exact-HEAD closure verification in progress**.
+Status: **integrated into `dev` via PR #6 at `79b6ec8dde1b0302f47ee0617e9361675ac04c55`**. The historical candidate evidence below documents the implementation stage.
 Jira: WEM-33. This story introduces a public read-only invitation capability without weakening WEM-13 authenticated staff authorization or WEM-14 movement-history invariants.
 
 ## Purpose
@@ -216,4 +216,4 @@ WEM-57 through WEM-61 are implemented and verified on the feature branch.
 
 WEM-62 manual acceptance is GREEN on real local WordPress: clean activation/rerun created the credential table, issue rendered the minimal public view through a simple permalink, rotate denied the old bearer and activated the next generation, revoke denied that bearer, explicit reissue activated a new generation, lifecycle persistence matched the frozen invariant, anonymous operational AJAX guards remained HTTP 403, malformed/unknown/rotated/revoked/mixed-authority requests were publicly indistinguishable with empty bodies, and denied responses retained the mandatory hardening headers.
 
-The runtime dispatch correction is verified on implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`; GitHub Actions run `37800964347` completed successfully in both required jobs. Final story closure now requires only exact-HEAD CI after this documentation update. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
+The runtime dispatch correction is verified on implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`; GitHub Actions run `37800964347` completed successfully in both required jobs. Historical premerge note; WEM-33 has since been merged via PR #6. The integrated WEM-73 WP-CLI custody/export extension is documented separately in `private-bulk-invitations-wem73.md`; it does not change the WEM-33 public read-only bearer authority. QR, self-check-in, WEM-35 admin UX and WEM-36 CSV remain outside this story.
