@@ -48,6 +48,14 @@ final class WEM_Invitation_Bulk_Resume
             $records[] = $record;
         }
 
+        // A credential reconciled earlier may be revoked while later guests
+        // are processed. Revalidate every record before any CSV publication.
+        foreach ($records as $record) {
+            if (!(($this->reconcile)($record))) {
+                throw new RuntimeException('Resumed invitation credential reconciliation failed.');
+            }
+        }
+
         // Never publish partial batches.
         ($this->export)($records);
     }
