@@ -62,4 +62,42 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
             rmdir($directory);
         }
     }
+    public function testRejectsDirectoryInsideDocumentRootEvenWhenOutsideWordPressInstall(): void
+    {
+        $root = sys_get_temp_dir() . '/wem73-public-' . bin2hex(random_bytes(8));
+        $directory = $root . '/invitations';
+        self::assertTrue(mkdir($root, 0700));
+        self::assertTrue(mkdir($directory, 0700));
+        $previous = $_SERVER['DOCUMENT_ROOT'] ?? null;
+        $_SERVER['DOCUMENT_ROOT'] = $root;
+        try {
+            $invoked = 0;
+            $runtime = new \\WEM_Invitation_Bulk_Cli_Runtime(
+                static fn (int $actor): bool => $actor === 9,
+                static function (array $request) use (&$invoked): void { $invoked++; }
+            );
+            $rejected = false;
+            try {
+                $runtime->execute([
+                    'actor' => 9,
+                    'event' => 7,
+                    'operation' => 'public-directory',
+                    'private_dir' => $directory,
+                ]);
+            } catch (RuntimeException $error) {
+                $rejected = true;
+            }
+            self::assertTrue($rejected, 'Document-root storage must be rejected before the workflow.');
+            self::assertSame(0, $invoked);
+        } finally {
+            if ($previous === null) {
+                unset($_SERVER['DOCUMENT_ROOT']);
+            } else {
+                $_SERVER['DOCUMENT_ROOT'] = $previous;
+            }
+            rmdir($directory);
+            rmdir($root);
+        }
+    }
+
 }
