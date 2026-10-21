@@ -152,6 +152,12 @@ Use the manual environment for browser/admin verification. Ask the user only for
 - No production guest data, credentials or database exports belong in tests or Git.
 - Do not reset/destroy the manual WordPress site to repair a test failure; diagnose environment isolation first.
 
+## Evidence validity and local artifacts
+
+A result is authoritative only for its recorded implementation/configuration SHA and environment. Reuse it when relevant inputs are unchanged; rerun the affected gate if code, tests, configuration, environment or the closure contract invalidates coverage. A documentation-only change does not itself require rerunning browser/manual product acceptance. Record the exact run or locally observed command and its source, not an inferred PASS.
+
+Before deleting or resetting any ignored/untracked `.db`, `.zip`, `.log` or exported artifact, inventory and classify it. Retain required evidence outside Git without guest data or secrets in public logs; request approval for destructive cleanup. Keep PHPUnit and manual WordPress data isolated.
+
 ## Source of truth
 
 For test commands and environment boundaries, this file and the current scripts/configuration are authoritative. For story-specific acceptance evidence and historical runs, use Jira and the current handoff. Chat transcripts are not project authority.
