@@ -34,6 +34,7 @@ final class WEM_Event_Table_Schema
             event_term_id BIGINT UNSIGNED NOT NULL,
             table_code VARCHAR(100) NOT NULL,
             capacity INT UNSIGNED NOT NULL,
+            CONSTRAINT wem_event_table_capacity_positive CHECK (capacity > 0),
             layout_x INT NULL,
             layout_y INT NULL,
             PRIMARY KEY  (id),
