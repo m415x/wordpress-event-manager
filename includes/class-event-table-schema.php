@@ -43,29 +43,51 @@ final class WEM_Event_Table_Schema
 
         dbDelta($sql);
 
-        // dbDelta does not parse CHECK constraints: add it separately, once.
+        // dbDelta does not parse CHECK. SHOW CREATE TABLE includes constraints
+        // on WordPress PHPUnit temporary tables, unlike information_schema.
         $constraint_name = 'wem_event_table_capacity_positive';
-        $existing = $wpdb->get_var(
-            $wpdb->prepare(
-                'SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
-                 WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME = %s
-                   AND CONSTRAINT_NAME = %s
-                   AND CONSTRAINT_TYPE = %s',
-                $table_name,
-                $constraint_name,
-                'CHECK'
-            )
+        $definition = self::create_table_definition($table_name);
+
+        if (preg_match('/CONSTRAINT\\s+[`"]?' . $constraint_name . '[`"]?\\s+CHECK\\s*\\(/i', $definition)) {
+            self::assert_positive_capacity_definition($definition, $constraint_name);
+            return;
+        }
+
+        $added = $wpdb->query(
+            "ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint_name} CHECK (capacity > 0)"
         );
 
-        if ($existing === null) {
-            $added = $wpdb->query(
-                "ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint_name} CHECK (capacity > 0)"
-            );
+        if ($added === false) {
+            throw new RuntimeException('Could not install positive table-capacity constraint.');
+        }
 
-            if ($added === false) {
-                throw new RuntimeException('Could not install positive table-capacity constraint.');
-            }
+        self::assert_positive_capacity_definition(
+            self::create_table_definition($table_name),
+            $constraint_name
+        );
+    }
+
+    private static function create_table_definition($table_name)
+    {
+        global $wpdb;
+
+        $result = $wpdb->get_row("SHOW CREATE TABLE {$table_name}", ARRAY_N);
+        if (!is_array($result) || !isset($result[1])) {
+            throw new RuntimeException('Could not inspect event-table schema.');
+        }
+
+        return (string) $result[1];
+    }
+
+    private static function assert_positive_capacity_definition($definition, $constraint_name)
+    {
+        // MariaDB normalizes CHECK expressions with identifier quoting and
+        // optional parenthesization.
+        $pattern = '/CONSTRAINT\\s+[`"]?' . $constraint_name
+            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*[`"]?capacity[`"]?\\s*>\\s*0\\s*\\)*\\s*\\)/i';
+
+        if (!preg_match($pattern, $definition)) {
+            throw new RuntimeException('Event-table positive capacity constraint is absent or inconsistent.');
         }
     }
 }
