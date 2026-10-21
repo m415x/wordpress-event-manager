@@ -38,8 +38,13 @@ final class WEM_Invitation_Bulk_Mixed_Storage
                 $admission->admit_and_classify($operation_id, $event_id, $guest_ids, $guest_id),
             static fn (int $guest_id): array =>
                 $recovery->recover($operation_id, $event_id, $guest_ids, $guest_id),
-            static fn (int $guest_id): array =>
-                $issuer->run($operation_id, $event_id, $guest_ids, $guest_id),
+            static function (int $guest_id) use ($issuer, $recovery, $operation_id, $event_id, $guest_ids): array {
+                // The WEM-33 receipt contains token and generation, not the
+                // full custody identity required for SQL reconciliation.
+                // Only return the committed, independently verified record.
+                $issuer->run($operation_id, $event_id, $guest_ids, $guest_id);
+                return $recovery->recover($operation_id, $event_id, $guest_ids, $guest_id);
+            },
             static fn (array $record): bool => $reconciliation->is_exportable($record),
             $this->export
         );
