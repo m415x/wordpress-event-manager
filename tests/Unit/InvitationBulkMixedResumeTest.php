@@ -11,6 +11,7 @@ final class InvitationBulkMixedResumeTest extends TestCase
 {
     public function testRecoversCustodiedGuestAndIssuesOnlyVerifiedNotStartedGuest(): void
     {
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-mixed-resume.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Mixed_Resume'));
         $events = [];
         $states = [101 => 'reconcile', 102 => 'not_started'];
