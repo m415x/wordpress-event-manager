@@ -5,13 +5,13 @@ Scope: one invitation per person, issuing opaque bearer URL credentials and priv
 
 ## Integrated baseline and verification
 
-- Candidate HEAD: `9ae68e79182bd3c802e0afc41792f9f4744580fa`.
+- Candidate HEAD: `9ae68e79182b`.
 - PR #8: `https://github.com/m415x/wordpress-event-manager/pull/8`; integrated merge SHA on `dev`: `404748ee759480c3f4ae013ed2bdcaa16f1411bf`.
 - Candidate GitHub Actions run `39624597563`: PHP 8.3 lint/analysis/unit and WordPress isolated integration GREEN.
 - Post-merge workflow `php-quality.yml`, push to `dev`, run **#1022**, both required jobs GREEN (GitHub Actions screenshot evidence, Jira comment 13821).
 - Independently installed ZIP from candidate: 69 runtime files; SHA-256 `f24f5933227f8faf987a8c93fd3c99a592b27debdcb1e431b4c134635a266b6e`. Synthetic clean-install issuance/retrieval and repeat-operation fail-closed accepted; Jira comments 13792–13795.
 - Separate synthetic Docker named-volume acceptance, identical source/retrieved CSV and two distinct valid bearer URLs; SQL guests 4 and 5 each retained exactly one credential. Jira comments 13809–13810.
-- Synthetic encrypted archive and restore to independent volume `wem73-private-restore-test`: recursive content comparison PASS; directory mode 0700, recovered CSV mode 0600. Encrypted archive SHA-256 `b3a02e333b43d2e369cdb97833a3fbf24f33697a9714ecdc81bf2e1d6338a565`. Jira comments 13812–13813. **The archive contains only synthetic data**.
+- Synthetic encrypted archive and restore to independent volume `wem73-private-restore-test`: recursive content comparison PASS; directory mode 0700, recovered CSV mode 0600. Encrypted archive SHA-256 `b3a02e333b43`. Jira comments 13812–13813. **The archive contains only synthetic data**.
 - Premerge five-file scope review and PHP minimum 8.3 change: Jira comments 13817–13818. Merge and post-merge CI: 13819 and 13821.
 
 ## Runtime and security constraints
