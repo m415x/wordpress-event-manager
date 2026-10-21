@@ -67,7 +67,9 @@ final class InvitationBulkResumeTest extends TestCase
             static fn (int $guest): ?array => $guest === 101
                 ? ['guest_id' => 101, 'token' => str_repeat('A', 43)]
                 : null,
-            static fn (array $record): bool => $active[$record['guest_id']] ?? false,
+            static function (array $record) use (&$active): bool {
+                return $active[$record['guest_id']] ?? false;
+            },
             static function (int $guest) use (&$active): array {
                 $active[101] = false;
                 return ['guest_id' => $guest, 'token' => str_repeat('B', 43)];
