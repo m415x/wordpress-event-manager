@@ -20,7 +20,9 @@ final class InvitationBulkWpCliIssueDispatchTest extends TestCase
         $requests = [];
         $command = new \WEM_Invitation_Bulk_Cli_Command(
             static fn (int $actor): bool => $actor === 9,
-            static function (array $request) use (&$requests): void { $requests[] = $request; }
+            static function (array $request) use (&$requests): void {
+                $requests[] = $request;
+            }
         );
         (new \WEM_Invitation_Bulk_Wp_Cli_Handler($command))->issue([], [
             'actor' => '9',
@@ -39,14 +41,18 @@ final class InvitationBulkWpCliIssueDispatchTest extends TestCase
         $calls = 0;
         $command = new \WEM_Invitation_Bulk_Cli_Command(
             static fn (int $actor): bool => true,
-            static function () use (&$calls): void { $calls++; }
+            static function () use (&$calls): void {
+                $calls++;
+            }
         );
         $handler = new \WEM_Invitation_Bulk_Wp_Cli_Handler($command);
-        foreach ([
+        foreach (
+            [
             ['actor' => '9x', 'event' => '7', 'operation' => 'batch-01', 'private-dir' => '/secure'],
             ['actor' => '9', 'event' => '-7', 'operation' => 'batch-01', 'private-dir' => '/secure'],
             ['actor' => '9', 'event' => '7', 'operation' => '../escape', 'private-dir' => '/secure'],
-        ] as $args) {
+            ] as $args
+        ) {
             try {
                 $handler->issue([], $args);
                 self::fail('Malformed CLI arguments must not invoke the workflow.');

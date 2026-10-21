@@ -39,7 +39,8 @@ final class InvitationCustodyReconciliationTest extends TestCase
         $reconciler = new \WEM_Invitation_Custody_Reconciler();
         self::assertTrue($reconciler->is_exportable($record, $matches));
 
-        foreach ([
+        foreach (
+            [
             array_merge($matches, ['guest_id' => 18]),
             array_merge($matches, ['event_id' => 7]),
             array_merge($matches, ['generation' => 2]),
@@ -48,7 +49,8 @@ final class InvitationCustodyReconciliationTest extends TestCase
             array_merge($matches, ['status' => 'rotated', 'active_slot' => null]),
             array_merge($matches, ['active_slot' => null]),
             null,
-        ] as $invalid) {
+            ] as $invalid
+        ) {
             self::assertFalse($reconciler->is_exportable($record, $invalid));
         }
     }

@@ -44,9 +44,12 @@ final class InvitationBulkMixedStorageIntegrationTest extends WP_UnitTestCase
         $guests = [];
         for ($i = 0; $i < 1000 && count($guests) < 2; $i++) {
             $id = self::factory()->post->create(['post_type' => 'invitado', 'post_status' => 'publish']);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $id
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $id
+                )) === 0
+            ) {
                 wp_set_object_terms($id, [$event], 'evento');
                 $guests[] = $id;
             }
@@ -72,11 +75,15 @@ final class InvitationBulkMixedStorageIntegrationTest extends WP_UnitTestCase
         $runner = new \WEM_Invitation_Bulk_Mixed_Storage(
             $admission,
             new \WEM_Invitation_Bulk_Recovered_Storage(
-                $admission, $journal, new \WEM_Invitation_Custody_Database_Reconciliation()
+                $admission,
+                $journal,
+                new \WEM_Invitation_Custody_Database_Reconciliation()
             ),
             $issuer,
             new \WEM_Invitation_Custody_Database_Reconciliation(),
-            static function (array $rows) use (&$exported): void { $exported[] = $rows; }
+            static function (array $rows) use (&$exported): void {
+                $exported[] = $rows;
+            }
         );
         $runner->run($operation, $event, $guests);
 
@@ -85,7 +92,8 @@ final class InvitationBulkMixedStorageIntegrationTest extends WP_UnitTestCase
         self::assertSame($first['token'], $exported[0][0]['token']);
         foreach ($guests as $guest) {
             self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guest
+                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                $guest
             )));
         }
     }

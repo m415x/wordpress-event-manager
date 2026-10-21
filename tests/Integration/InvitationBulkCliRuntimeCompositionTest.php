@@ -22,7 +22,9 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
         $invoked = 0;
         $runtime = new \WEM_Invitation_Bulk_Cli_Runtime(
             static fn (int $actor): bool => $actor === 9,
-            static function (array $request) use (&$invoked): void { $invoked++; }
+            static function (array $request) use (&$invoked): void {
+                $invoked++;
+            }
         );
         $request = [
             'actor' => 9,
@@ -46,7 +48,9 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
             $invoked = [];
             $runtime = new \WEM_Invitation_Bulk_Cli_Runtime(
                 static fn (int $actor): bool => $actor === 9,
-                static function (array $request) use (&$invoked): void { $invoked[] = $request; }
+                static function (array $request) use (&$invoked): void {
+                    $invoked[] = $request;
+                }
             );
             $request = ['actor' => 9, 'event' => 7, 'operation' => 'batch-1', 'private_dir' => $directory];
             $runtime->execute($request);
@@ -74,7 +78,9 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
             $invoked = 0;
             $runtime = new \WEM_Invitation_Bulk_Cli_Runtime(
                 static fn (int $actor): bool => $actor === 9,
-                static function (array $request) use (&$invoked): void { $invoked++; }
+                static function (array $request) use (&$invoked): void {
+                    $invoked++;
+                }
             );
             $rejected = false;
             try {
@@ -99,5 +105,4 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
             rmdir($root);
         }
     }
-
 }

@@ -48,7 +48,8 @@ final class InvitationBulkCsvPublicationIntegrationTest extends WP_UnitTestCase
         $publication = new \WEM_Invitation_Bulk_Csv_Publication(
             new \WEM_Invitation_Bulk_Csv_Rows(static fn (array $r): bool => true),
             new \WEM_Invitation_Bulk_Private_Export(
-                new \WEM_Invitation_Private_Csv(), $storage,
+                new \WEM_Invitation_Private_Csv(),
+                $storage,
                 static fn (array $row): bool => true
             )
         );
@@ -61,7 +62,8 @@ final class InvitationBulkCsvPublicationIntegrationTest extends WP_UnitTestCase
         $denied = new \WEM_Invitation_Bulk_Csv_Publication(
             new \WEM_Invitation_Bulk_Csv_Rows(static fn (array $r): bool => false),
             new \WEM_Invitation_Bulk_Private_Export(
-                new \WEM_Invitation_Private_Csv(), $storage,
+                new \WEM_Invitation_Private_Csv(),
+                $storage,
                 static fn (array $row): bool => true
             )
         );

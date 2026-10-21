@@ -26,7 +26,9 @@ final class InvitationBulkWpCliHandlerTest extends TestCase
     public function testConfiguredHandlerDelegatesOnlyAfterValidatedCommandBoundary(): void
     {
         $executions = 0;
-        $workflow = static function (array $request) use (&$executions): void { $executions++; };
+        $workflow = static function (array $request) use (&$executions): void {
+            $executions++;
+        };
         $command = new \WEM_Invitation_Bulk_Cli_Command(
             static fn (int $actor): bool => $actor === 9,
             $workflow

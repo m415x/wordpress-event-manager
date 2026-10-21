@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -42,7 +43,8 @@ final class InvitationBulkOperationalInterruptedResumeTest extends WP_UnitTestCa
         }
         self::assertSame(0, (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$table} WHERE guest_id IN (%d,%d)",
-            $guests[0], $guests[1]
+            $guests[0],
+            $guests[1]
         )));
 
         $dir = sys_get_temp_dir() . '/wem73-interrupted-' . bin2hex(random_bytes(8));
@@ -58,7 +60,8 @@ final class InvitationBulkOperationalInterruptedResumeTest extends WP_UnitTestCa
                 $admission,
                 $attempts,
                 new \WEM_Invitation_Custody_Issuance_Bridge(
-                    new \WEM_Invitation_Credential_Service(), $journal
+                    new \WEM_Invitation_Credential_Service(),
+                    $journal
                 ),
                 $actor
             );
@@ -78,7 +81,8 @@ final class InvitationBulkOperationalInterruptedResumeTest extends WP_UnitTestCa
             self::assertCount(3, array_filter(explode("\n", trim($csv))));
             foreach ($guests as $id) {
                 self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $id
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $id
                 )));
             }
             self::assertCount(1, glob($dir . '/*.csv') ?: []);

@@ -57,7 +57,9 @@ final class InvitationBulkMixedResumeTest extends TestCase
                 return ['guest_id' => $guest];
             },
             static fn (array $record): bool => true,
-            static function () use (&$events): void { $events[] = 'export'; }
+            static function () use (&$events): void {
+                $events[] = 'export';
+            }
         );
         $this->expectException(RuntimeException::class);
         try {

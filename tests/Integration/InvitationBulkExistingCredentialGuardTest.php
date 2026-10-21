@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -37,7 +38,8 @@ final class InvitationBulkExistingCredentialGuardTest extends WP_UnitTestCase
         wp_set_object_terms($guestId, [$event], 'evento');
         (new \WEM_Invitation_Credential_Service())->issue($guestId, $admin);
         $before = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guestId
+            "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+            $guestId
         ));
         self::assertSame(1, $before);
 
@@ -55,7 +57,8 @@ final class InvitationBulkExistingCredentialGuardTest extends WP_UnitTestCase
             }
             self::assertTrue($rejected, 'Pre-existing credential must block batch emission.');
             self::assertSame($before, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guestId
+                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                $guestId
             )));
             self::assertNull((new \WEM_Invitation_Private_Csv_Storage($dir))->read('preexisting-guard'));
         } finally {

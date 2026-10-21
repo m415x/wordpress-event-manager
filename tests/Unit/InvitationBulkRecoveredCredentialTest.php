@@ -38,7 +38,10 @@ final class InvitationBulkRecoveredCredentialTest extends TestCase
         $reads = 0;
         $service = new \WEM_Invitation_Bulk_Recovered_Credential(
             static fn (string $operation, int $guest): string => 'indeterminate',
-            static function () use (&$reads): array { $reads++; return ['token' => 'opaque']; },
+            static function () use (&$reads): array {
+                $reads++;
+                return ['token' => 'opaque'];
+            },
             static fn (array $record): bool => true
         );
         try {

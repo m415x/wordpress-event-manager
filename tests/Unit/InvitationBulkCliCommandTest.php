@@ -25,13 +25,15 @@ final class InvitationBulkCliCommandTest extends TestCase
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Cli_Command'));
         $command = new \WEM_Invitation_Bulk_Cli_Command($permissions, $workflow);
 
-        foreach ([
+        foreach (
+            [
             ['actor' => 0, 'event' => 7, 'operation' => 'run-1', 'private_dir' => '/private'],
             ['actor' => 19, 'event' => 7, 'operation' => 'run-1', 'private_dir' => '/private'],
             ['actor' => 42, 'event' => 0, 'operation' => 'run-1', 'private_dir' => '/private'],
             ['actor' => 42, 'event' => 7, 'operation' => '../invalid', 'private_dir' => '/private'],
             ['actor' => 42, 'event' => 7, 'operation' => 'run-1', 'private_dir' => ''],
-        ] as $request) {
+            ] as $request
+        ) {
             try {
                 $command->execute($request);
                 self::fail('Invalid WP-CLI request must be denied.');

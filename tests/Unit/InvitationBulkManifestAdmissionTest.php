@@ -20,7 +20,9 @@ final class InvitationBulkManifestAdmissionTest extends TestCase
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-manifest-admission.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Manifest_Admission'));
         $admission = new \WEM_Invitation_Bulk_Manifest_Admission(
-            static function (string $operation) use (&$manifest) { return $manifest; },
+            static function (string $operation) use (&$manifest) {
+                return $manifest;
+            },
             static function (string $operation, int $event, array $ids) use (&$manifest, &$events): void {
                 $events[] = 'manifest';
                 $manifest = ['operation_id' => $operation, 'event_id' => $event, 'guest_ids' => $ids];
@@ -37,7 +39,9 @@ final class InvitationBulkManifestAdmissionTest extends TestCase
         $original = ['operation_id' => 'batch-1', 'event_id' => 7, 'guest_ids' => [101, 102]];
         $admission = new \WEM_Invitation_Bulk_Manifest_Admission(
             static fn (string $operation): array => $original,
-            static function () use (&$writes): void { $writes++; }
+            static function () use (&$writes): void {
+                $writes++;
+            }
         );
         self::assertSame([101, 102], $admission->admit('batch-1', 7, [101, 102]));
 

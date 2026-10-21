@@ -47,8 +47,12 @@ final class InvitationBulkLockedIssuanceTest extends TestCase
         $coordinator = new \WEM_Invitation_Bulk_Locked_Issuance(
             static fn (int $guest, callable $callback) => $callback(),
             static fn (int $guest): string => 'indeterminate',
-            static function (int $guest) use (&$events): void { $events[] = 'attempt'; },
-            static function (int $guest) use (&$events): void { $events[] = 'issue'; }
+            static function (int $guest) use (&$events): void {
+                $events[] = 'attempt';
+            },
+            static function (int $guest) use (&$events): void {
+                $events[] = 'issue';
+            }
         );
         try {
             $coordinator->run(101);

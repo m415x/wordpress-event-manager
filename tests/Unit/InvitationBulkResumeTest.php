@@ -50,7 +50,9 @@ final class InvitationBulkResumeTest extends TestCase
                 $issued++;
                 return [];
             },
-            static function () use (&$exported): void { $exported++; }
+            static function () use (&$exported): void {
+                $exported++;
+            }
         );
         try {
             $runner->run([101]);
@@ -88,5 +90,4 @@ final class InvitationBulkResumeTest extends TestCase
         }
         self::assertFalse($exported);
     }
-
 }

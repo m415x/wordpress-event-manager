@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -45,9 +46,12 @@ final class InvitationBulkOperationalAuthorizedIntegrationTest extends WP_UnitTe
                 'post_status' => 'publish',
                 'post_title' => 'WEM73 Operational ' . $attempt,
             ]);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $id
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $id
+                )) === 0
+            ) {
                 wp_set_object_terms($id, [$event], 'evento');
                 $guests[] = $id;
             }
@@ -69,7 +73,8 @@ final class InvitationBulkOperationalAuthorizedIntegrationTest extends WP_UnitTe
         self::assertCount(3, array_filter(explode("\n", trim($csv))));
         foreach ($guests as $guest) {
             self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guest
+                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                $guest
             )));
         }
         self::assertCount(1, glob($this->private . '/*.csv') ?: []);

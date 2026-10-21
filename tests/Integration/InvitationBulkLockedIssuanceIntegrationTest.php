@@ -45,9 +45,12 @@ final class InvitationBulkLockedIssuanceIntegrationTest extends WP_UnitTestCase
         $guest = 0;
         for ($n = 0; $n < 1000; $n++) {
             $candidate = self::factory()->post->create(['post_type' => 'invitado', 'post_status' => 'publish']);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $candidate
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $candidate
+                )) === 0
+            ) {
                 $guest = $candidate;
                 break;
             }
@@ -84,7 +87,8 @@ final class InvitationBulkLockedIssuanceIntegrationTest extends WP_UnitTestCase
             self::assertNotSame('', $exception->getMessage());
         }
         self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guest
+            "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+            $guest
         )));
     }
 }

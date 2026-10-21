@@ -18,8 +18,11 @@ final class InvitationBulkAdmittedLockedIssuanceTest extends TestCase
         $service = new \WEM_Invitation_Bulk_Admitted_Locked_Issuance(
             static function (int $guest, callable $callback) use (&$steps) {
                 $steps[] = 'lock';
-                try { return $callback(); }
-                finally { $steps[] = 'unlock'; }
+                try {
+                    return $callback();
+                } finally {
+                    $steps[] = 'unlock';
+                }
             },
             static function (string $operation, int $event, array $ids, int $guest) use (&$steps, &$state): string {
                 $steps[] = 'admission_evidence';
@@ -56,8 +59,13 @@ final class InvitationBulkAdmittedLockedIssuanceTest extends TestCase
         $service = new \WEM_Invitation_Bulk_Admitted_Locked_Issuance(
             static fn (int $guest, callable $callback) => $callback(),
             static fn (string $operation, int $event, array $ids, int $guest): string => 'indeterminate',
-            static function () use (&$events): void { $events[] = 'attempt'; },
-            static function () use (&$events): array { $events[] = 'issue'; return []; }
+            static function () use (&$events): void {
+                $events[] = 'attempt';
+            },
+            static function () use (&$events): array {
+                $events[] = 'issue';
+                return [];
+            }
         );
         $this->expectException(RuntimeException::class);
         try {

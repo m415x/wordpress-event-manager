@@ -44,9 +44,12 @@ final class InvitationBulkRecoveredStorageIntegrationTest extends WP_UnitTestCas
         $guest = 0;
         for ($n = 0; $n < 1000; $n++) {
             $candidate = self::factory()->post->create(['post_type' => 'invitado', 'post_status' => 'publish']);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $candidate
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $candidate
+                )) === 0
+            ) {
                 $guest = $candidate;
                 break;
             }

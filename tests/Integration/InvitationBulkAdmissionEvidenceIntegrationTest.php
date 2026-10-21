@@ -45,9 +45,12 @@ final class InvitationBulkAdmissionEvidenceIntegrationTest extends WP_UnitTestCa
                 'post_type' => 'invitado',
                 'post_status' => 'publish',
             ]);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $candidate
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $candidate
+                )) === 0
+            ) {
                 $guest = $candidate;
                 break;
             }
@@ -72,7 +75,9 @@ final class InvitationBulkAdmissionEvidenceIntegrationTest extends WP_UnitTestCa
 
         (new \WEM_Invitation_Bulk_Attempt_Storage($this->private))
             ->mark_started('run-integrated', $guest);
-        self::assertSame('indeterminate',
-            $guard->admit_and_classify('run-integrated', 7, [$guest], $guest));
+        self::assertSame(
+            'indeterminate',
+            $guard->admit_and_classify('run-integrated', 7, [$guest], $guest)
+        );
     }
 }

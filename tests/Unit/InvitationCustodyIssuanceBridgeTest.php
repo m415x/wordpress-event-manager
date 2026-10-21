@@ -13,7 +13,7 @@ final class InvitationCustodyIssuanceBridgeTest extends TestCase
     {
         $calls = [];
         $bearer = rtrim(strtr(base64_encode(str_repeat('z', 32)), '+/', '-_'), '=');
-        $service = new class($calls, $bearer) {
+        $service = new class ($calls, $bearer) {
             public array $calls = [];
             private string $bearer;
             public function __construct(&$calls, string $bearer)
@@ -34,7 +34,7 @@ final class InvitationCustodyIssuanceBridgeTest extends TestCase
                 throw new RuntimeException('commit outcome uncertain');
             }
         };
-        $journal = new class($calls) {
+        $journal = new class ($calls) {
             public array $calls = [];
             public array $record = [];
             public function __construct(&$calls)
@@ -49,7 +49,10 @@ final class InvitationCustodyIssuanceBridgeTest extends TestCase
         };
 
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-custody-issuance-bridge.php';
-        self::assertTrue(class_exists('WEM_Invitation_Custody_Issuance_Bridge'), 'WEM-73 needs a custody-before-commit bridge.');
+        self::assertTrue(
+            class_exists('WEM_Invitation_Custody_Issuance_Bridge'),
+            'WEM-73 needs a custody-before-commit bridge.'
+        );
         $bridge = new \WEM_Invitation_Custody_Issuance_Bridge($service, $journal);
         try {
             $bridge->issue(31, 8, 4, 'run-1');

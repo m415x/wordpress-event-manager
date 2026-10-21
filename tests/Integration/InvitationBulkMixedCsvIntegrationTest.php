@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -45,9 +46,12 @@ final class InvitationBulkMixedCsvIntegrationTest extends WP_UnitTestCase
                 'post_status' => 'publish',
                 'post_title' => 'WEM73 Guest ' . $i,
             ]);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $id
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $id
+                )) === 0
+            ) {
                 wp_set_object_terms($id, [$event], 'evento');
                 $guests[] = $id;
             }
@@ -65,7 +69,8 @@ final class InvitationBulkMixedCsvIntegrationTest extends WP_UnitTestCase
             $admission,
             $attempts,
             new \WEM_Invitation_Custody_Issuance_Bridge(
-                new \WEM_Invitation_Credential_Service(), $journal
+                new \WEM_Invitation_Credential_Service(),
+                $journal
             ),
             $actor
         );
@@ -99,7 +104,8 @@ final class InvitationBulkMixedCsvIntegrationTest extends WP_UnitTestCase
         self::assertCount(1, glob($this->private . '/*.csv') ?: []);
         foreach ($guests as $guest) {
             self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guest
+                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                $guest
             )));
         }
     }

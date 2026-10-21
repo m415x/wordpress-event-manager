@@ -30,7 +30,9 @@ final class InvitationBulkWordPressScopeTest extends WP_UnitTestCase
         self::assertTrue(class_exists('WEM_Invitation_Bulk_WordPress_Scope'));
         $guard = new \WEM_Invitation_Bulk_WordPress_Scope();
         $calls = 0;
-        $issue = static function () use (&$calls): void { $calls++; };
+        $issue = static function () use (&$calls): void {
+            $calls++;
+        };
 
         foreach ([[$subscriber, $guestA, $eventA], [$admin, $guestB, $eventA]] as $case) {
             try {

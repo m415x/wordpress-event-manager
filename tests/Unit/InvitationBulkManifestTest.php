@@ -36,8 +36,10 @@ final class InvitationBulkManifestTest extends TestCase
         $store = new \WEM_Invitation_Bulk_Manifest($this->directory);
         $store->create('run-1', 7, [101, 102, 103]);
         $reopened = new \WEM_Invitation_Bulk_Manifest($this->directory);
-        self::assertSame(['operation_id' => 'run-1', 'event_id' => 7, 'guest_ids' => [101, 102, 103]],
-            $reopened->read('run-1'));
+        self::assertSame(
+            ['operation_id' => 'run-1', 'event_id' => 7, 'guest_ids' => [101, 102, 103]],
+            $reopened->read('run-1')
+        );
         $files = glob($this->directory . '/*') ?: [];
         self::assertCount(1, $files);
         self::assertSame(0600, fileperms($files[0]) & 0777);

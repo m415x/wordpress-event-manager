@@ -65,8 +65,18 @@ final class InvitationBulkPrivateExportTest extends TestCase
         );
         try {
             $export->save('run-2', [
-                ['guest_id' => 101, 'guest_name' => 'One', 'event_id' => 7, 'invitation_url' => 'https://example.test/one'],
-                ['guest_id' => 102, 'guest_name' => 'Two', 'event_id' => 7, 'invitation_url' => 'https://example.test/two'],
+                [
+                    'guest_id' => 101,
+                    'guest_name' => 'One',
+                    'event_id' => 7,
+                    'invitation_url' => 'https://example.test/one',
+                ],
+                [
+                    'guest_id' => 102,
+                    'guest_name' => 'Two',
+                    'event_id' => 7,
+                    'invitation_url' => 'https://example.test/two',
+                ],
             ]);
             self::fail('A failed final reconciliation must deny publication.');
         } catch (RuntimeException $error) {

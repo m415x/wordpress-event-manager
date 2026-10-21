@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -51,7 +52,8 @@ final class InvitationBulkOperationalThousandGuestsTest extends WP_UnitTestCase
         self::assertCount(1000, array_unique($ids));
         self::assertSame(0, (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$table} WHERE guest_id BETWEEN %d AND %d",
-            min($ids), max($ids)
+            min($ids),
+            max($ids)
         )));
         self::assertCount(1000, (new \WEM_Invitation_Bulk_Event_Discovery())->guests($event));
 
@@ -95,12 +97,17 @@ final class InvitationBulkOperationalThousandGuestsTest extends WP_UnitTestCase
             self::assertSame($ids, $seenIds);
             $count = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table} WHERE guest_id BETWEEN %d AND %d",
-                min($ids), max($ids)
+                min($ids),
+                max($ids)
             ));
             self::assertSame(1000, $count);
             // Metrics are counts and elapsed seconds ONLY, never bearer values.
-            fwrite(STDERR, sprintf("WEM73 VOLUME: guests=1000 credentials=%d urls=%d elapsed_s=%.2f\n",
-                $count, count($seenUrls), $elapsed));
+            fwrite(STDERR, sprintf(
+                "WEM73 VOLUME: guests=1000 credentials=%d urls=%d elapsed_s=%.2f\n",
+                $count,
+                count($seenUrls),
+                $elapsed
+            ));
         } finally {
             foreach (glob($directory . '/*') ?: [] as $file) {
                 if (is_file($file)) {

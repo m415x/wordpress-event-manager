@@ -23,13 +23,15 @@ final class InvitationBulkCliPreflightTest extends TestCase
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-cli-preflight.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Cli_Preflight'));
         $preflight = new \WEM_Invitation_Bulk_Cli_Preflight($administrator, $discover);
-        foreach ([
+        foreach (
+            [
             [2, 7, 'operation-safe', '/private/journal', '/private/csv'],
             [1, 0, 'operation-safe', '/private/journal', '/private/csv'],
             [1, 7, '../unsafe', '/private/journal', '/private/csv'],
             [1, 7, 'operation-safe', '', '/private/csv'],
             [1, 7, 'operation-safe', '/private/journal', ''],
-        ] as $input) {
+            ] as $input
+        ) {
             try {
                 $preflight->prepare(...$input);
                 self::fail('Unsafe bulk issuance request must be rejected.');

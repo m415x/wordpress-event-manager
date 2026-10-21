@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -56,7 +57,11 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
                 . "E2E-A-" . $operation . ",Ana,Test,,{$eventName},,0\n"
                 . "E2E-B-" . $operation . ",Beto,Test,,{$eventName},,0\n");
             $_FILES['wem_csv'] = ['tmp_name' => $file];
-            $_POST = ['wem_do_import' => '1', 'wem_import_nonce' => wp_create_nonce('wem_import_action'), 'separador' => ','];
+            $_POST = [
+                'wem_do_import' => '1',
+                'wem_import_nonce' => wp_create_nonce('wem_import_action'),
+                'separador' => ',',
+            ];
 
             // Exercise the existing form importer rather than bypassing it with post factories.
             $import = new \WEM_Import_Export();

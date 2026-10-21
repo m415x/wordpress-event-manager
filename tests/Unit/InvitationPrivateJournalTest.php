@@ -107,5 +107,4 @@ final class InvitationPrivateJournalTest extends TestCase
         $this->expectException(RuntimeException::class);
         $journal->custody($record);
     }
-
 }

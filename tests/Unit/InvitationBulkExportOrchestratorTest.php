@@ -49,7 +49,9 @@ final class InvitationBulkExportOrchestratorTest extends TestCase
         $orchestrator = new \WEM_Invitation_Bulk_Export_Orchestrator(
             static fn (int $guest): array => ['guest_id' => $guest, 'token' => str_repeat('B', 43)],
             static fn (array $record): bool => false,
-            static function () use (&$exports): void { $exports++; }
+            static function () use (&$exports): void {
+                $exports++;
+            }
         );
         $this->expectException(RuntimeException::class);
         try {

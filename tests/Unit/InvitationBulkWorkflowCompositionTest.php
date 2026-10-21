@@ -131,5 +131,4 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
         }
         self::assertFalse($exported);
     }
-
 }

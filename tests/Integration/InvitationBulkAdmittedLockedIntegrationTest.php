@@ -45,9 +45,12 @@ final class InvitationBulkAdmittedLockedIntegrationTest extends WP_UnitTestCase
         $guest = 0;
         for ($n = 0; $n < 1000; $n++) {
             $candidate = self::factory()->post->create(['post_type' => 'invitado', 'post_status' => 'publish']);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $candidate
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $candidate
+                )) === 0
+            ) {
                 $guest = $candidate;
                 break;
             }
@@ -62,12 +65,17 @@ final class InvitationBulkAdmittedLockedIntegrationTest extends WP_UnitTestCase
         $admission = new \WEM_Invitation_Bulk_Admission_Evidence($manifest, $attempts, $journal);
         $lock = new \WEM_Invitation_Bulk_Guest_Lock($this->private);
         $bridge = new \WEM_Invitation_Custody_Issuance_Bridge(
-            new \WEM_Invitation_Credential_Service(), $journal
+            new \WEM_Invitation_Credential_Service(),
+            $journal
         );
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Admitted_Locked_Storage'));
 
         $service = new \WEM_Invitation_Bulk_Admitted_Locked_Storage(
-            $lock, $admission, $attempts, $bridge, $admin
+            $lock,
+            $admission,
+            $attempts,
+            $bridge,
+            $admin
         );
         $issued = $service->run($operation, $event, [$guest], $guest);
         self::assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/', $issued['token']);
@@ -80,7 +88,8 @@ final class InvitationBulkAdmittedLockedIntegrationTest extends WP_UnitTestCase
             self::assertNotSame('', $error->getMessage());
         }
         self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $guest
+            "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+            $guest
         )));
     }
 }

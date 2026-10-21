@@ -43,9 +43,12 @@ final class InvitationBulkEvidenceReaderTest extends WP_UnitTestCase
             $candidate = self::factory()->post->create([
                 'post_type' => 'invitado', 'post_status' => 'publish',
             ]);
-            if ((int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d", $candidate
-            )) === 0) {
+            if (
+                (int) $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE guest_id = %d",
+                    $candidate
+                )) === 0
+            ) {
                 $guest = $candidate;
                 break;
             }
