@@ -24,10 +24,20 @@ final class WEM_Invitation_Bulk_Cli_Runtime
                 if ($mode === false || ($mode & 0077) !== 0) {
                     throw new RuntimeException('Private invitation directory is insecure.');
                 }
+                $public_roots = array();
                 if (defined('ABSPATH')) {
-                    $root = realpath(ABSPATH);
-                    if ($root !== false && ($real === $root
-                        || strncmp($real, rtrim($root, '/') . '/', strlen(rtrim($root, '/') . '/')) === 0)) {
+                    $public_roots[] = ABSPATH;
+                }
+                if (isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT'])) {
+                    $public_roots[] = $_SERVER['DOCUMENT_ROOT'];
+                }
+                foreach ($public_roots as $public_root) {
+                    $root = realpath($public_root);
+                    if ($root === false) {
+                        continue;
+                    }
+                    $prefix = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+                    if ($real === $root || strncmp($real, $prefix, strlen($prefix)) === 0) {
                         throw new RuntimeException('Private invitation directory cannot be in webroot.');
                     }
                 }
