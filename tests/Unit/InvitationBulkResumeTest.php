@@ -59,4 +59,31 @@ final class InvitationBulkResumeTest extends TestCase
             self::assertSame(0, $exported);
         }
     }
+    public function testRevokedEarlierCredentialBlocksEntireResumedBatchExport(): void
+    {
+        $active = [101 => true, 102 => true];
+        $exported = false;
+        $runner = new \WEM_Invitation_Bulk_Resume(
+            static fn (int $guest): ?array => $guest === 101
+                ? ['guest_id' => 101, 'token' => str_repeat('A', 43)]
+                : null,
+            static fn (array $record): bool => $active[$record['guest_id']] ?? false,
+            static function (int $guest) use (&$active): array {
+                $active[101] = false;
+                return ['guest_id' => $guest, 'token' => str_repeat('B', 43)];
+            },
+            static function () use (&$exported): void {
+                $exported = true;
+            }
+        );
+
+        try {
+            $runner->run([101, 102]);
+            self::fail('Revoked recovered credential must block the entire CSV.');
+        } catch (RuntimeException $error) {
+            self::assertSame('Resumed invitation credential reconciliation failed.', $error->getMessage());
+        }
+        self::assertFalse($exported);
+    }
+
 }
