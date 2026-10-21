@@ -5,7 +5,7 @@
  * Plugin URI: https://github.com/m415x/wordpress-event-manager
  * Version: 2.2.1
  * Author: WordPress Event Manager Contributors
- * Requires PHP: 7.4
+ * Requires PHP: 8.3
  * Requires at least: 5.8
  * Text Domain: wordpress-event-manager
  * License: GPLv2 or later
