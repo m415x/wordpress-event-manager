@@ -70,7 +70,7 @@ final class SeatingConsentPersistenceTest extends WP_UnitTestCase
         $wpdb->suppress_errors(true);
         try {
             $invalid = $wpdb->insert($table, [
-                'guest_id' => $guest,
+                'guest_id' => $guest + 1,
                 'event_term_id' => $eventA,
                 'visibility_opt_in' => 2,
                 'updated_at' => '2026-10-21 00:00:00',
