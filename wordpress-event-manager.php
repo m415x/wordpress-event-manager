@@ -46,6 +46,8 @@ if (defined('WP_CLI') && WP_CLI && class_exists('WP_CLI')) {
 
 register_activation_hook(__FILE__, array('WEM_Movement_Schema', 'install'));
 register_activation_hook(__FILE__, array('WEM_Invitation_Credential_Schema', 'install'));
+register_activation_hook(__FILE__, array('WEM_Event_Table_Schema', 'install'));
+register_activation_hook(__FILE__, array('WEM_Table_Reservation_Schema', 'install'));
 
 add_action('plugins_loaded', function () {
     new WEM_CPT_Manager();
