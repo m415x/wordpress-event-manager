@@ -22,7 +22,10 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
             register_post_type('invitado', ['public' => false]);
         }
 
+        require_once __DIR__ . '/MovementIsolationProbe.php';
+        MovementIsolationProbe::capture('before_setup_install');
         \WEM_Movement_Schema::install();
+        MovementIsolationProbe::capture('after_setup_install');
     }
 
     public function testAuthorizedPrevalidatedCheckinAppendsMovementAndUpdatesProjection(): void
@@ -45,8 +48,13 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
 
         $actorId = self::factory()->user->create(['role' => 'subscriber']);
 
+        MovementIsolationProbe::capture('before_checkin', $guestId, $eventId);
         $service = new \WEM_Movement_Service();
-        $result = $service->checkin($guestId, $eventId, $actorId, 'staff_web');
+        try {
+            $result = $service->checkin($guestId, $eventId, $actorId, 'staff_web');
+        } finally {
+            MovementIsolationProbe::capture('after_checkin_attempt', $guestId, $eventId);
+        }
 
         self::assertTrue($result['ok']);
         self::assertSame('inside', $result['state']);
