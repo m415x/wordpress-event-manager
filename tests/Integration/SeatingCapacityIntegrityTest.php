@@ -73,6 +73,8 @@ final class SeatingCapacityIntegrityTest extends WP_UnitTestCase
     {
         global $wpdb;
 
+        $originalDbError = $wpdb->last_error;
+        $originalDbQuery = $wpdb->last_query;
         $database = $wpdb->get_var('SELECT DATABASE()');
         $exists = $wpdb->get_var($wpdb->prepare(
             'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s',
@@ -106,8 +108,9 @@ final class SeatingCapacityIntegrityTest extends WP_UnitTestCase
             'installer_error_class' => $error ? get_class($error) : null,
             'installer_error_code' => $error ? $error->getCode() : null,
             'installer_error_message' => $error ? $error->getMessage() : null,
-            'wpdb_last_error' => $wpdb->last_error,
-            'wpdb_last_query' => $wpdb->last_query,
+            'original_wpdb_error' => $originalDbError,
+            'original_wpdb_query' => $originalDbQuery,
+            'wpdb_last_error_after_catalog' => $wpdb->last_error,
         ];
 
         fwrite(STDERR, "\nWEM-74 INSTALL STAGE " . $stage . "\n"
