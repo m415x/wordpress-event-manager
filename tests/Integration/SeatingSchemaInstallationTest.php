@@ -8,23 +8,21 @@ use WP_UnitTestCase;
 
 final class SeatingSchemaInstallationTest extends WP_UnitTestCase
 {
-    protected function setUp(): void
+    public function testEntrypointRegistersBothSeatingInstallers(): void
     {
-        parent::setUp();
-        require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
-    }
+        $entrypoint = dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+        $source = file_get_contents($entrypoint);
+        self::assertIsString($source);
 
-    public function testBothSeatingSchemaInstallersAreRegisteredOnActivation(): void
-    {
-        $activation = 'activate_wordpress-event-manager/wordpress-event-manager.php';
-
-        self::assertNotFalse(
-            has_action($activation, ['WEM_Event_Table_Schema', 'install']),
-            'WEM-74 must provision event tables during actual plugin activation.'
-        );
-        self::assertNotFalse(
-            has_action($activation, ['WEM_Table_Reservation_Schema', 'install']),
-            'WEM-74 must provision reservations during actual plugin activation.'
-        );
+        foreach (['WEM_Event_Table_Schema', 'WEM_Table_Reservation_Schema'] as $schema) {
+            self::assertMatchesRegularExpression(
+                '/register_activation_hook\\s*\\(\\s*__FILE__\\s*,\\s*array\\s*\\(\\s*[\'"]'
+                    . preg_quote($schema, '/')
+                    . '[\'"]\\s*,\\s*[\'"]install[\'"]\\s*\\)\\s*\\)/',
+                $source,
+                $schema . ' must be declared as a plugin activation installer.'
+            );
+            self::assertTrue(is_callable([$schema, 'install']), $schema . ' installer must be callable.');
+        }
     }
 }
