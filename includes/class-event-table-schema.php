@@ -43,27 +43,44 @@ final class WEM_Event_Table_Schema
 
         dbDelta($sql);
 
-        // dbDelta does not parse CHECK. SHOW CREATE TABLE includes constraints
-        // on WordPress PHPUnit temporary tables, unlike information_schema.
-        $constraint_name = 'wem_event_table_capacity_positive';
-        $definition = self::create_table_definition($table_name);
+        // dbDelta does not parse CHECK clauses. Inspect the effective table
+        // definition: PHPUnit can shadow persistent tables with TEMPORARY ones.
+        self::ensure_positive_constraint(
+            $table_name,
+            'wem_event_table_capacity_positive',
+            'capacity'
+        );
+        self::ensure_positive_constraint(
+            $table_name,
+            'wem_event_table_event_positive',
+            'event_term_id'
+        );
+    }
 
-        if (preg_match('/CONSTRAINT\\s+[`"]?' . $constraint_name . '[`"]?\\s+CHECK\\s*\\(/i', $definition)) {
-            self::assert_positive_capacity_definition($definition, $constraint_name);
+    private static function ensure_positive_constraint($table_name, $constraint_name, $column_name)
+    {
+        global $wpdb;
+
+        $definition = self::create_table_definition($table_name);
+        $name_pattern = '/CONSTRAINT\\s+[`"]?' . preg_quote($constraint_name, '/')
+            . '[`"]?\\s+CHECK\\s*\\(/i';
+
+        if (preg_match($name_pattern, $definition)) {
+            self::assert_positive_constraint($definition, $constraint_name, $column_name);
             return;
         }
 
         $added = $wpdb->query(
-            "ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint_name} CHECK (capacity > 0)"
+            "ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint_name} CHECK ({$column_name} > 0)"
         );
-
         if ($added === false) {
-            throw new RuntimeException('Could not install positive table-capacity constraint.');
+            throw new RuntimeException('Could not install positive ' . $column_name . ' constraint.');
         }
 
-        self::assert_positive_capacity_definition(
+        self::assert_positive_constraint(
             self::create_table_definition($table_name),
-            $constraint_name
+            $constraint_name,
+            $column_name
         );
     }
 
@@ -79,15 +96,16 @@ final class WEM_Event_Table_Schema
         return (string) $result[1];
     }
 
-    private static function assert_positive_capacity_definition($definition, $constraint_name)
+    private static function assert_positive_constraint($definition, $constraint_name, $column_name)
     {
-        // MariaDB normalizes CHECK expressions with identifier quoting and
-        // optional parenthesization.
-        $pattern = '/CONSTRAINT\\s+[`"]?' . $constraint_name
-            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*[`"]?capacity[`"]?\\s*>\\s*0\\s*\\)*\\s*\\)/i';
+        // MariaDB normalizes CHECK expressions with optional identifier quoting
+        // and parenthesization. Never silently accept a divergent definition.
+        $pattern = '/CONSTRAINT\\s+[`"]?' . preg_quote($constraint_name, '/')
+            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*[`"]?'
+            . preg_quote($column_name, '/') . '[`"]?\\s*>\\s*0\\s*\\)*\\s*\\)/i';
 
         if (!preg_match($pattern, $definition)) {
-            throw new RuntimeException('Event-table positive capacity constraint is absent or inconsistent.');
+            throw new RuntimeException('Event-table positive ' . $column_name . ' constraint is absent or inconsistent.');
         }
     }
 }
