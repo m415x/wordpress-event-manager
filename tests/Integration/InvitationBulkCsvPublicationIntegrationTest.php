@@ -13,6 +13,7 @@ final class InvitationBulkCsvPublicationIntegrationTest extends WP_UnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         $this->private = sys_get_temp_dir() . '/wem73-csv-publish-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($this->private, 0700));
         (new \WEM_Taxonomy_Manager())->register_taxonomy();
