@@ -35,21 +35,22 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
             $highestIssuedGuest = (int) $wpdb->get_var(
                 "SELECT COALESCE(MAX(guest_id), 0) FROM {$credentialTable}"
             );
-            $reserved = 0;
-            for ($n = 0; $n < 2000; $n++) {
-                $reserved = self::factory()->post->create([
-                    'post_type' => 'post',
-                    'post_status' => 'draft',
-                ]);
-                if ($reserved > $highestIssuedGuest + 2) {
-                    break;
-                }
-            }
-            self::assertGreaterThan(
-                $highestIssuedGuest + 2,
-                $reserved,
-                'Cannot reserve collision-free imported IDs in this test database.'
+            // WordPress supports import_id for a synthetic post. One explicit,
+            // unused high ID advances MySQL AUTO_INCREMENT without thousands
+            // of posts or changes to historical credential records.
+            $highestPost = (int) $wpdb->get_var(
+                "SELECT COALESCE(MAX(ID), 0) FROM {$wpdb->posts}"
             );
+            $reservedId = max($highestIssuedGuest, $highestPost) + 100;
+            $reserved = wp_insert_post([
+                'import_id' => $reservedId,
+                'post_type' => 'post',
+                'post_status' => 'draft',
+                'post_title' => 'WEM73 E2E ID reservation',
+            ], true);
+            self::assertFalse(is_wp_error($reserved), 'Failed to reserve a synthetic import ID.');
+            self::assertSame($reservedId, (int) $reserved);
+            self::assertGreaterThan($highestIssuedGuest, (int) $reserved);
 
             file_put_contents($file, "titulo,nombre,organizacion,mesa,evento,observaciones,checkin\n"
                 . "E2E-A-" . $operation . ",Ana,Test,,{$eventName},,0\n"
