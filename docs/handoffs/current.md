@@ -1,144 +1,39 @@
-# Current operational handoff — WEM-33 final closure verification
+# Current operational handoff — WEM-73 integrated; delivery custody gates open
 
-Updated: 2026-10-08. This is an orientation document; remote GitHub + Jira + current source/tests remain authoritative.
+Updated: 2026-10-21. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
 
-## Current baseline
-- Canonical integration branch: `dev`; stable `main` remains separate.
-- Foundation WEM-1/WEM-2 is closed. PR #1 integrated Foundation into `dev`.
-- WEM-12 CSV import accounting is **Listo** in Jira. PR #2 merged into `dev` at `20cc59a3b0c2bf1259f4e2ad716addc084ebec1a`.
-- WEM-13 event-scoped staff authorization is **Listo** and integrated into `dev` via PR #3 at merge `4f63cd01ad9583153e19c0d985394ab1267a075d`; WEM-19 through WEM-24 are closed.
-- The WEM-13 frozen contract remains in `docs/architecture/staff-authorization-wem13.md`.
-- WEM-14 is **Listo** and integrated into `dev` via PR #4 at merge `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
-- WEM-25 through WEM-30 are complete. WEM-25 froze the durable contract; WEM-26 implemented append-only storage; WEM-27 implemented atomic check-in and rollback/drift behavior; WEM-28 completed checkout/reentry, concurrency and outside-only event reassignment; WEM-29 integrated the WEM-13 AJAX surface; WEM-30 closed full verification, manual acceptance, CI, PR and merge.
-- WEM-32 is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`; WEM-44 through WEM-49 are complete.
-- WEM-33 is **En curso** on `feat/WEM-33-secure-public-invitations`, created from `dev@3f8051d069d589d4afa20642c2749d4703a3ac6a`. WEM-56 through WEM-61 are complete; WEM-62 manual acceptance is GREEN and only final exact-HEAD CI over closure documentation remains.
+## Canonical integration baseline
 
-## WEM-13 verified behavior
-- Operational staff authority requires WordPress authentication, operation-specific WEM capability and explicit authorized `evento` term IDs.
-- Global administrators have global event scope but still require a valid `invitado` with exactly one canonical event and valid transition/request integrity.
-- `wem_list_ajax`, `[wem_list]`, `wem_checkin_ajax` and `[wem_checkin]` now expose only the authenticated staff/admin paths covered by the WEM-13 contract.
-- Anonymous/nopriv guest-list and mutation AJAX remain fixed HTTP 403 deny-all.
-- Public guest/legacy QR paths remain unavailable; WEM-13 does not implement public invitation tokens or guest self-check-in.
-- Staff listing/query filters cannot expand beyond actor event scope.
-- Guests with zero or multiple `evento` terms are denied operational access.
-- `wem_observaciones` remains private/admin-only and is not rendered on staff operational surfaces.
-- Check-in, checkout and re-entry are server-authorized and preserve denied-state isolation.
-- Staff scope assignment is persisted only through `WEM_Authorization::set_authorized_event_ids()` and edited through the bounded WordPress user-profile integration.
-- Roster navigation uses the real WordPress event-page permalink rather than assuming pretty permalinks.
-- Successful roster check-in reloads the operational page so list and colocated detail state remain synchronized.
+- `dev`: WEM-73 PR #8 merged at `404748ee759480c3f4ae013ed2bdcaa16f1411bf`.
+- WEM-73 candidate HEAD: `9ae68e79182b`, GitHub Actions `39624597563` GREEN 2/2. Post-merge push `php-quality.yml` run #1022 GREEN 2/2; Jira 13821.
+- WEM-73 source-focused ZIP: 69 runtime files; SHA-256 `f24f5933227f8faf987a8c93fd3c99a592b27debdcb1e431b4c134635a266b6e`. Acceptance: clean WP ZIP installation, two-guest private URL/CSV, duplicate operation denied; separate persistence / SQL recon / encrypted archive restore synthetic PASS. See [durable WEM-73 contract](../architecture/private-bulk-invitations-wem73.md) and Jira 13792–13795, 13809–13821.
+- WEM-33 PR #6 merged previously at `79b6ec`; WEM-33 public read-only bearer resolver is implemented. Do not resurrect outdated branch-only WEM-33 closure claims.
+- Earlier integrated stories WEM-2, 12, 13, 14 and 32 remain covered by the docs index and architecture contracts. `main` is not the integration target.
+- This documentation branch `docs/WEM-73-post-merge-handoff` is docs-only and **must not** be mistaken for the unchanged candidate HEAD/ZIP. No QR integration was made.
 
-## WEM-14 closure evidence
-- Final feature HEAD before merge: `c91220ace0b61f7b266ee26118fe987b56626663`.
-- GitHub Actions run `37625472731`: `WordPress isolated integration` SUCCESS and `PHP 8.3 lint, analysis and unit` SUCCESS.
-- Local gates GREEN: unit, full integration, TDD runner self-tests 15/15, local workflow helper, DB isolation, Composer strict, PHPCS and configured PHPStan.
-- Manual anonymous HTTP guards: `wem_checkin_ajax` and `wem_list_ajax` returned HTTP 403 with the fixed deny JSON.
-- Authenticated browser walkthrough verified Event A check-in → checkout → reentry, UI state updates, Event B cross-scope denial and private-observation non-disclosure.
-- Manual environment schema presence was verified explicitly as `wp_wem_guest_movements`; no historical movement reconstruction was performed.
-- PR #4 merged into `dev` at `f7992617f9a14b6ea8a2838d3575344ea5b4dbaf`.
+## Functional delivery status
 
-## WEM-32 frozen provisioning contract
+The verified minimum WEM-73 path is WP-CLI administrative bulk credential issuance and private retrieval of an Excel-compatible CSV of invitation bearer URLs, intended after CSV guest import. It is not an admin GUI with bulk selection, not QR images, and not seat selection. Each invitation is for one person.
 
-- Operational authority remains capability-based; preset or WordPress role names never authorize business operations.
-- Canonical provisioning states are None, Viewer and Operator. Viewer grants `wem_view_event_guests`; Operator grants view plus `wem_operate_event_guests`.
-- Presets modify only WEM-managed user capabilities and preserve existing WordPress roles and non-WEM capabilities.
-- Non-canonical external capability combinations must be detected without silent normalization; only an explicit preset application may converge them.
-- Event scope remains independent and all writes stay behind `WEM_Authorization::set_authorized_event_ids()`.
-- Scope without capability never authorizes; revoke takes effect immediately even when scope remains persisted.
-- `manage_options` remains WEM-13's global-admin boundary.
-- WEM-32 requires no provisioning installer by default. Activation/reactivation/deactivation must not grant, revoke, normalize or rewrite user provisioning. A newly discovered need for versioned provisioning state requires a fresh decision before implementation.
-- The `class-cpt-manager.php` use of `administrator` as a role-like capability is not a WEM-32 blocker and remains WEM-35 debt; Viewer/Operator do not gain generic CPT administration authority.
-- Durable contract: `docs/architecture/staff-provisioning-wem32.md`.
+Public bearer possession grants only the WEM-33 minimal read-only public view. Check-in remains an authenticated staff operation under WEM-13/14. No public CSV retrieval and no token output in normal CLI success logs.
 
-## WEM-33 frozen public invitation contract
+**No operational GO for real guest credentials yet.** Appoint custodian and replacement; confirm server PHP 8.3, private persistent POSIX volume, 0700/0600, administrator/host access, off-host encrypted backup with key custody, consistent MySQL backup/restore, sensitive HTTP/access/error log policy, confidential delivery channel, documented retention and deletion deadline. Synthetic Docker volume restore is not a full WordPress restore. See WEM-73 contract/runbook.
 
-- Public authority is one opaque 256-bit CSPRNG bearer token bound to one invitation; it never derives from guest/post ID, ticket, event slug or timestamp.
-- The bearer secret is never persisted in cleartext. WEM stores only deterministic lookup/verification material; the full bearer is exposed only by the administrative operation that creates it.
-- Lifecycle is immutable by generation: issue creates the first active generation; rotate invalidates it and creates a new generation; revoke leaves none active; explicit reissue always creates a new token/digest/generation. Rotated/revoked rows never become active again.
-- Only `status=active` may carry `active_slot=1`; rotated/revoked rows require NULL. A unique `(guest_id, active_slot)` index is the physical single-active defense and the API must also validate semantic consistency.
-- There is no implicit time expiration.
-- Credential persistence uses a dedicated WEM table, not post meta. The guest is the lifecycle serialization unit.
-- Credential administration remains `manage_options` in WEM-33; WEM-32 Viewer/Operator provisioning does not grant it.
-- The public resolver is separate from `[wem_checkin]`, `[wem_list]` and staff AJAX. WordPress login, nonce, ticket, slug, page or guest ID do not amplify public authority.
-- Public routing must work under simple permalinks, require no event slug and require no manually created WordPress page.
-- The public projection is exactly `guest_name` from `wem_nombre` plus `event_name` from the exactly-one canonical event. Never fall back to post title/ticket.
-- Missing/malformed/unknown/rotated/revoked/inconsistent credentials and invalid guest/event cardinality are publicly indistinguishable.
-- Public responses require `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and no third-party resources that receive the bearer URL.
-- QR/Google Charts remain WEM-34; self-check-in remains WEM-38; admin UX remains WEM-35; CSV authorization remains WEM-36.
-- Durable contract: `docs/architecture/public-invitation-wem33.md`.
+## Immediate next work
 
-## Fresh-chat behavior
-A fresh chat should not carry operational workflow in its prompt. Follow `AGENTS.md`.
+1. Reconcile the docs-only PR against remote `dev`; verify no `includes/`, plugin bootstrap, tests, build scripts, lockfiles or runtime ZIP content changed.
+2. Verify docs-only PR CI when relevant; merge to `dev` only after approved review, then update Jira issue WEM-73 with documentary SHA, post-merge CI result, and whether operational gates are still open.
+3. Preserve the functional candidate as shipped and do not quietly integrate WEM-34 (local QR), seating, guest self check-in or unrelated UX.
+4. Keep temporary test files (such as `.wp-env.wem73-custody.json`, `wem73-custody-guests.php`, `wem73-verify-persistent.php`) untracked/out of the delivered plugin; no bearer data in repository.
+5. Read Jira current statuses before transitioning WEM-73 or related closure subtasks; technical integration and operational readiness are distinct decisions.
 
-- Start from remote `dev`, current CI/PR state, source/tests, docs and Jira.
-- Use GitHub/Jira connectors directly for remote evidence.
-- Ask the user only for genuinely local/manual evidence or a real product/domain decision.
-- Do not repeat tests/CI/walkthroughs merely to recreate exact-SHA evidence.
-- Treat WEM-14 as integrated baseline. Select the next story from current Jira state; do not reopen WEM-14 unless a verified regression or approved follow-up requires it.
+## RED/GREEN evidence and fresh-chat continuity
 
-## Current testing workflow
-See `docs/testing.md` for authoritative commands.
+For every bounded TDD subtask, record Jira RED and GREEN comments **as they occur**, each with issue/subtask key, relevant HEAD SHA, exact focused test/command, observed expected-failure reason or passing summary, environment, and any blocker/next bounded action. Do not record generic invented PASS, tokens, guest PII, credentials or full bearer logs. An infrastructure failure is ERROR, never legitimate RED. For audit/docs-only work, log verification and disposition without manufacturing TDD RED. Link PR, CI run and ZIP digest to their exact SHAs; leave a fresh-chat-safe handoff before context loss.
 
-- Manual WordPress: `.wp-env.test.json`, port 8890.
-- PHPUnit WordPress: `.wp-env.phpunit.json`, port 8892.
-- Never run WordPress Core PHPUnit against the manual site.
-- Remote CI status should be inspected directly through GitHub tooling.
+## Test environment and constraints
 
-## Product boundaries still in force
-- WEM-8 compatibility remains **new-installations-only**; no implicit legacy migration or aliases.
-- WEM-33 public invitation capability is implemented on its feature branch and awaiting WEM-62 manual/final closure; it is not yet integrated into `dev`. QR remains WEM-34.
-- WEM-14 runtime movement persistence and authenticated AJAX integration are implemented, verified and integrated into `dev`.
-- No production deployment or production guest data is implied by completed local/CI evidence.
-
-## WEM-14 active contract
-
-- Dedicated WEM table: append-only accepted movement ledger and historical source of truth.
-- Existing post meta remains a mutable current-state projection for efficient reads.
-- Every movement has UUID movement_id plus a monotonic internal sequence; occurred_at alone does not define total order.
-- guest_id + captured canonical event_term_id are immutable historical scope.
-- The operational guest is the serialization unit for state reread, validation, append and projection update.
-- checkin, checkout and reentry are distinct movement types.
-- Event reassignment is allowed only while outside and never rewrites historical movement event_term_id.
-- Append + projection update are one transaction; partial commits are forbidden.
-- Ledger/projection drift causes controlled failure; there is no silent autorepair.
-- The ledger is accepted-only. Rejected attempts remain outside WEM-14.
-- New installations only; no reconstruction, backfill or historical migration.
-
-
-## WEM-14 implementation state
-
-- Dedicated table: `{$wpdb->prefix}wem_guest_movements`, keyed by monotonic `sequence` with unique `movement_id`.
-- Accepted movement types are `checkin`, `checkout` and `reentry`; source is currently `staff_web`; decision is `accepted`.
-- `WEM_Movement_Service` serializes the guest row with `SELECT ... FOR UPDATE`, rereads projection/history, rejects drift, validates transition, appends one movement and updates projection in one SQL transaction.
-- Failed projection writes roll back the movement; post-meta cache is invalidated after rollback so WordPress reads do not expose stale transactional state.
-- Event reassignment is explicit, guest-serialized, allowed only outside, changes current taxonomy scope and clears the mutable movement projection without rewriting prior ledger facts.
-- `wem_checkin_ajax` keeps WEM-13 authentication/capability/event-scope and nonce checks before delegating to the movement service.
-- Rejected authorization/request/transition attempts are not ledger movements.
-- Public/anonymous/legacy QR behavior remains outside WEM-14 and must stay fail-closed.
-
-
-## WEM-32 closure evidence in progress
-
-- Candidate HEAD before final documentation: `37e680cafdad6355525d5a220b3289851c6b6b99`.
-- GitHub Actions run `37641449272`: `WordPress isolated integration` SUCCESS and `PHP 8.3 lint, analysis and unit` SUCCESS.
-- Automated lifecycle coverage includes canonical/non-canonical detection, explicit None/Viewer/Operator convergence, role/non-WEM capability preservation, no automatic grants to built-in roles, activation/reactivation/deactivation non-mutation, external-role convergence and deleted/unknown users.
-- Operational regressions using real provisioning cover scoped Viewer/Operator behavior, revoke with persisted scope, cross-event denial, guest cardinality and public fail-closed boundaries.
-- Real WordPress walkthrough passed user creation, Viewer grant, Viewer→Operator, check-in→checkout→reentry, Operator→Viewer immediate downgrade, revoke to None with scope retained, unchanged WordPress role, ordinary-user denial and deleted-user cleanup.
-- Manual anonymous HTTP guards GREEN: `wem_checkin_ajax` and `wem_list_ajax` returned HTTP 403 with the fixed deny-all JSON.
-- Final feature HEAD before merge: `c2b8f01c451741979bfd75e88391724e0df8064d`.
-- GitHub Actions run `37645179459`: both required jobs SUCCESS on that exact HEAD.
-- PR #5 merged into `dev` at `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`.
-- WEM-32 closure is complete; future work must select the next story from current Jira state rather than reopening WEM-32 without a verified regression or approved follow-up.
-
-
-## WEM-33 closure candidate
-
-- WEM-56 contract freeze: complete.
-- WEM-57 dedicated credential storage: complete.
-- WEM-58 atomic lifecycle and administrative authority: complete.
-- WEM-59 bearer-only resolver and simple-permalink route: complete.
-- WEM-60 minimal read-only projection/renderer: complete.
-- WEM-61 public HTTP hardening: complete.
-- Dispatch-corrected implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009`: GitHub Actions run `37800964347` SUCCESS in both required jobs.
-- GitHub Actions run `37795451779`: `PHP 8.3 lint, analysis and unit` SUCCESS; `WordPress isolated integration` SUCCESS.
-- Draft PR #6 remains open, mergeable and unmerged. It must not merge until WEM-62 acceptance is complete.
-- WEM-62 real WordPress acceptance is GREEN: issue → public read → rotate old denied/new valid → revoke denied → explicit reissue new valid; simple-permalink routing; mandatory response headers; indistinguishable denials; anonymous operational guards; and no public mutation authority. Final exact-HEAD CI after closure documentation remains.
+- Manual WordPress `.wp-env.test.json`: 8890; PHPUnit `.wp-env.phpunit.json`: 8892, isolated. See `docs/testing.md`.
+- Verified WEM-73 custody used an isolated synthetic `wp-env` at 8898 with Docker named volume; it must not be interpreted as a durable production deployment.
+- WEM-8 new-installation-only boundary; WEM-13 staff event scope and anonymous protections remain required. PHP minimum in the merged plugin is 8.3.
+- No blanket proof of infrastructure request-log redaction, protected real-event delivery, backup key escrow, or post-event destruction yet.
