@@ -31,7 +31,7 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
             // credential history survives independently. Reserve IDs beyond
             // every historical credential before exercising the real importer.
             global $wpdb;
-            $credentialTable = \\WEM_Invitation_Credential_Schema::table_name();
+            $credentialTable = \WEM_Invitation_Credential_Schema::table_name();
             $highestIssuedGuest = (int) $wpdb->get_var(
                 "SELECT COALESCE(MAX(guest_id), 0) FROM {$credentialTable}"
             );
