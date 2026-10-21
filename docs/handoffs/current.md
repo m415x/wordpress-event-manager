@@ -21,11 +21,10 @@ Public bearer possession grants only the WEM-33 minimal read-only public view. C
 
 ## Immediate next work
 
-1. Reconcile the docs-only PR against remote `dev`; verify no `includes/`, plugin bootstrap, tests, build scripts, lockfiles or runtime ZIP content changed.
-2. Verify docs-only PR CI when relevant; merge to `dev` only after approved review, then update Jira issue WEM-73 with documentary SHA, post-merge CI result, and whether operational gates are still open.
-3. Preserve the functional candidate as shipped and do not quietly integrate WEM-34 (local QR), seating, guest self check-in or unrelated UX.
-4. Keep temporary test files (such as `.wp-env.wem73-custody.json`, `wem73-custody-guests.php`, `wem73-verify-persistent.php`) untracked/out of the delivered plugin; no bearer data in repository.
-5. Read Jira current statuses before transitioning WEM-73 or related closure subtasks; technical integration and operational readiness are distinct decisions.
+1. WEM-73 technical and administrative closure is complete in Jira (`Listo`); PR #8 and documentation PR #9 are merged. Documentation merge on `dev`: `7c752a9348ad`, post-merge documentary CI #1026 GREEN 2/2 (Jira 13836–13839). Operational custody gates for real guest credentials remain open independently; **no production GO**.
+2. After this bounded docs-only harness reconciliation is integrated, resume [WEM-41](https://trail-running-workout-planning.atlassian.net/browse/WEM-41) discovery for the individual table-selection MVP. WEM-41 was `Por hacer` at the 2026-10-21 audit; recheck Jira issue, related stories, approvals and scope before implementation. Do not create duplicate seating stories or implement WEM-72.
+3. Preserve WEM-33/34/73 contracts and existing WEM-73 functional evidence. No QR, seating behavior or guest self check-in is part of this documentation change.
+4. Before cleanup, inventory ignored/untracked ZIPs, logs, databases and test helpers; preserve needed safe evidence and keep tokens, private CSVs and production data out of Git. The workflow is in [agent harness](../agent-harness.md).
 
 ## RED/GREEN evidence and fresh-chat continuity
 
