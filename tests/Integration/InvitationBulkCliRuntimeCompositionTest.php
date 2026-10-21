@@ -72,7 +72,7 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
         $_SERVER['DOCUMENT_ROOT'] = $root;
         try {
             $invoked = 0;
-            $runtime = new \\WEM_Invitation_Bulk_Cli_Runtime(
+            $runtime = new \WEM_Invitation_Bulk_Cli_Runtime(
                 static fn (int $actor): bool => $actor === 9,
                 static function (array $request) use (&$invoked): void { $invoked++; }
             );
