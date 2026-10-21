@@ -16,7 +16,7 @@ final class InvitationBulkCliRegistrationTest extends TestCase
         $register = static function (string $name, $handler) use (&$calls): void {
             $calls[] = $name;
         };
-        $registration = new \WEM_Invitation_Bulk_Cli_Registration($register);
+        $registration = new \WEM_Invitation_Bulk_Cli_Registration($register, static fn () => new \stdClass());
         $registration->register(false);
         self::assertSame([], $calls);
         $registration->register(true);
