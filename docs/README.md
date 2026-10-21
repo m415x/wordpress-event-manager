@@ -19,7 +19,11 @@ Read `../AGENTS.md` before starting a story.
 - **WEM-32 staff capability provisioning** is **Listo** and integrated into `dev` via PR #5 at merge `6c7faff1f304e267dd74b8d2ddc142e64eeb3d0b`. WEM-44 through WEM-49 are complete. Final feature HEAD `c2b8f01c451741979bfd75e88391724e0df8064d` passed both required GitHub Actions jobs in run `37645179459`; real WordPress lifecycle acceptance and anonymous HTTP guards were GREEN.
 - **WEM-33 secure public invitation credentials** is in **final closure verification** on `feat/WEM-33-secure-public-invitations`. WEM-56 through WEM-61 are complete and WEM-62 manual lifecycle/browser acceptance is GREEN. Dispatch-corrected implementation HEAD `4632c287bdf538f3c766c399b8483a77cf972009` passed both required GitHub Actions jobs in run `37800964347`; only exact-HEAD CI after final closure documentation remains before Jira closure and merge preparation.
 
+- **WEM-33 secure public invitation credentials** are integrated into `dev` via PR #6, merge `79b6ec8dde1b0302f47ee0617e9361675ac04c55`. The superseded WEM-33 final-closure wording below is historical and must not guide current work.
+- **WEM-73 private bulk URL/CSV** is integrated into `dev` via PR #8, merge `404748ee759480c3f4ae013ed2bdcaa16f1411bf`. Candidate `9ae68e79182bd3c802e0afc41792f9f4744580fa`; candidate CI run `39624597563` GREEN, post-merge workflow run #1022 GREEN 2/2. Clean ZIP, synthetic custody persistence, SQL reconciliation and encrypted archive restore PASS. Production custody and MySQL recovery gates remain open; see [WEM-73 operational contract](architecture/private-bulk-invitations-wem73.md).
+
 ## Durable documents
+- [WEM-73 private bulk URL/CSV and custody](architecture/private-bulk-invitations-wem73.md) — exact SHA and ZIP evidence, safe WP-CLI runbook, custody, backup/restore, logging and real-event blockers.
 - [Testing](testing.md) — initial PHPUnit harness, Docker commands, limits and pending integration coverage.
 - [Foundation integrated baseline](handoffs/foundation-baseline.md) — WEM-2 acceptance evidence, actual merge SHA, security/compatibility limitations, isolated test environments and fresh-chat bootstrap.
 - [WEM-13 staff authorization contract](architecture/staff-authorization-wem13.md) — frozen event-scoped staff/admin authorization model; public surfaces remain fail-closed.
