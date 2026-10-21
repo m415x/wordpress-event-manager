@@ -55,6 +55,7 @@ final class WEM_Event_Table_Schema
             'wem_event_table_event_positive',
             'event_term_id'
         );
+        self::ensure_nonempty_table_code($table_name);
     }
 
     private static function ensure_positive_constraint($table_name, $constraint_name, $column_name)
@@ -82,6 +83,36 @@ final class WEM_Event_Table_Schema
             $constraint_name,
             $column_name
         );
+    }
+
+    private static function ensure_nonempty_table_code($table_name)
+    {
+        global $wpdb;
+
+        $constraint = 'wem_event_table_code_nonempty';
+        $definition = self::create_table_definition($table_name);
+        $name_pattern = '/CONSTRAINT\\s+[`"]?' . preg_quote($constraint, '/')
+            . '[`"]?\\s+CHECK\\s*\\(/i';
+        $expression_pattern = '/CONSTRAINT\\s+[`"]?' . preg_quote($constraint, '/')
+            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*char_length\\s*\\(\\s*[`"]?table_code[`"]?\\s*\\)\\s*>\\s*0\\s*\\)*\\s*\\)/i';
+
+        if (preg_match($name_pattern, $definition)) {
+            if (!preg_match($expression_pattern, $definition)) {
+                throw new RuntimeException('Event-table code nonempty constraint is inconsistent.');
+            }
+            return;
+        }
+
+        $result = $wpdb->query(
+            "ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint} CHECK (CHAR_LENGTH(table_code) > 0)"
+        );
+        if ($result === false) {
+            throw new RuntimeException('Could not install nonempty event-table code constraint.');
+        }
+
+        if (!preg_match($expression_pattern, self::create_table_definition($table_name))) {
+            throw new RuntimeException('Event-table code nonempty constraint was not installed.');
+        }
     }
 
     private static function create_table_definition($table_name)
