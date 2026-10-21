@@ -34,7 +34,6 @@ final class WEM_Event_Table_Schema
             event_term_id BIGINT UNSIGNED NOT NULL,
             table_code VARCHAR(100) NOT NULL,
             capacity INT UNSIGNED NOT NULL,
-            CONSTRAINT wem_event_table_capacity_positive CHECK (capacity > 0),
             layout_x INT NULL,
             layout_y INT NULL,
             PRIMARY KEY  (id),
@@ -43,5 +42,30 @@ final class WEM_Event_Table_Schema
         ) {$charset_collate};";
 
         dbDelta($sql);
+
+        // dbDelta does not parse CHECK constraints: add it separately, once.
+        $constraint_name = 'wem_event_table_capacity_positive';
+        $existing = $wpdb->get_var(
+            $wpdb->prepare(
+                'SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = %s
+                   AND CONSTRAINT_NAME = %s
+                   AND CONSTRAINT_TYPE = %s',
+                $table_name,
+                $constraint_name,
+                'CHECK'
+            )
+        );
+
+        if ($existing === null) {
+            $added = $wpdb->query(
+                "ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint_name} CHECK (capacity > 0)"
+            );
+
+            if ($added === false) {
+                throw new RuntimeException('Could not install positive table-capacity constraint.');
+            }
+        }
     }
 }
