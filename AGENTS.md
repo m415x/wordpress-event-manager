@@ -68,6 +68,13 @@ A fresh chat is only an entry point. All operational detail must be recoverable 
 - Avoid speculative large epics, transcript archives, and unrelated cleanup. Track deferred decisions as Jira work.
 - Closure subtask: reconcile approved subtasks and acceptance criteria, run actual applicable full gates and manual walkthrough, record passing/failing evidence, update durable docs and handoff, then mark the story `Listo` and merge to `dev`.
 
+## TDD traceability and verified handoff (post WEM-73)
+- For each accepted subtask, record RED and GREEN as separate Jira comments with issue key, branch/commit SHA, exact targeted test command, observed failure assertion or successful test summary, environment, scope and next action. Logs are evidence, not a transcript archive; redact tokens, guest PII and credentials.
+- Use **ERROR**, never RED, for bootstrap, configuration, Docker/DB or tooling failures; never invent test results from a proposed command. Documentation-only reviews do not require artificial RED/GREEN cycles.
+- At each candidate/final gate, link the exact candidate SHA, CI run, merge SHA, artifact SHA-256, manual acceptance and unresolved operational limitations in Jira and `docs/handoffs/current.md`.
+- The integrated WEM-73 baseline and private custody runbook are at `docs/architecture/private-bulk-invitations-wem73.md`. Production operation still requires real server, owner, backup, transport, logging and deletion evidence. The WP-CLI command accepts an explicit administrative actor ID: host/CLI access is itself privileged, not proof of the person invoking it.
+- Fresh chat first resolves current remote `dev`, then verifies that docs and Jira reflect that HEAD; never use the historical WEM-2 section below as the latest baseline.
+
 ## Integrated WEM-2 Foundation baseline
 - Foundation v2.2.1 was merged into **`dev`**, not `main`, through [PR #1](https://github.com/m415x/wordpress-event-manager/pull/1) on 2026-10-02; exact integration merge commit: `0b32514cb20ded251e21da70cc1b3f8681c1b6fd`. Historical `main` source before Foundation: `74116d06ccf40f3316cee7a33b034df45f8efa7b`. See `docs/handoffs/foundation-baseline.md` for acceptance evidence and pending post-merge Jira/CI status.
 - WEM-3 audited an earlier plugin bootstrap defect; WEM-11 subsequently fixed and verified actual WordPress activation, modular hooks and temporary fail-closed sensitive routes. **Do not conflate a successful Docker start or registration with public authorization or safe public check-in.** All guest-sensitive AJAX/shortcode routes must remain unavailable until WEM-13 independently proves actor- and event-scoped permissions.
