@@ -82,7 +82,7 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
     {
         $events = [];
         try {
-            new \WEM_Invitation_Bulk_Workflow(
+            (new \ReflectionClass(\WEM_Invitation_Bulk_Workflow::class))->newInstanceArgs([
                 static function () use (&$events): array {
                     $events[] = 'preflight';
                     return [101];
@@ -94,8 +94,8 @@ final class InvitationBulkWorkflowCompositionTest extends TestCase
                 },
                 static function () use (&$events): void {
                     $events[] = 'export';
-                }
-            );
+                },
+            ]);
             self::fail('Production workflow must require a reconciliation dependency.');
         } catch (\Throwable $error) {
             self::assertSame([], $events);
