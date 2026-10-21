@@ -19,6 +19,8 @@ final class SeatingTableIdentityIntegrityTest extends WP_UnitTestCase
         global $wpdb;
 
         \WEM_Event_Table_Schema::install();
+        \WEM_Event_Table_Schema::install();
+        \WEM_Event_Table_Schema::install();
         $table = \WEM_Event_Table_Schema::table_name();
         $code = 'WEM74-SCOPE-' . wp_generate_uuid4();
 
