@@ -27,6 +27,30 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
         $previousPost = $_POST;
 
         try {
+            // WordPress test transactions may reuse post IDs while WEM-33
+            // credential history survives independently. Reserve IDs beyond
+            // every historical credential before exercising the real importer.
+            global $wpdb;
+            $credentialTable = \\WEM_Invitation_Credential_Schema::table_name();
+            $highestIssuedGuest = (int) $wpdb->get_var(
+                "SELECT COALESCE(MAX(guest_id), 0) FROM {$credentialTable}"
+            );
+            $reserved = 0;
+            for ($n = 0; $n < 2000; $n++) {
+                $reserved = self::factory()->post->create([
+                    'post_type' => 'post',
+                    'post_status' => 'draft',
+                ]);
+                if ($reserved > $highestIssuedGuest + 2) {
+                    break;
+                }
+            }
+            self::assertGreaterThan(
+                $highestIssuedGuest + 2,
+                $reserved,
+                'Cannot reserve collision-free imported IDs in this test database.'
+            );
+
             file_put_contents($file, "titulo,nombre,organizacion,mesa,evento,observaciones,checkin\n"
                 . "E2E-A-" . $operation . ",Ana,Test,,{$eventName},,0\n"
                 . "E2E-B-" . $operation . ",Beto,Test,,{$eventName},,0\n");
