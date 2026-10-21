@@ -1,6 +1,6 @@
 # WEM-33 — Secure public invitation credential and read-only view
 
-Status: **integrated into `dev` via PR #6 at `79b6ec8dde1b0302f47ee0617e9361675ac04c55`**. The historical candidate evidence below documents the implementation stage.
+Status: **integrated into `dev` via PR #6 at `79b6ec`**. The historical candidate evidence below documents the implementation stage.
 Jira: WEM-33. This story introduces a public read-only invitation capability without weakening WEM-13 authenticated staff authorization or WEM-14 movement-history invariants.
 
 ## Purpose
