@@ -10,6 +10,7 @@ final class InvitationBulkPrivateRetrievalCliTest extends WP_UnitTestCase
 {
     private string $directory;
     private string $output;
+    private string $outputDirectory;
 
     protected function setUp(): void
     {
@@ -17,7 +18,9 @@ final class InvitationBulkPrivateRetrievalCliTest extends WP_UnitTestCase
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         $this->directory = sys_get_temp_dir() . '/wem73-retrieval-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($this->directory, 0700));
-        $this->output = sys_get_temp_dir() . '/wem73-delivery-' . bin2hex(random_bytes(8)) . '.csv';
+        $this->outputDirectory = sys_get_temp_dir() . '/wem73-delivery-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($this->outputDirectory, 0700));
+        $this->output = $this->outputDirectory . '/invitations.csv';
     }
 
     protected function tearDown(): void
@@ -31,6 +34,7 @@ final class InvitationBulkPrivateRetrievalCliTest extends WP_UnitTestCase
             unlink($this->output);
         }
         rmdir($this->directory);
+        rmdir($this->outputDirectory);
         parent::tearDown();
     }
 
