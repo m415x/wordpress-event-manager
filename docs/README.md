@@ -22,6 +22,7 @@ Read `../AGENTS.md` before starting a story.
 - **WEM-73 private bulk URL/CSV** is integrated into `dev` via PR #8, merge `404748ee759480c3f4ae013ed2bdcaa16f1411bf`. Candidate `9ae68e79182b`; candidate CI run `39624597563` GREEN, post-merge workflow run #1022 GREEN 2/2. Clean ZIP, synthetic custody persistence, SQL reconciliation and encrypted archive restore PASS. Production custody and MySQL recovery gates remain open; see [WEM-73 operational contract](architecture/private-bulk-invitations-wem73.md).
 
 ## Durable documents
+- [WEM-41 seating/reservations MVP contract](architecture/seating-reservations-wem41.md) — approved domain, privacy, CSV compatibility, authorization, and I1–I6 implementation boundaries.
 - [Agent harness](agent-harness.md) — compact candidate → RED/GREEN → PR → merge → post-merge reconciliation cycle; normative rules remain in AGENTS.md.
 - [WEM-73 private bulk URL/CSV and custody](architecture/private-bulk-invitations-wem73.md) — exact SHA and ZIP evidence, safe WP-CLI runbook, custody, backup/restore, logging and real-event blockers.
 - [Testing](testing.md) — initial PHPUnit harness, Docker commands, limits and pending integration coverage.
