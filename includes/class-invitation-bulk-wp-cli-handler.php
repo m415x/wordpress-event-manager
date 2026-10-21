@@ -15,15 +15,39 @@ final class WEM_Invitation_Bulk_Wp_Cli_Handler
 
     public function issue($args, $assoc_args): void
     {
-        // An unconfigured handler must never perform writes, even with
-        // apparently well-formed arguments.
         if ($this->command === null) {
             $this->deny_cli('Bulk invitation workflow is not configured.');
         }
 
-        // Argument parsing and actor selection must be supplied by the
-        // eventual WP-CLI composition root, not inferred from web requests.
-        $this->deny_cli('Bulk invitation CLI issuance is not enabled.');
+        if (!is_array($args) || $args !== array() || !is_array($assoc_args)) {
+            $this->deny_cli('Invalid invitation bulk command parameters.');
+        }
+
+        foreach (array('actor', 'event', 'operation', 'private-dir') as $key) {
+            if (!isset($assoc_args[$key]) || !is_string($assoc_args[$key])) {
+                $this->deny_cli('Invalid invitation bulk command parameters.');
+            }
+        }
+        if (count($assoc_args) !== 4
+            || !preg_match('/^[1-9][0-9]*$/D', $assoc_args['actor'])
+            || !preg_match('/^[1-9][0-9]*$/D', $assoc_args['event'])
+            || filter_var($assoc_args['actor'], FILTER_VALIDATE_INT) === false
+            || filter_var($assoc_args['event'], FILTER_VALIDATE_INT) === false) {
+            $this->deny_cli('Invalid invitation bulk command parameters.');
+        }
+
+        $request = array(
+            'actor' => (int) $assoc_args['actor'],
+            'event' => (int) $assoc_args['event'],
+            'operation' => $assoc_args['operation'],
+            'private_dir' => $assoc_args['private-dir'],
+        );
+
+        try {
+            $this->dispatch($request);
+        } catch (RuntimeException $error) {
+            $this->deny_cli('Bulk invitation command rejected.');
+        }
     }
 
     private function deny_cli(string $message): void
