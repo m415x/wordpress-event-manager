@@ -15,6 +15,7 @@ final class InvitationBulkPrivateExportTest extends TestCase
     {
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-private-csv.php';
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-private-csv-storage.php';
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-private-export.php';
         $this->directory = sys_get_temp_dir() . '/wem73-export-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($this->directory, 0700));
     }
