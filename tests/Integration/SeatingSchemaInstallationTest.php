@@ -11,6 +11,7 @@ final class SeatingSchemaInstallationTest extends WP_UnitTestCase
     public function testEntrypointRegistersBothSeatingInstallers(): void
     {
         $entrypoint = dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+        require_once $entrypoint;
         $source = file_get_contents($entrypoint);
         self::assertIsString($source);
 
