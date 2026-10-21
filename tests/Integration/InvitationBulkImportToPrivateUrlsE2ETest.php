@@ -54,7 +54,7 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
             // Establish that these imported fixtures are genuinely unissued before
             // diagnosing the production fail-closed classifier.
             global $wpdb;
-            $credentialTable = \\WEM_Invitation_Credential_Schema::table_name();
+            $credentialTable = \WEM_Invitation_Credential_Schema::table_name();
             foreach ($guests as $guestId) {
                 $priorCount = (int) $wpdb->get_var($wpdb->prepare(
                     "SELECT COUNT(*) FROM {$credentialTable} WHERE guest_id = %d",
@@ -67,7 +67,7 @@ final class InvitationBulkImportToPrivateUrlsE2ETest extends WP_UnitTestCase
                 );
             }
 
-            (new \\WEM_Invitation_Bulk_Operational_Cli())->execute([
+            (new \WEM_Invitation_Bulk_Operational_Cli())->execute([
                 'actor' => $admin, 'event' => $event, 'operation' => $operation, 'private_dir' => $directory,
             ]);
 
