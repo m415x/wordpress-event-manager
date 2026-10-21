@@ -22,6 +22,7 @@ final class WEM_Invitation_Bulk_Cli_Registration
         if (!$is_cli) {
             return;
         }
-        ($this->register)('wem invitations', 'WEM_Invitation_Bulk_Wp_Cli_Handler');
+        $handler = (new WEM_Invitation_Bulk_Wp_Cli_Composition())->handler();
+        ($this->register)('wem invitations', $handler);
     }
 }
