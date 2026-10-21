@@ -16,6 +16,7 @@ final class InvitationBulkCliRuntimeCompositionTest extends TestCase
     public function testRejectsUnprovisionedPrivateDirectoryBeforeWorkflow(): void
     {
         require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-cli-command.php';
+        require_once dirname(__DIR__, 2) . '/includes/class-invitation-bulk-cli-runtime.php';
         self::assertTrue(class_exists('WEM_Invitation_Bulk_Cli_Runtime'));
 
         $invoked = 0;
