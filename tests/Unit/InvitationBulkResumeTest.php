@@ -34,7 +34,8 @@ final class InvitationBulkResumeTest extends TestCase
         $runner->run([101, 102]);
         self::assertSame([
             'recover:101', 'reconcile:101',
-            'recover:102', 'issue:102', 'reconcile:102', 'export:2',
+            'recover:102', 'issue:102', 'reconcile:102',
+            'reconcile:101', 'reconcile:102', 'export:2',
         ], $calls);
     }
 
