@@ -19,6 +19,8 @@ final class SeatingEventScopeIntegrityTest extends WP_UnitTestCase
         global $wpdb;
 
         \WEM_Event_Table_Schema::install();
+        \WEM_Event_Table_Schema::install();
+        \WEM_Event_Table_Schema::install();
         $table = \WEM_Event_Table_Schema::table_name();
 
         $wpdb->suppress_errors(true);
@@ -36,5 +38,11 @@ final class SeatingEventScopeIntegrityTest extends WP_UnitTestCase
             $inserted,
             'A table must never be stored without a positive event scope.'
         );
+
+        self::assertSame(1, $wpdb->insert($table, [
+            'event_term_id' => 1,
+            'table_code' => 'WEM74-POSITIVE-SCOPE-' . wp_generate_uuid4(),
+            'capacity' => 1,
+        ], ['%d', '%s', '%d']));
     }
 }
