@@ -4,7 +4,10 @@ set -euo pipefail
 # Isolated PHPUnit installation. This script must never operate on
 # the manual WordPress .wp-env.test.json installation or its database.
 config='.wp-env.phpunit.json'
-container_cwd='wp-content/plugins/wordpress-event-manager'
+# wp-env mounts plugins: ["."] under the checkout directory name.
+repo_root=$(git rev-parse --show-toplevel) || exit 2
+plugin_dir=$(basename "$repo_root")
+container_cwd="wp-content/plugins/$plugin_dir"
 
 if [[ $# != 1 ]]; then
   printf 'Usage: bash scripts/wp-phpunit.sh <start|stop>\n' >&2

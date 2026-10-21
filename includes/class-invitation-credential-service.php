@@ -4,9 +4,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+final class WEM_Invitation_Commit_Indeterminate extends RuntimeException
+{
+}
+
 final class WEM_Invitation_Credential_Service
 {
-    public function issue($guest_id, $actor_user_id)
+    public function issue($guest_id, $actor_user_id, $custody = null)
     {
         global $wpdb;
 
@@ -19,6 +23,10 @@ final class WEM_Invitation_Credential_Service
 
         if ($actor_user_id <= 0 || !user_can($actor_user_id, 'manage_options')) {
             throw new RuntimeException('Credential administration is not authorized.');
+        }
+
+        if ($custody !== null && !is_callable($custody)) {
+            throw new InvalidArgumentException('Credential custody callback is invalid.');
         }
 
         $wpdb->query('START TRANSACTION');
@@ -102,12 +110,41 @@ final class WEM_Invitation_Credential_Service
                 throw new RuntimeException('Unable to issue invitation credential.');
             }
 
-            $wpdb->query('COMMIT');
+            if ($custody !== null) {
+                // WEM-73: custody must attest durable storage or throw BEFORE commit.
+                // No file I/O or bearer persistence is performed by WEM-33 itself.
+                $custody(array(
+                    'guest_id' => $guest_id,
+                    'generation' => $generation,
+                    'token' => $token,
+                    'token_digest' => $digest,
+                    'issued_by_user_id' => $actor_user_id,
+                ));
+            }
+
+            // A failed/ambiguous commit cannot safely be treated as a rollback.
+            try {
+                $committed = $wpdb->query('COMMIT');
+            } catch (Throwable $exception) {
+                throw new WEM_Invitation_Commit_Indeterminate(
+                    'Invitation credential commit outcome is indeterminate.',
+                    0,
+                    $exception
+                );
+            }
+            if ($committed === false) {
+                throw new WEM_Invitation_Commit_Indeterminate(
+                    'Invitation credential commit outcome is indeterminate.'
+                );
+            }
 
             return array(
                 'token' => $token,
                 'generation' => $generation,
             );
+        } catch (WEM_Invitation_Commit_Indeterminate $exception) {
+            // Do not claim a rollback on an uncertain COMMIT outcome.
+            throw $exception;
         } catch (Throwable $exception) {
             $wpdb->query('ROLLBACK');
 
