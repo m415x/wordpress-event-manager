@@ -12,7 +12,7 @@ final class SeatingAdministrativeAuditSchemaContractTest extends TestCase
     {
         $file = dirname(__DIR__, 2) . '/includes/class-seating-administrative-audit-schema.php';
 
-        self::assertFileExists($file, 'WEM-74 requires dedicated immutable evidence of administrative seating changes.');
+        self::assertFileExists($file, 'WEM-74 requires dedicated administrative seating audit storage.');
         $source = file_get_contents($file);
         self::assertIsString($source);
         self::assertStringContainsString('guest_id', $source);
