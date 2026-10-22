@@ -20,7 +20,7 @@ final class SeatingPrivacyConsentSchemaContractTest extends TestCase
         self::assertStringContainsString('event_term_id', $source);
         self::assertStringContainsString('visibility_opt_in', $source);
         self::assertMatchesRegularExpression('/DEFAULT\\s+0/i', $source, 'Consent must be hidden by default.');
-        self::assertStringContainsString('UNIQUE KEY guest_event', $source, 'Consent must have a unique guest/event identity.');
+        self::assertStringContainsString('UNIQUE KEY guest_event', $source, 'Consent identity must be unique.');
         self::assertStringContainsString('updated_at', $source, 'Consent withdrawal must be persistable.');
     }
 }
