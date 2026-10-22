@@ -13,10 +13,7 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
         parent::setUp();
 
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
-        require_once __DIR__ . '/MovementIsolationProbe.php';
-        MovementIsolationProbe::capture('before_setup_install');
         \WEM_Movement_Schema::install();
-        MovementIsolationProbe::capture('after_setup_install');
     }
 
     public function testAcceptedMovementsAppendWithDurableMonotonicOrder(): void
@@ -69,7 +66,6 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
 
         $ledger = new \WEM_Movement_Ledger();
 
-        MovementIsolationProbe::capture('before_202_append', 202, 8);
         $movement = $ledger->append([
             'guest_id' => 202,
             'event_term_id' => 8,
@@ -80,9 +76,7 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
             'decision' => 'accepted',
         ]);
 
-        MovementIsolationProbe::capture('after_202_append', 202, 8);
         \WEM_Movement_Schema::install();
-        MovementIsolationProbe::capture('after_202_reinstall', 202, 8);
 
         $history = $ledger->find_by_guest_event(202, 8);
 
