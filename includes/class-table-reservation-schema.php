@@ -65,7 +65,33 @@ final class WEM_Table_Reservation_Schema
         if (!preg_match($expected, $definition)) {
             throw new RuntimeException('Reservation status/slot constraint is absent or inconsistent.');
         }
+        foreach (['guest_id', 'table_id', 'event_term_id'] as $column) {
+            self::ensure_positive_identity($table_name, $column);
+        }
     }
+
+    private static function ensure_positive_identity($table_name, $column)
+    {
+        global $wpdb;
+
+        $constraint = 'wem_reservation_' . $column . '_positive';
+        $definition = self::table_definition($table_name);
+        $name_pattern = '/CONSTRAINT\\s+[`"]?' . preg_quote($constraint, '/') . '[`"]?\\s+CHECK\\s*\\(/i';
+        if (!preg_match($name_pattern, $definition)) {
+            $added = $wpdb->query("ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint} CHECK ({$column} > 0)");
+            if ($added === false) {
+                throw new RuntimeException('Could not install positive reservation identity constraint for ' . $column);
+            }
+            $definition = self::table_definition($table_name);
+        }
+        $expected = '/CONSTRAINT\\s+[`"]?' . preg_quote($constraint, '/')
+            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*[`"]?'
+            . preg_quote($column, '/') . '[`"]?\\s*>\\s*0\\s*\\)*\\s*\\)/i';
+        if (!preg_match($expected, $definition)) {
+            throw new RuntimeException('Positive reservation identity constraint absent or inconsistent: ' . $column);
+        }
+    }
+
     private static function table_definition($table_name)
     {
         global $wpdb;
