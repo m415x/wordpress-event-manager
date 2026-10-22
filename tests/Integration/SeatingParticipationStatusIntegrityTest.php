@@ -27,19 +27,31 @@ final class SeatingParticipationStatusIntegrityTest extends WP_UnitTestCase
         self::assertSame(1, $wpdb->insert($table, [
             'guest_id' => 991101, 'event_term_id' => 881101, 'updated_at' => $now,
         ], ['%d', '%d', '%s']));
-        self::assertSame('eligible', (string) $wpdb->get_var($wpdb->prepare(
-            "SELECT participation_status FROM {$table} WHERE guest_id = %d AND event_term_id = %d",
-            991101, 881101
-        )), 'A newly persisted participation defaults to eligible.');
+        self::assertSame(
+            'eligible',
+            (string) $wpdb->get_var($wpdb->prepare(
+                "SELECT participation_status FROM {$table} WHERE guest_id = %d AND event_term_id = %d",
+                991101,
+                881101
+            )),
+            'A newly persisted participation defaults to eligible.'
+        );
 
-        self::assertSame(1, $wpdb->update($table, [
-            'participation_status' => 'canceled', 'canceled_at' => $now, 'updated_at' => $now,
-        ], ['guest_id' => 991101, 'event_term_id' => 881101],
-            ['%s', '%s', '%s'], ['%d', '%d']));
-        self::assertSame('canceled', (string) $wpdb->get_var($wpdb->prepare(
-            "SELECT participation_status FROM {$table} WHERE guest_id = %d AND event_term_id = %d",
-            991101, 881101
-        )));
+        self::assertSame(1, $wpdb->update(
+            $table,
+            ['participation_status' => 'canceled', 'canceled_at' => $now, 'updated_at' => $now],
+            ['guest_id' => 991101, 'event_term_id' => 881101],
+            ['%s', '%s', '%s'],
+            ['%d', '%d']
+        ));
+        self::assertSame(
+            'canceled',
+            (string) $wpdb->get_var($wpdb->prepare(
+                "SELECT participation_status FROM {$table} WHERE guest_id = %d AND event_term_id = %d",
+                991101,
+                881101
+            ))
+        );
 
         $wpdb->suppress_errors(true);
         try {
