@@ -23,16 +23,29 @@ final class SeatingReservationActiveSlotIntegrityTest extends WP_UnitTestCase
         \WEM_Table_Reservation_Schema::install();
         $table = \WEM_Table_Reservation_Schema::table_name();
         $now = '2026-10-21 12:00:00';
+        \WEM_Event_Table_Schema::install();
+        $parent = \WEM_Event_Table_Schema::table_name();
+        $codes = [];
+        foreach ([1, 2] as $n) {
+            self::assertSame(1, $wpdb->insert($parent, [
+                'event_term_id' => 901,
+                'table_code' => 'WEM74-SLOT-' . wp_generate_uuid4(),
+                'capacity' => 3,
+            ], ['%d', '%s', '%d']));
+            $codes[] = (int) $wpdb->insert_id;
+        }
+        [$firstTableId, $secondTableId] = $codes;
+
 
         self::assertSame(1, $wpdb->insert($table, [
-            'guest_id' => 993001, 'table_id' => 1001, 'event_term_id' => 901,
+            'guest_id' => 993001, 'table_id' => $firstTableId, 'event_term_id' => 901,
             'status' => 'active', 'active_slot' => 1, 'created_at' => $now,
         ], ['%d', '%d', '%d', '%s', '%d', '%s']));
 
         $wpdb->suppress_errors(true);
         try {
             $duplicate = $wpdb->insert($table, [
-                'guest_id' => 993001, 'table_id' => 1002, 'event_term_id' => 901,
+                'guest_id' => 993001, 'table_id' => $secondTableId, 'event_term_id' => 901,
                 'status' => 'active', 'active_slot' => 1, 'created_at' => $now,
             ], ['%d', '%d', '%d', '%s', '%d', '%s']);
         } finally {
@@ -41,7 +54,7 @@ final class SeatingReservationActiveSlotIntegrityTest extends WP_UnitTestCase
         self::assertFalse($duplicate, 'Two active reservations for one guest must be physically impossible.');
 
         self::assertSame(1, $wpdb->insert($table, [
-            'guest_id' => 993002, 'table_id' => 1001, 'event_term_id' => 901,
+            'guest_id' => 993002, 'table_id' => $firstTableId, 'event_term_id' => 901,
             'status' => 'canceled', 'active_slot' => null, 'created_at' => $now,
             'canceled_at' => $now,
         ], ['%d', '%d', '%d', '%s', '%d', '%s', '%s']));
@@ -49,7 +62,7 @@ final class SeatingReservationActiveSlotIntegrityTest extends WP_UnitTestCase
         $wpdb->suppress_errors(true);
         try {
             $invalid = $wpdb->insert($table, [
-                'guest_id' => 993003, 'table_id' => 1001, 'event_term_id' => 901,
+                'guest_id' => 993003, 'table_id' => $firstTableId, 'event_term_id' => 901,
                 'status' => 'active', 'active_slot' => null, 'created_at' => $now,
             ], ['%d', '%d', '%d', '%s', '%s', '%s']);
         } finally {
