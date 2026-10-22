@@ -46,10 +46,7 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
         $actorId = self::factory()->user->create(['role' => 'subscriber']);
 
         $service = new \WEM_Movement_Service();
-        try {
-            $result = $service->checkin($guestId, $eventId, $actorId, 'staff_web');
-        } finally {
-        }
+        $result = $service->checkin($guestId, $eventId, $actorId, 'staff_web');
 
         self::assertTrue($result['ok']);
         self::assertSame('inside', $result['state']);
