@@ -51,20 +51,15 @@ foreach ($columns as $column) {
         $column['TABLE_NAME'] . '.' . $column['COLUMN_NAME'] . ' unsigned BIGINT NOT NULL');
 }
 
-$install = static function () use ($wpdb,$db,$parent,$child,$p,$r,$index,$fk,$run,$assert,$fail) {
+$install = static function () use ($wpdb, $db, $parent, $child, $index, $fk, $assert) {
     WEM_Event_Table_Schema::install();
     WEM_Table_Reservation_Schema::install();
+    WEM_Seating_Referential_Integrity_Schema::install();
+
     $keys = $wpdb->get_results($wpdb->prepare(
         'SELECT INDEX_NAME,SEQ_IN_INDEX,COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s AND INDEX_NAME=%s ORDER BY SEQ_IN_INDEX',
         $db,$parent,$index
     ), ARRAY_A);
-    if (!$keys) {
-        $run("ALTER TABLE {$p} ADD INDEX `{$index}` (`id`,`event_term_id`)");
-        $keys = $wpdb->get_results($wpdb->prepare(
-            'SELECT INDEX_NAME,SEQ_IN_INDEX,COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s AND INDEX_NAME=%s ORDER BY SEQ_IN_INDEX',
-            $db,$parent,$index
-        ), ARRAY_A);
-    }
     $assert(count($keys)===2 && $keys[0]['COLUMN_NAME']==='id'
         && $keys[1]['COLUMN_NAME']==='event_term_id', 'composite parent index exact');
 
@@ -72,13 +67,6 @@ $install = static function () use ($wpdb,$db,$parent,$child,$p,$r,$index,$fk,$ru
         'SELECT CONSTRAINT_NAME,REFERENCED_TABLE_NAME,UPDATE_RULE,DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=%s AND TABLE_NAME=%s AND CONSTRAINT_NAME=%s',
         $db,$child,$fk
     ), ARRAY_A);
-    if (!$constraint) {
-        $run("ALTER TABLE {$r} ADD CONSTRAINT `{$fk}` FOREIGN KEY (`table_id`,`event_term_id`) REFERENCES {$p} (`id`,`event_term_id`) ON UPDATE RESTRICT ON DELETE RESTRICT");
-        $constraint = $wpdb->get_results($wpdb->prepare(
-            'SELECT CONSTRAINT_NAME,REFERENCED_TABLE_NAME,UPDATE_RULE,DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=%s AND TABLE_NAME=%s AND CONSTRAINT_NAME=%s',
-            $db,$child,$fk
-        ), ARRAY_A);
-    }
     $assert(count($constraint)===1 && $constraint[0]['REFERENCED_TABLE_NAME']===$parent
         && $constraint[0]['UPDATE_RULE']==='RESTRICT' && $constraint[0]['DELETE_RULE']==='RESTRICT',
         'single FK with exact RESTRICT rules');
