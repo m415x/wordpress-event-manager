@@ -19,6 +19,8 @@ final class SeatingParticipationStatusIntegrityTest extends WP_UnitTestCase
         global $wpdb;
 
         \WEM_Seating_Participation_Schema::install();
+        \WEM_Seating_Participation_Schema::install();
+        \WEM_Seating_Participation_Schema::install();
         $table = \WEM_Seating_Participation_Schema::table_name();
         $now = '2026-10-21 12:00:00';
 
