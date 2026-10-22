@@ -19,6 +19,8 @@ final class SeatingConsentPersistenceTest extends WP_UnitTestCase
         global $wpdb;
 
         \WEM_Seating_Visibility_Consent_Schema::install();
+        \WEM_Seating_Visibility_Consent_Schema::install();
+        \WEM_Seating_Visibility_Consent_Schema::install();
         $table = \WEM_Seating_Visibility_Consent_Schema::table_name();
         $guest = 990001;
         $eventA = 880001;
