@@ -21,8 +21,8 @@ printf '{"plugins":["."],"phpVersion":"8.3","port":%s,"testsEnvironment":false}\
 printf 'SHA=%s\nROOT=%s\nPORT=%s\nCONFIG=%s\n' "$sha" "$root" "$port" "$config" | tee "$root/manifest.log"
 cd "$root/plugin"
 wp-env start "--config=$config" >"$root/start.log" 2>&1
-wp-env run cli "--config=$config" --env-cwd=wp-content/plugins/wordpress-event-manager composer install --no-interaction --prefer-dist --no-progress >"$root/composer.log" 2>&1
-wp-env run cli "--config=$config" wp plugin activate wordpress-event-manager >"$root/activation.log" 2>&1
+wp-env run cli "--config=$config" composer install --working-dir=/var/www/html/wp-content/plugins/plugin --no-interaction --prefer-dist --no-progress >"$root/composer.log" 2>&1
+wp-env run cli "--config=$config" wp plugin activate plugin/wordpress-event-manager.php >"$root/activation.log" 2>&1
 wp-env run cli "--config=$config" wp db query "
 SELECT DATABASE() AS database_name;
 SELECT table_name,engine,table_type
