@@ -19,6 +19,8 @@ final class SeatingReservationActiveSlotIntegrityTest extends WP_UnitTestCase
         global $wpdb;
 
         \WEM_Table_Reservation_Schema::install();
+        \WEM_Table_Reservation_Schema::install();
+        \WEM_Table_Reservation_Schema::install();
         $table = \WEM_Table_Reservation_Schema::table_name();
         $now = '2026-10-21 12:00:00';
 
