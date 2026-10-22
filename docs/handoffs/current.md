@@ -1,6 +1,6 @@
-# Current operational handoff — WEM-73 integrated; delivery custody gates open
+# Current operational handoff — WEM-74 I1 integrated; WEM-73 custody gates open
 
-Updated: 2026-10-21. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
+Updated: 2026-10-22. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
 
 ## Canonical integration baseline
 
@@ -19,14 +19,14 @@ Public bearer possession grants only the WEM-33 minimal read-only public view. C
 
 **No operational GO for real guest credentials yet.** Appoint custodian and replacement; confirm server PHP 8.3, private persistent POSIX volume, 0700/0600, administrator/host access, off-host encrypted backup with key custody, consistent MySQL backup/restore, sensitive HTTP/access/error log policy, confidential delivery channel, documented retention and deletion deadline. Synthetic Docker volume restore is not a full WordPress restore. See WEM-73 contract/runbook.
 
-## WEM-74 I1 candidate — not integrated
+## WEM-74 I1 — integrated into dev
 
 - WEM-41 approved I1 implements physical event tables, structured table reservations, consent, participation status, administrative audit storage, and a composite reservation-to-table/event FK. Runtime reservation transactions, public selection, administrative flows and privacy projection remain I2–I6, **not** completed by I1. The audit table is storage; append-only behavior must be enforced at the authorized writer in the later service.
-- Candidate branch `feat/WEM-74-seating-persistence`, PR [#12](https://github.com/m415x/wordpress-event-manager/pull/12) Draft. Pre-documentation product/test HEAD `6a853fd6a9b9872681fd812d8d2fc5e1d6112d8d`; [GitHub Actions #1171](https://github.com/m415x/wordpress-event-manager/actions/runs/39710803199) PASS, both PHP 8.3 lint/analysis/unit and isolated WordPress integration. Documentation commits change the SHA; never claim #1171 verifies later HEADs.
+- PR [#12](https://github.com/m415x/wordpress-event-manager/pull/12) **merged into `dev`**: candidate HEAD `ef194be4270ebfbdc23898fecd1455b5158098b2`, merge commit `d5fd385dae4ba75f5fadbade6afa31cc660ba6ac`. Candidate [GitHub Actions #1175](https://github.com/m415x/wordpress-event-manager/actions/runs/39711127415) GREEN both PHP 8.3 lint/analysis/unit and isolated WordPress integration. A separate workflow associated with the merge SHA had **not** been returned when checked on 2026-10-22; do not invent post-merge GREEN.
 - Fresh-instance complete local PHPUnit gate: `d89704a1789e4f0e408a9846273e7b081ff8f076`, 73 unit/542 assertions and 142 integration/3950 assertions = 215 tests/4492 assertions, PASS. Product FK persistent InnoDB probe `5d3a908a9bca3b6061ade504184796894dd6b3ef` PASS: valid same-event reservation, cross-event/nonexistent-table rejection, retained rows on schema rerun, ON UPDATE/DELETE RESTRICT. Subsequent first-run movement focal on `58754f957775fdea69e28d9b3f3100cb7b2fd064` PASS 3 tests/27 assertions. These are **different commits** and do not prove repeated-run PHPUnit reliability.
 - General PHPUnit reusable environment exhibited movement-ledger count/projection drift on subsequent runs; isolated first-run tests passed without changes to movement business logic. WEM-72 owns repeatability investigation; do not erase or reset that environment to generate artificial GREEN.
 - Disposable Docker WEM-74 resources cleaned selectively after inventory and backups: 6 Compose projects, 18 containers, 12 exclusive volumes, 6 networks removed; WEM-73 custody and PHPUnit general preserved. Host-side evidence is retained under `~/WEM74-CLOSURE-EVIDENCE-20261021`; manifest `evidence-manifest-v3.sha256` verified PASS. Evidence is local, not stored in Git or the Docker volumes.
-- Before integration: verify current-head CI and PR checks, conduct diff/architecture audit against WEM-41, confirm durable evidence in Jira WEM-74 (including comments 13968, 13982, 13994, 14001), and complete candidate→review→merge→post-merge handoff. Do not merge without review and accepted closure.
+- After merge: reconcile Jira WEM-74, verify any later `dev` CI and handoff; do not claim a merge-SHA post-merge run without evidence. Fresh focal movement probe on `58754f9` used an additional disposable local WP environment (port 9011) that must be selectively removed by exact Compose project after preserving its logs; this resource is NOT included in the six previously cleaned instances. Dependencies I2–I6 remain not implemented.
 
 ## Immediate next work
 
