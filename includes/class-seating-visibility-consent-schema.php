@@ -42,5 +42,31 @@ final class WEM_Seating_Visibility_Consent_Schema
         ) {$charset_collate};";
 
         dbDelta($sql);
+
+        // dbDelta cannot parse CHECK; SHOW CREATE TABLE sees temporary tables.
+        $constraint = 'wem_seating_consent_binary';
+        $definition = self::table_definition($table_name);
+        $name_pattern = '/CONSTRAINT\\s+[`"]?' . $constraint . '[`"]?\\s+CHECK\\s*\\(/i';
+        if (!preg_match($name_pattern, $definition)) {
+            $added = $wpdb->query("ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint} CHECK (visibility_opt_in IN (0, 1))");
+            if ($added === false) {
+                throw new RuntimeException('Could not install binary visibility consent constraint.');
+            }
+            $definition = self::table_definition($table_name);
+        }
+        $expected = '/CONSTRAINT\\s+[`"]?' . $constraint
+            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*[`"]?visibility_opt_in[`"]?\\s+IN\\s*\\(\\s*0\\s*,\\s*1\\s*\\)\\s*\\)*\\s*\\)/i';
+        if (!preg_match($expected, $definition)) {
+            throw new RuntimeException('Binary visibility consent constraint is absent or inconsistent.');
+        }
+    }
+    private static function table_definition($table_name)
+    {
+        global $wpdb;
+        $row = $wpdb->get_row("SHOW CREATE TABLE {$table_name}", ARRAY_N);
+        if (!is_array($row) || !isset($row[1])) {
+            throw new RuntimeException('Could not inspect visibility consent schema.');
+        }
+        return (string) $row[1];
     }
 }
