@@ -47,12 +47,13 @@ final class WEM_Table_Reservation_Schema
 
         dbDelta($sql);
 
+        // Explicit IS NOT NULL is required: SQL CHECK accepts UNKNOWN from NULL = 1.
         // dbDelta ignores CHECK. Inspect the effective PHPUnit temporary table.
         $constraint = 'wem_reservation_status_slot_consistent';
         $definition = self::table_definition($table_name);
         $name_pattern = '/CONSTRAINT\\s+[`"]?' . $constraint . '[`"]?\\s+CHECK\\s*\\(/i';
         if (!preg_match($name_pattern, $definition)) {
-            $expression = "((status = 'active' AND active_slot = 1 AND canceled_at IS NULL) OR (status = 'canceled' AND active_slot IS NULL AND canceled_at IS NOT NULL))";
+            $expression = "((status = 'active' AND active_slot IS NOT NULL AND active_slot = 1 AND canceled_at IS NULL) OR (status = 'canceled' AND active_slot IS NULL AND canceled_at IS NOT NULL))";
             $added = $wpdb->query("ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint} CHECK ({$expression})");
             if ($added === false) {
                 throw new RuntimeException('Could not install reservation status/slot constraint.');
@@ -60,7 +61,7 @@ final class WEM_Table_Reservation_Schema
             $definition = self::table_definition($table_name);
         }
         $expected = '/CONSTRAINT\\s+[`"]?' . $constraint
-            . '[`"]?\\s+CHECK\\s*\\(.*?[`"]?status[`"]?\\s*=\\s*\\x27active\\x27.*?[`"]?active_slot[`"]?\\s*=\\s*1.*?[`"]?canceled_at[`"]?\\s+IS\\s+NULL.*?\\bOR\\b.*?[`"]?status[`"]?\\s*=\\s*\\x27canceled\\x27.*?[`"]?active_slot[`"]?\\s+IS\\s+NULL.*?[`"]?canceled_at[`"]?\\s+IS\\s+NOT\\s+NULL.*?\\)/is';
+            . '[`"]?\\s+CHECK\\s*\\(.*?[`"]?status[`"]?\\s*=\\s*\\x27active\\x27.*?[`"]?active_slot[`"]?\\s+IS\\s+NOT\\s+NULL.*?[`"]?active_slot[`"]?\\s*=\\s*1.*?[`"]?canceled_at[`"]?\\s+IS\\s+NULL.*?\\bOR\\b.*?[`"]?status[`"]?\\s*=\\s*\\x27canceled\\x27.*?[`"]?active_slot[`"]?\\s+IS\\s+NULL.*?[`"]?canceled_at[`"]?\\s+IS\\s+NOT\\s+NULL.*?\\)/is';
         if (!preg_match($expected, $definition)) {
             throw new RuntimeException('Reservation status/slot constraint is absent or inconsistent.');
         }
