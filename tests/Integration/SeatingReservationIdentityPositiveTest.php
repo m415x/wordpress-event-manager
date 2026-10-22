@@ -23,16 +23,25 @@ final class SeatingReservationIdentityPositiveTest extends WP_UnitTestCase
         \WEM_Table_Reservation_Schema::install();
         $table = \WEM_Table_Reservation_Schema::table_name();
         $now = '2026-10-21 12:00:00';
+        \WEM_Event_Table_Schema::install();
+        $parent = \WEM_Event_Table_Schema::table_name();
+        self::assertSame(1, $wpdb->insert($parent, [
+            'event_term_id' => 911,
+            'table_code' => 'WEM74-IDENTITY-' . wp_generate_uuid4(),
+            'capacity' => 5,
+        ], ['%d', '%s', '%d']));
+        $tableId = (int) $wpdb->insert_id;
+
 
         self::assertSame(1, $wpdb->insert($table, [
-            'guest_id' => 994001, 'table_id' => 1111, 'event_term_id' => 911,
+            'guest_id' => 994001, 'table_id' => $tableId, 'event_term_id' => 911,
             'status' => 'active', 'active_slot' => 1, 'created_at' => $now,
         ], ['%d', '%d', '%d', '%s', '%d', '%s']));
 
         foreach (['guest_id', 'table_id', 'event_term_id'] as $index => $invalidColumn) {
             $data = [
-                'guest_id' => 994002 + $index, 'table_id' => 1112 + $index,
-                'event_term_id' => 912 + $index, 'status' => 'active',
+                'guest_id' => 994002 + $index, 'table_id' => $tableId,
+                'event_term_id' => 911, 'status' => 'active',
                 'active_slot' => 1, 'created_at' => $now,
             ];
             $data[$invalidColumn] = 0;
