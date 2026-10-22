@@ -61,6 +61,23 @@ final class WEM_Seating_Participation_Schema
         if (!preg_match($expected, $definition)) {
             throw new RuntimeException('Canonical participation status constraint is absent or inconsistent.');
         }
+        // The state and cancellation timestamp must agree at the SQL boundary.
+        $date_constraint = 'wem_seating_participation_cancel_date';
+        $definition = self::table_definition($table_name);
+        $date_name_pattern = '/CONSTRAINT\\s+[`"]?' . $date_constraint . '[`"]?\\s+CHECK\\s*\\(/i';
+        $date_expression = "((participation_status = 'eligible' AND canceled_at IS NULL) OR (participation_status = 'canceled' AND canceled_at IS NOT NULL))";
+        if (!preg_match($date_name_pattern, $definition)) {
+            $added = $wpdb->query("ALTER TABLE {$table_name} ADD CONSTRAINT {$date_constraint} CHECK ({$date_expression})");
+            if ($added === false) {
+                throw new RuntimeException('Could not install participation cancellation date constraint.');
+            }
+            $definition = self::table_definition($table_name);
+        }
+        $date_expected = '/CONSTRAINT\\s+[`"]?' . $date_constraint
+            . '[`"]?\\s+CHECK\\s*\\(.*?[`"]?participation_status[`"]?\\s*=\\s*[\\x27]eligible[\\x27].*?[`"]?canceled_at[`"]?\\s+IS\\s+NULL.*?\\bOR\\b.*?[`"]?participation_status[`"]?\\s*=\\s*[\\x27]canceled[\\x27].*?[`"]?canceled_at[`"]?\\s+IS\\s+NOT\\s+NULL.*?\\)/is';
+        if (!preg_match($date_expected, $definition)) {
+            throw new RuntimeException('Participation cancellation date constraint is absent or inconsistent.');
+        }
     }
     private static function table_definition($table_name)
     {
