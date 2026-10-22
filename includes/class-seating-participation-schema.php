@@ -44,5 +44,31 @@ final class WEM_Seating_Participation_Schema
         ) {$charset_collate};";
 
         dbDelta($sql);
+
+        // dbDelta cannot parse CHECK clauses; inspect effective temporary tables.
+        $constraint = 'wem_seating_participation_status_canonical';
+        $definition = self::table_definition($table_name);
+        $name_pattern = '/CONSTRAINT\\s+[`"]?' . $constraint . '[`"]?\\s+CHECK\\s*\\(/i';
+        if (!preg_match($name_pattern, $definition)) {
+            $added = $wpdb->query("ALTER TABLE {$table_name} ADD CONSTRAINT {$constraint} CHECK (participation_status IN ('eligible', 'canceled'))");
+            if ($added === false) {
+                throw new RuntimeException('Could not install canonical participation status constraint.');
+            }
+            $definition = self::table_definition($table_name);
+        }
+        $expected = '/CONSTRAINT\\s+[`"]?' . $constraint
+            . '[`"]?\\s+CHECK\\s*\\(\\s*\\(*\\s*[`"]?participation_status[`"]?\\s+IN\\s*\\(\\s*[\x27]eligible[\x27]\\s*,\\s*[\x27]canceled[\x27]\\s*\\)\\s*\\)*\\s*\\)/i';
+        if (!preg_match($expected, $definition)) {
+            throw new RuntimeException('Canonical participation status constraint is absent or inconsistent.');
+        }
+    }
+    private static function table_definition($table_name)
+    {
+        global $wpdb;
+        $row = $wpdb->get_row("SHOW CREATE TABLE {$table_name}", ARRAY_N);
+        if (!is_array($row) || !isset($row[1])) {
+            throw new RuntimeException('Could not inspect participation schema.');
+        }
+        return (string) $row[1];
     }
 }
