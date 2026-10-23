@@ -8,13 +8,24 @@ if ! git diff --quiet -- . ':(exclude).wp-env.phpunit.json' ||
    ! git diff --cached --quiet -- . ':(exclude).wp-env.phpunit.json'; then
   echo "Refusing to package tracked uncommitted changes" >&2; exit 2
 fi
-command -v python3 >/dev/null || { echo "Python 3 is required for packaging" >&2; exit 2; }
+command -v docker >/dev/null || { echo "Docker is required for Python packaging" >&2; exit 2; }
 head=$(git rev-parse --short=12 HEAD)
 mkdir -p dist
-python3 - "$repo" "$repo/dist/wordpress-event-manager-$head.zip" <<'PY'
-import pathlib, subprocess, sys, zipfile
-repo, target = map(pathlib.Path, sys.argv[1:])
-tracked = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+# One-shot container, no new Compose project, ports or persistent volumes.
+manifest=$(mktemp "$repo/dist/.package-tracked.XXXXXX")
+trap 'rm -f "$manifest"' EXIT
+git ls-files -z > "$manifest"
+manifest_name=$(basename "$manifest")
+host_repo=$(cd "$repo" && pwd -W 2>/dev/null || pwd)
+MSYS_NO_PATHCONV=1 docker run --rm --network none \
+  --mount "type=bind,source=$host_repo,target=/workspace" \
+  --workdir /workspace -i python:3.12-alpine \
+  python - "$manifest_name" "$head" <<'PY'
+import pathlib, sys, zipfile
+repo = pathlib.Path("/workspace")
+manifest_name, head = sys.argv[1:]
+target = repo / "dist" / ("wordpress-event-manager-" + head + ".zip")
+tracked = (repo / "dist" / manifest_name).read_bytes().split(b"\0")
 roots = {"includes", "assets", "languages", "templates", "vendor"}
 files = {"wordpress-event-manager.php", "readme.txt", "LICENSE", "license.txt"}
 included = []
