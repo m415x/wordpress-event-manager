@@ -19,12 +19,25 @@ final class PreissuedPublicLifecycleTest extends WP_UnitTestCase
         $actor = self::factory()->user->create(['role' => 'administrator']);
         $event = self::factory()->term->create(['taxonomy' => 'evento']);
         self::assertNotWPError($event);
-        $guest = self::factory()->post->create([
-            'post_type' => 'invitado', 'post_status' => 'publish',
-        ]);
+        $table = \WEM_Preissued_Invitation_Schema::table_name();
+        // PHPUnit persists WEM inventory across tests while WP fixtures may
+        // reuse post IDs. Select an identity not already reserved by inventory.
+        $guest = 0;
+        for ($attempt = 0; $attempt < 50; ++$attempt) {
+            $candidate = (int) self::factory()->post->create([
+                'post_type' => 'invitado', 'post_status' => 'publish',
+            ]);
+            $claimed = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$table} WHERE assigned_guest_id = %d", $candidate
+            ));
+            if ($claimed === null) {
+                $guest = $candidate;
+                break;
+            }
+        }
+        self::assertGreaterThan(0, $guest, 'Synthetic guest must not collide with persistent inventory.');
         self::assertNotWPError(wp_set_object_terms($guest, [(int) $event], 'evento'));
         $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-        $table = \WEM_Preissued_Invitation_Schema::table_name();
         self::assertSame(1, $wpdb->insert($table, [
             'event_term_id' => (int) $event,
             'token_digest' => hash('sha256', $token),
