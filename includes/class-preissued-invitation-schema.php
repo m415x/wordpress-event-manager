@@ -132,6 +132,31 @@ final class WEM_Preissued_Invitation_Schema
         if ($verifiedDeleteTrigger !== $deleteTrigger) {
             throw new RuntimeException('Preissued deletion integrity guard absent.');
         }
+        // Audit evidence is append-only even for direct SQL writers.
+        // Re-running install must preserve existing triggers and audit rows.
+        foreach (['UPDATE' => 'update', 'DELETE' => 'delete'] as $event => $suffix) {
+            $auditTrigger = $wpdb->prefix . 'wem_preissued_audit_guard_' . $suffix;
+            $found = $wpdb->get_var($wpdb->prepare(
+                'SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = %s AND EVENT_OBJECT_TABLE = %s AND EVENT_MANIPULATION = %s',
+                $auditTrigger, $audit, $event
+            ));
+            if ($found === null) {
+                $definition = "CREATE TRIGGER {$auditTrigger} BEFORE {$event} ON {$audit}
+                    FOR EACH ROW BEGIN
+                        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invitation assignment audit is append-only';
+                    END";
+                if ($wpdb->query($definition) === false) {
+                    throw new RuntimeException('Could not establish append-only assignment audit.');
+                }
+            }
+            $verified = $wpdb->get_var($wpdb->prepare(
+                'SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = %s AND EVENT_OBJECT_TABLE = %s AND EVENT_MANIPULATION = %s',
+                $auditTrigger, $audit, $event
+            ));
+            if ($verified !== $auditTrigger) {
+                throw new RuntimeException('Append-only assignment audit guard absent.');
+            }
+        }
         // Fail closed if physical constraints were not established.
         foreach ([$table, $audit] as $name) {
             $row = $wpdb->get_row("SHOW TABLE STATUS LIKE '" . esc_sql($name) . "'", ARRAY_A);
