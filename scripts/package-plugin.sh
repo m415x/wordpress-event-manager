@@ -72,7 +72,7 @@ for relative_root in runtime_roots:
         raise SystemExit("ERROR: required Composer runtime missing: " + str(relative_root))
     runtime_files.extend(p.relative_to(stage) for p in root.rglob("*") if p.is_file())
 for path in runtime_files:
-    source = repo / path
+    source = stage / path
     if source.is_symlink() or any(parent.is_symlink() for parent in source.parents if parent != stage):
         raise SystemExit("ERROR: symlink in Composer runtime: " + str(path))
     if any(x in {"tests", "test", "bin", ".git"} for x in path.parts):
