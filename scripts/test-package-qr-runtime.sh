@@ -5,7 +5,11 @@ set -euo pipefail
 bash scripts/package-plugin.sh
 zip_file=$(find dist -maxdepth 1 -type f -name 'wordpress-event-manager-*.zip' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
 test -n "$zip_file"
-python3 - "$zip_file" <<'PY'
+host_repo=$(pwd -W 2>/dev/null || pwd)
+MSYS_NO_PATHCONV=1 docker run --rm --network none \
+  --mount "type=bind,source=$host_repo,target=/workspace,readonly" \
+  --workdir /workspace -i python:3.12-alpine \
+  python - "$zip_file" <<'PY'
 import sys,zipfile
 z=zipfile.ZipFile(sys.argv[1])
 names=set(z.namelist())
