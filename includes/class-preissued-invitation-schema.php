@@ -51,6 +51,63 @@ final class WEM_Preissued_Invitation_Schema
             UNIQUE KEY invitation_assignment (invitation_id, operation),
             KEY guest_event (guest_id, event_term_id)
         ) {$collation};");
+        // Permanent database guard: event/digest/issuance identity is immutable.
+        // Only the first unassigned -> assigned transition may set its guest.
+        // Never permit a direct SQL writer to reassign, unassign or delete.
+        $trigger = $wpdb->prefix . 'wem_preissued_guard_update';
+        $existing = $wpdb->get_var($wpdb->prepare(
+            'SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = %s',
+            $trigger
+        ));
+        if ($existing === null) {
+            $sql = "CREATE TRIGGER {$trigger} BEFORE UPDATE ON {$table} FOR EACH ROW
+                BEGIN
+                    IF NOT (OLD.id <=> NEW.id)
+                       OR NOT (OLD.event_term_id <=> NEW.event_term_id)
+                       OR NOT (OLD.token_digest <=> NEW.token_digest)
+                       OR NOT (OLD.issued_by <=> NEW.issued_by)
+                       OR NOT (OLD.issued_at <=> NEW.issued_at)
+                    THEN
+                        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Immutable invitation identity';
+                    END IF;
+                    IF OLD.state = 'unassigned' THEN
+                        IF NOT (
+                            (NEW.state = 'unassigned'
+                             AND NEW.assigned_guest_id IS NULL
+                             AND NEW.assigned_by IS NULL
+                             AND NEW.assigned_at IS NULL)
+                            OR
+                            (NEW.state = 'assigned'
+                             AND OLD.assigned_guest_id IS NULL
+                             AND NEW.assigned_guest_id IS NOT NULL
+                             AND NEW.assigned_by IS NOT NULL
+                             AND NEW.assigned_at IS NOT NULL)
+                            OR
+                            (NEW.state = 'revoked'
+                             AND OLD.assigned_guest_id IS NULL
+                             AND NEW.assigned_guest_id IS NULL)
+                        ) THEN
+                            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid invitation transition';
+                        END IF;
+                    ELSEIF NOT (OLD.state <=> NEW.state)
+                        OR NOT (OLD.assigned_guest_id <=> NEW.assigned_guest_id)
+                        OR NOT (OLD.assigned_by <=> NEW.assigned_by)
+                        OR NOT (OLD.assigned_at <=> NEW.assigned_at)
+                    THEN
+                        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Reassignment prohibited';
+                    END IF;
+                END";
+            if ($wpdb->query($sql) === false) {
+                throw new RuntimeException('Could not install preissued update integrity guard.');
+            }
+        }
+        $installed = $wpdb->get_var($wpdb->prepare(
+            'SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND EVENT_OBJECT_TABLE = %s AND TRIGGER_NAME = %s',
+            $table, $trigger
+        ));
+        if ($installed !== $trigger) {
+            throw new RuntimeException('Preissued update integrity guard absent.');
+        }
         // Fail closed if physical constraints were not established.
         foreach ([$table, $audit] as $name) {
             $row = $wpdb->get_row("SHOW TABLE STATUS LIKE '" . esc_sql($name) . "'", ARRAY_A);
