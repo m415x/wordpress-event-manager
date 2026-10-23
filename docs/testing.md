@@ -12,6 +12,32 @@ This document is the **current operational testing guide** for WordPress Event M
 - A written command, configured workflow or proposed test is not evidence. Record only observed results.
 - Reuse valid evidence for the same relevant code/configuration. Do not rerun gates merely to recreate screenshots or logs.
 
+## Inventory and infrastructure reuse
+
+Before starting `wp-env` in **any** branch or worktree, inspect all owners, ports and resources without modifying them:
+
+```bash
+docker compose ls -a
+docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+docker network ls
+docker volume ls
+docker ps --format 'table {{.Names}}\t{{.Ports}}'
+wp-env status --config=.wp-env.phpunit.json
+```
+
+Review Compose labels for exact ownership, without assuming names or ports are permanent:
+
+```bash
+docker inspect <exact-container-name> --format '{{index .Config.Labels "com.docker.compose.project"}}'
+docker inspect <exact-container-name> --format '{{range .Mounts}}{{println .Type .Name .Destination}}{{end}}'
+```
+
+Default to reusing an identified WEM environment, with independent disposable database/schema and recorded test connection identity. Separate manual WordPress data from all PHPUnit data; merely changing the port or Git worktree does **not** establish database isolation. Never run a test against a live/manual or another project's database. Before reusing persistent PHPUnit data, assess test pollution and reuse only proven-safe fixtures; do not silently reset.
+
+Use `pnpm wp:phpunit:start` only after verifying ownership, occupancy and the existing configuration; `pnpm wp:phpunit:stop` stops that selected environment without removing volumes. Prefer GitHub Actions for reproducible unattended verification. A new isolated stack is exceptional: clean installation, migration, real concurrent connections, backup restoration, packaging or demonstrated inability to isolate on existing resources. Inventory and document the reason before starting one.
+
+Before selectively stopping inactive WEM containers, check current processes, related Compose dependencies and uncollected logs/artifacts. Do not stop services owned by other projects. Destruction requires exact resource/owner identification, preserved evidence and express authorization: never run `docker system prune`, `docker volume prune`, `docker compose down -v` or wildcard/mass deletion. Treat names/ports shown in current handoffs as observations, not durable allocation rules.
+
 ## Environments
 
 | Configuration | Port | Purpose |
