@@ -37,13 +37,12 @@ final class PreissuedInvitationPersistenceTest extends WP_UnitTestCase
         self::assertSame(['token_digest'], $unique['token_digest'] ?? null);
         self::assertSame(['assigned_guest_id'], $unique['assigned_guest'] ?? null);
 
-        // A direct SQL writer must not bypass the immutable event/assignment
-        // contract, even if PHP application validation is skipped.
-        $ddl = $wpdb->get_row("SHOW CREATE TABLE {$table}", ARRAY_N);
-        self::assertMatchesRegularExpression(
-            '/(?:TRIGGER|CONSTRAINT)[^;]*immutable|immutable[^;]*(?:TRIGGER|CONSTRAINT)/i',
-            $ddl[1],
-            'P0 requires DB-enforced event identity and one-time assignment invariants.'
-        );
+        // Constraints protecting immutable identity require a DB-level guard:
+        // inspecting SHOW CREATE TABLE alone cannot reveal triggers.
+        $triggers = $wpdb->get_results($wpdb->prepare(
+            "SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND EVENT_OBJECT_TABLE = %s AND EVENT_MANIPULATION = 'UPDATE'",
+            $table
+        ), ARRAY_A);
+        self::assertNotEmpty($triggers, 'P0 requires SQL-level enforcement against reassignment/event mutation.');
     }
 }
