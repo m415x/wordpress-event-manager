@@ -20,12 +20,25 @@ final class PreissuedAssignmentRollbackTest extends WP_UnitTestCase
         $admin = self::factory()->user->create(['role' => 'administrator']);
         $event = self::factory()->term->create(['taxonomy' => 'evento']);
         self::assertNotWPError($event);
-        $guest = self::factory()->post->create([
-            'post_type' => 'invitado', 'post_status' => 'publish',
-        ]);
-        self::assertNotWPError(wp_set_object_terms($guest, [(int) $event], 'evento'));
         $table = \WEM_Preissued_Invitation_Schema::table_name();
         $audit = \WEM_Preissued_Invitation_Schema::audit_table_name();
+        // Existing persistent PHPUnit inventory may retain synthetic guest IDs
+        // from other runs. The fixture must not collide with assigned_guest.
+        $guest = 0;
+        for ($attempt = 0; $attempt < 50; ++$attempt) {
+            $candidate = (int) self::factory()->post->create([
+                'post_type' => 'invitado', 'post_status' => 'publish',
+            ]);
+            $alreadyAssigned = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$table} WHERE assigned_guest_id = %d", $candidate
+            ));
+            if ($alreadyAssigned === null) {
+                $guest = $candidate;
+                break;
+            }
+        }
+        self::assertGreaterThan(0, $guest, 'A fresh, unassigned synthetic guest is required.');
+        self::assertNotWPError(wp_set_object_terms($guest, [(int) $event], 'evento'));
 
         self::assertSame(1, $wpdb->insert($table, [
             'event_term_id' => (int) $event,
