@@ -79,9 +79,9 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
             ));
             self::assertGreaterThan(0, $firstReservationId);
             try {
-                (new \\WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId);
+                (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId);
                 self::fail('Duplicate initial reservation must be denied.');
-            } catch (\\DomainException $expected) {
+            } catch (\DomainException $expected) {
                 self::assertSame('Guest already has an active reservation.', $expected->getMessage());
             }
             self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
