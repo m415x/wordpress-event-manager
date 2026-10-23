@@ -13,20 +13,31 @@ head=$(git rev-parse --short=12 HEAD)
 mkdir -p dist
 # One-shot container, no new Compose project, ports or persistent volumes.
 manifest=$(mktemp "$repo/dist/.package-tracked.XXXXXX")
-trap 'rm -f "$manifest"' EXIT
+stage=$(mktemp -d "$repo/dist/.qr-prod-vendor.XXXXXX")
+trap 'rm -f "$manifest"; rm -rf -- "$stage"' EXIT
+cp composer.json composer.lock "$stage/"
+# Generate a production-only Composer autoloader in staging, never touching
+# the checkout's PHPUnit/dev vendor. Reuse the existing isolated WEM CLI.
+plugin_dir=$(basename "$repo")
+stage_relative="dist/$(basename "$stage")"
+wp-env run cli --config=.wp-env.phpunit.json \
+  --env-cwd="wp-content/plugins/$plugin_dir" \
+  composer install --no-dev --no-interaction --prefer-dist --no-progress \
+  --working-dir="$stage_relative"
+test -f "$stage/vendor/autoload.php" || { echo 'Missing staged production autoloader' >&2; exit 2; }
 git ls-files -z > "$manifest"
 manifest_name=$(basename "$manifest")
 host_repo=$(cd "$repo" && pwd -W 2>/dev/null || pwd)
 MSYS_NO_PATHCONV=1 docker run --rm --network none \
   --mount "type=bind,source=$host_repo,target=/workspace" \
   --workdir /workspace -i python:3.12-alpine \
-  python - "$manifest_name" "$head" <<'PY'
+  python - "$manifest_name" "$head" "$(basename "$stage")" <<'PY'
 import pathlib, sys, zipfile
 repo = pathlib.Path("/workspace")
-manifest_name, head = sys.argv[1:]
+manifest_name, head, stage_name = sys.argv[1:]\nstage = repo / "dist" / stage_name
 target = repo / "dist" / ("wordpress-event-manager-" + head + ".zip")
 tracked = (repo / "dist" / manifest_name).read_bytes().split(b"\0")
-roots = {"includes", "assets", "languages", "templates", "vendor"}
+roots = {"includes", "assets", "languages", "templates"}
 files = {"wordpress-event-manager.php", "readme.txt", "LICENSE", "license.txt"}
 included = []
 for item in tracked:
@@ -50,18 +61,18 @@ runtime_roots = (
     pathlib.Path("vendor/chillerlan/php-qrcode"),
     pathlib.Path("vendor/chillerlan/php-settings-container"),
 )
-vendor = repo / "vendor"
+vendor = stage / "vendor"
 if not (vendor / "autoload.php").is_file():
     raise SystemExit("ERROR: vendor/autoload.php missing; run Composer install first")
 runtime_files = [pathlib.Path("vendor/autoload.php")]
 for relative_root in runtime_roots:
-    root = repo / relative_root
+    root = stage / relative_root
     if not root.is_dir():
         raise SystemExit("ERROR: required Composer runtime missing: " + str(relative_root))
-    runtime_files.extend(p.relative_to(repo) for p in root.rglob("*") if p.is_file())
+    runtime_files.extend(p.relative_to(stage) for p in root.rglob("*") if p.is_file())
 for path in runtime_files:
     source = repo / path
-    if source.is_symlink() or any(parent.is_symlink() for parent in source.parents if parent != repo):
+    if source.is_symlink() or any(parent.is_symlink() for parent in source.parents if parent != stage):
         raise SystemExit("ERROR: symlink in Composer runtime: " + str(path))
     if any(x in {"tests", "test", "bin", ".git"} for x in path.parts):
         continue
