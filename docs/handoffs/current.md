@@ -11,6 +11,13 @@ Updated: 2026-10-22. Start from GitHub `dev`, Jira and current code; this handof
 - Earlier integrated stories WEM-2, 12, 13, 14 and 32 remain covered by the docs index and architecture contracts. `main` is not the integration target.
 - This documentation branch `docs/WEM-73-post-merge-handoff` is docs-only and **must not** be mistaken for the unchanged candidate HEAD/ZIP. No QR integration was made.
 
+## Documentation-only checkpoint — Docker/wp-env reuse policy (2026-10-23)
+
+- Separate documentation branch `docs/WEM-infrastructure-reuse-policy` from current `dev`, independent of P0 preissued-invitation implementation and WEM-82/T2.
+- `AGENTS.md`, `docs/agent-harness.md`, `docs/testing.md`: reuse-first inventory and ownership, disposable database isolation, manual/PHPUnit separation, CI preference, narrow exceptions, and selective retirement requiring evidence and express authorization. This is **documentation only**; no Docker/Compose action, script/config change, RED/GREEN, or application-code change is claimed.
+- Fresh executors must read the policy on integrated `dev`, not infer a specific Compose project or port from temporary observations. Docs branch requires scoped diff review, PR/CI and integration verification before this becomes canonical on `dev`.
+- P0 print work remains urgent and independent, with no authorization to emit real credentials until WEM-73 custody gates are met.
+
 ## Functional delivery status
 
 The verified minimum WEM-73 path is WP-CLI administrative bulk credential issuance and private retrieval of an Excel-compatible CSV of invitation bearer URLs, intended after CSV guest import. It is not an admin GUI with bulk selection, not QR images, and not seat selection. Each invitation is for one person.
