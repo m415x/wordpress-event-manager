@@ -108,6 +108,30 @@ final class WEM_Preissued_Invitation_Schema
         if ($installed !== $trigger) {
             throw new RuntimeException('Preissued update integrity guard absent.');
         }
+        // Physical retention: an assigned invitation cannot be erased by SQL.
+        $deleteTrigger = $wpdb->prefix . 'wem_preissued_guard_delete';
+        $deleteExisting = $wpdb->get_var($wpdb->prepare(
+            'SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = %s AND EVENT_OBJECT_TABLE = %s AND EVENT_MANIPULATION = %s',
+            $deleteTrigger, $table, 'DELETE'
+        ));
+        if ($deleteExisting === null) {
+            $deleteSql = "CREATE TRIGGER {$deleteTrigger} BEFORE DELETE ON {$table} FOR EACH ROW
+                BEGIN
+                    IF OLD.state = 'assigned' OR OLD.assigned_guest_id IS NOT NULL THEN
+                        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Assigned invitation deletion prohibited';
+                    END IF;
+                END";
+            if ($wpdb->query($deleteSql) === false) {
+                throw new RuntimeException('Could not install preissued deletion integrity guard.');
+            }
+        }
+        $verifiedDeleteTrigger = $wpdb->get_var($wpdb->prepare(
+            'SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = %s AND EVENT_OBJECT_TABLE = %s AND EVENT_MANIPULATION = %s',
+            $deleteTrigger, $table, 'DELETE'
+        ));
+        if ($verifiedDeleteTrigger !== $deleteTrigger) {
+            throw new RuntimeException('Preissued deletion integrity guard absent.');
+        }
         // Fail closed if physical constraints were not established.
         foreach ([$table, $audit] as $name) {
             $row = $wpdb->get_row("SHOW TABLE STATUS LIKE '" . esc_sql($name) . "'", ARRAY_A);
