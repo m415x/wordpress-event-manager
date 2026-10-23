@@ -34,7 +34,8 @@ MSYS_NO_PATHCONV=1 docker run --rm --network none \
   python - "$manifest_name" "$head" "$(basename "$stage")" <<'PY'
 import pathlib, sys, zipfile
 repo = pathlib.Path("/workspace")
-manifest_name, head, stage_name = sys.argv[1:]\nstage = repo / "dist" / stage_name
+manifest_name, head, stage_name = sys.argv[1:]
+stage = repo / "dist" / stage_name
 target = repo / "dist" / ("wordpress-event-manager-" + head + ".zip")
 tracked = (repo / "dist" / manifest_name).read_bytes().split(b"\0")
 roots = {"includes", "assets", "languages", "templates"}
