@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
 
-use WP_UnitTestCase;
+use PHPUnit\Framework\TestCase;
 
-final class PreissuedInvitationPersistenceTest extends WP_UnitTestCase
+final class PreissuedInvitationPersistenceTest extends TestCase
 {
     protected function setUp(): void
     {
-        parent::setUp();
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
     }
 
@@ -36,6 +35,17 @@ final class PreissuedInvitationPersistenceTest extends WP_UnitTestCase
         }
         self::assertSame(['token_digest'], $unique['token_digest'] ?? null);
         self::assertSame(['assigned_guest_id'], $unique['assigned_guest'] ?? null);
+
+        // Guard against PHPUnit temporary-table shadowing: only persistent BASE TABLE qualifies.
+        foreach ([$table, $audit] as $name) {
+            $physical = $wpdb->get_row($wpdb->prepare(
+                'SELECT ENGINE, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s',
+                $name
+            ), ARRAY_A);
+            self::assertIsArray($physical, 'Physical schema required: ' . $name);
+            self::assertSame('BASE TABLE', $physical['TABLE_TYPE']);
+            self::assertSame('InnoDB', $physical['ENGINE']);
+        }
 
         // Constraints protecting immutable identity require a DB-level guard:
         // inspecting SHOW CREATE TABLE alone cannot reveal triggers.
