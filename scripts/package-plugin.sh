@@ -42,7 +42,34 @@ for item in tracked:
     source = repo / path
     if source.is_file() and not source.is_symlink():
         included.append((path, source))
+# Composer vendor is intentionally gitignored. Bundle only the installed
+# production QR dependency tree plus Composer's generated autoloader.
+# Never include vendor/bin, test suites or unrelated development packages.
+runtime_roots = (
+    pathlib.Path("vendor/composer"),
+    pathlib.Path("vendor/chillerlan/php-qrcode"),
+    pathlib.Path("vendor/chillerlan/php-settings-container"),
+)
+vendor = repo / "vendor"
+if not (vendor / "autoload.php").is_file():
+    raise SystemExit("ERROR: vendor/autoload.php missing; run Composer install first")
+runtime_files = [pathlib.Path("vendor/autoload.php")]
+for relative_root in runtime_roots:
+    root = repo / relative_root
+    if not root.is_dir():
+        raise SystemExit("ERROR: required Composer runtime missing: " + str(relative_root))
+    runtime_files.extend(p.relative_to(repo) for p in root.rglob("*") if p.is_file())
+for path in runtime_files:
+    source = repo / path
+    if source.is_symlink() or any(parent.is_symlink() for parent in source.parents if parent != repo):
+        raise SystemExit("ERROR: symlink in Composer runtime: " + str(path))
+    if any(x in {"tests", "test", "bin", ".git"} for x in path.parts):
+        continue
+    if path.suffix in {".log", ".zip", ".sqlite", ".db"}:
+        continue
+    included.append((path, source))
 assert any(str(p) == "wordpress-event-manager.php" for p, _ in included)
+included = list(dict(included).items())
 with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
     for path, source in sorted(included):
         info = zipfile.ZipInfo("wordpress-event-manager/" + path.as_posix(), (2026, 10, 21, 0, 0, 0))
