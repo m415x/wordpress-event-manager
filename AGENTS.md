@@ -51,6 +51,13 @@ A fresh chat is only an entry point. All operational detail must be recoverable 
 - Audit history must be append-only when introduced. Preserve distinctions between historical facts and current projections.
 - No credential, secret, personal guest data or production database export in Git.
 
+## Docker/wp-env infrastructure reuse — mandatory
+- Reuse existing WEM Docker/wp-env infrastructure by default. A new story, branch, subtask or TDD cycle does **not** justify a new Compose project. Inventory WEM and non-WEM Compose projects, containers, networks, named volumes, published ports and their running/stopped state before startup.
+- Prefer independent disposable databases/schemas within reusable infrastructure when effective isolation can be proved. The WordPress manual/admin database must **never** be used for PHPUnit, transactional destructive probes or test fixtures. Preserve independently owned databases and evidence.
+- Start services only when required; stop *only identified inactive WEM services* after checking live workloads and pending evidence. Never stop, remove or alter Docker resources belonging to other projects.
+- Prefer GitHub Actions for reproducible non-interactive gates. Create a temporary isolated instance only for justified clean installations, migrations, real multi-connection concurrency, backup recovery, packaging verification or a demonstrated isolation incompatibility. Document the owner and reason.
+- Never use `docker system prune`, `docker volume prune`, `docker compose down -v`, wildcard or mass deletion. Before any targeted destructive removal inventory exact resources and ownership, preserve required evidence, and obtain express approval. See `docs/agent-harness.md` for lifecycle and `docs/testing.md` for inventory commands.
+
 ## Testing and verification
 - Use RED → GREEN → refactor for new/changed behavior when a focused automated test can express the contract economically. Do not manufacture RED for audits, documentation-only reconciliation or administrative Jira work.
 - First establish a focused expected assertion failure and confirm RED for the intended reason; bootstrap/environment errors are not behavioral RED.
