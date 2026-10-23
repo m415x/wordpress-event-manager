@@ -22,13 +22,14 @@ final class WEM_Public_Invitation_Route
     public function register_query_var($query_vars)
     {
         $query_vars[] = 'wem_invitation';
+        $query_vars[] = 'wem_preissued';
 
         return $query_vars;
     }
 
     public function handle_request()
     {
-        if (!isset($_GET['wem_invitation'])) {
+        if (!isset($_GET['wem_invitation']) && !isset($_GET['wem_preissued'])) {
             return null;
         }
 
@@ -113,6 +114,16 @@ final class WEM_Public_Invitation_Route
 
     public function resolve_request(array $request)
     {
+        // Inventory bearer uses an independent resolver and never falls through
+        // to WEM-33 guest credential resolution.
+        if (array_keys($request) === array('wem_preissued')) {
+            $token = $request['wem_preissued'];
+            if (!is_string($token)) {
+                return null;
+            }
+            return (new WEM_Preissued_Public_Resolver())->resolve($token);
+        }
+
         $allowed_keys = array('wem_invitation');
         $keys = array_keys($request);
 
