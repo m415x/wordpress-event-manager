@@ -36,6 +36,12 @@ spl_autoload_register(function ($class) {
     }
 });
 
+// Bundled Composer runtime is required for fully offline local QR generation.
+$wem_composer_autoload = WEM_PATH . 'vendor/autoload.php';
+if (is_readable($wem_composer_autoload)) {
+    require_once $wem_composer_autoload;
+}
+
 require_once WEM_PATH . 'includes/helpers.php';
 
 // WEM-73: expose the administrative command only in WP-CLI.
