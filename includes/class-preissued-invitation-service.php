@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) { exit; }
  * P0 issuance and irreversible bind. No public routes or print delivery here.
  * The caller must provide an authorized WordPress administrator identity.
  */
+final class WEM_Preissued_Commit_Indeterminate extends RuntimeException {}
+
 final class WEM_Preissued_Invitation_Service
 {
     private function authorize(int $actor): void
@@ -43,10 +45,18 @@ final class WEM_Preissued_Invitation_Service
             }
             $id = (int) $wpdb->insert_id;
             $custody($id, add_query_arg('wem_preissued', $token, home_url('/')));
-            if ($wpdb->query('COMMIT') === false) {
-                throw new RuntimeException('Invitation commit outcome indeterminate: reconcile custody before retry.');
+            try {
+                $committed = $wpdb->query('COMMIT');
+            } catch (Throwable $commitError) {
+                throw new WEM_Preissued_Commit_Indeterminate('Invitation commit outcome indeterminate: reconcile custody before retry.', 0, $commitError);
+            }
+            if ($committed === false) {
+                throw new WEM_Preissued_Commit_Indeterminate('Invitation commit outcome indeterminate: reconcile custody before retry.');
             }
             return $id;
+        } catch (WEM_Preissued_Commit_Indeterminate $e) {
+            // Do not claim rollback or reissue when COMMIT outcome is unknown.
+            throw $e;
         } catch (Throwable $e) {
             $wpdb->query('ROLLBACK');
             throw $e;
