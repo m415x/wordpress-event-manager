@@ -2,7 +2,10 @@
 set -euo pipefail
 repo=$(git rev-parse --show-toplevel)
 cd "$repo"
-if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+# Local PHPUnit port overrides are never part of the ZIP; do not let them
+# block packaging. All other tracked edits (staged or unstaged) still block.
+if ! git diff --quiet -- . ':(exclude).wp-env.phpunit.json' ||
+   ! git diff --cached --quiet -- . ':(exclude).wp-env.phpunit.json'; then
   echo "Refusing to package tracked uncommitted changes" >&2; exit 2
 fi
 command -v python3 >/dev/null || { echo "Python 3 is required for packaging" >&2; exit 2; }
