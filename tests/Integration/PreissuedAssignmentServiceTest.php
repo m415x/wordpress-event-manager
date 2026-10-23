@@ -13,6 +13,9 @@ final class PreissuedAssignmentServiceTest extends WP_UnitTestCase
         global $wpdb;
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
+        // WordPress init can precede this test's plugin include.
+        (new \WEM_CPT_Manager())->register_cpt();
+        (new \WEM_Taxonomy_Manager())->register_taxonomy();
         \WEM_Preissued_Invitation_Schema::install();
         \WEM_Invitation_Credential_Schema::install();
         $actor = self::factory()->user->create(['role' => 'administrator']);
