@@ -43,8 +43,10 @@ final class SeatingCapacityLockRetryTest extends TestCase
             try {
                 $result = (new \WEM_Seating_Reservation_Service())->reserve_initial($guest, $tableId);
                 self::fail('Expected capacity lock contention, got reservation '.$result);
-            } catch (\RuntimeException $expected) {
-                self::assertStringContainsString('unavailable', strtolower($expected->getMessage()));
+            } catch (\DomainException $actual) {
+                self::assertSame('Seating temporarily unavailable.', $actual->getMessage(), 'Lock timeout must be classified as controlled retry exhaustion, not table ineligibility.');
+            } catch (\RuntimeException $actual) {
+                self::assertSame('Seating temporarily unavailable.', $actual->getMessage(), 'Lock timeout must produce a controlled unavailable result.');
             } finally {
                 remove_filter('query', $track);
             }
