@@ -65,10 +65,14 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
         self::assertTrue(class_exists('WEM_Movement_Ledger'));
 
         $ledger = new \WEM_Movement_Ledger();
+        // Dedicated identities prevent persistent schema-rerun fixtures from colliding
+        // with an earlier PHPUnit invocation or another test in the suite.
+        $guestId = random_int(100000000, 2000000000);
+        $eventId = random_int(100000000, 2000000000);
 
         $movement = $ledger->append([
-            'guest_id' => 202,
-            'event_term_id' => 8,
+            'guest_id' => $guestId,
+            'event_term_id' => $eventId,
             'movement_type' => 'checkin',
             'occurred_at' => '2026-10-06 10:00:00',
             'actor_user_id' => 4,
@@ -78,7 +82,7 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
 
         \WEM_Movement_Schema::install();
 
-        $history = $ledger->find_by_guest_event(202, 8);
+        $history = $ledger->find_by_guest_event($guestId, $eventId);
 
         self::assertCount(1, $history);
         self::assertSame($movement['movement_id'], $history[0]['movement_id']);
@@ -90,8 +94,8 @@ final class MovementLedgerPersistenceTest extends WP_UnitTestCase
             $tableName,
             [
                 'movement_id' => $movement['movement_id'],
-                'guest_id' => 202,
-                'event_term_id' => 8,
+                'guest_id' => $guestId,
+                'event_term_id' => $eventId,
                 'movement_type' => 'checkout',
                 'occurred_at' => '2026-10-06 10:01:00',
                 'actor_user_id' => 4,
