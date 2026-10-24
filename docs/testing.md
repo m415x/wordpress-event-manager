@@ -73,6 +73,10 @@ pnpm tdd unit
 pnpm tdd integration
 ```
 
+**WEM-87 integration partition:** `pnpm tdd integration` first classifies every `tests/Integration/**/*Test.php` file into WordPress Core-managed `WP_UnitTestCase` versus durable InnoDB `PHPUnit\\Framework\\TestCase`. An unclassified or ambiguous new test causes `ERROR`, never silent omission. The runner invokes each nonempty group in a distinct **sequential PHPUnit CLI process** (WordPress bootstrap once per group), aggregating failures; GREEN requires both groups to pass and the PHP syntax gate. The canonical focused file commands remain a single PHPUnit invocation. `--filter` and `-v` remain accepted, including when a filter selects tests in only one group. No `@runTestsInSeparateProcesses`, no new Compose project, and no alteration to product transaction guards.
+
+Regression: `bash tests/Runner/integration-partition.test.sh` exercises classifier completeness, rejection of unknown tests, both group invocations and failure propagation with mocks. This runner design must be verified locally before claiming any full-suite GREEN.
+
 Add `-v` or `--verbose` only when diagnostics are needed.
 
 Runner semantics:
