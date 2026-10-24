@@ -51,19 +51,6 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
             ], ['%d', '%s', '%d']));
             $tableId = (int) $wpdb->insert_id;
 
-            $transactionState = $wpdb->get_row(
-                'SELECT CONNECTION_ID() AS connection_id, @@in_transaction AS in_transaction, @@autocommit AS autocommit',
-                ARRAY_A
-            );
-            self::assertIsArray($transactionState);
-            self::assertSame(
-                0,
-                (int) $transactionState['in_transaction'],
-                'DIAGNOSTIC WEM-87: after fixture setup connection=' .
-                $transactionState['connection_id'] . ', autocommit=' .
-                $transactionState['autocommit'] . '; shared PHPUnit transaction is still open.'
-            );
-
             $failure = null;
             try {
                 (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId);
