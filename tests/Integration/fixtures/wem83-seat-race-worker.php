@@ -10,6 +10,9 @@ while (!is_file($gate) && microtime(true) < $deadline) {
 }
 if (!is_file($gate)) { fwrite(STDERR, "GATE_TIMEOUT\n"); exit(2); }
 global $wpdb;
+// SQL contention is an expected domain outcome; keep worker stdout protocol clean.
+$wpdb->hide_errors();
+$wpdb->suppress_errors(true);
 $connection = (int) $wpdb->get_var('SELECT CONNECTION_ID()');
 try {
     (new WEM_Seating_Reservation_Service())->reserve_initial((int) $guest, (int) $table);
