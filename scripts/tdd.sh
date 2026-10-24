@@ -63,23 +63,16 @@ cleanup_integration_configs() {
   for file in "${integration_configs[@]}"; do rm -f "$file"; done
 }
 if [[ $suite == integration && -z $test_path ]]; then
-  integration_files=()
-  while IFS= read -r name; do integration_files+=("$name"); done < <(find tests/Integration -type f -name '*Test.php' | LC_ALL=C sort)
-  if (("${#integration_files[@]}" == 0)); then printf 'ERROR\n' >&2; exit 1; fi
-  core_files=(); durable_files=()
-  for name in "${integration_files[@]}"; do
-    if grep -Eq 'extends[[:space:]]+\\?WP_UnitTestCase\\b' "$name"; then
-      core_files+=("$name")
-    elif grep -Eq 'extends[[:space:]]+(\\?PHPUnit\\\\Framework\\\\TestCase|TestCase)\\b' "$name"; then
-      durable_files+=("$name")
-    else
-      printf 'ERROR: unclassified integration test: %s\n' "$name" >&2
-      exit 1
-    fi
-  done
-  if (("${#core_files[@]}" + "${#durable_files[@]}" != "${#integration_files[@]}")); then
-    printf 'ERROR: integration classification does not cover all tests\n' >&2; exit 1
+  core_manifest=$(mktemp) || exit 2
+  durable_manifest=$(mktemp) || { rm -f "$core_manifest"; exit 2; }
+  integration_configs+=("$core_manifest" "$durable_manifest")
+  if ! bash scripts/classify-integration-tests.sh tests/Integration "$core_manifest" "$durable_manifest" >/dev/null; then
+    cleanup_integration_configs
+    printf 'ERROR\n' >&2
+    exit 1
   fi
+  mapfile -t core_files < "$core_manifest"
+  mapfile -t durable_files < "$durable_manifest"
   # XML must live at repository root so PHPUnit resolves bootstrap and
   # test file paths relative to the same root as the canonical config.
   for group in core durable; do
@@ -103,6 +96,7 @@ test_exit=0
 if (("${#integration_configs[@]}" > 0)); then
   # No concurrent WordPress Core bootstraps or PHPUnit processes.
   for cfg in "${integration_configs[@]}"; do
+    if [[ $cfg != *.xml ]]; then continue; fi
     if ! grep -q '<file>' "$cfg"; then continue; fi
     command=("${base_command[@]}" vendor/bin/phpunit -c "$(basename "$cfg")")
     if [[ -n $filter ]]; then command+=(--filter "$filter"); fi
@@ -155,7 +149,7 @@ fi
 static_cmd='set -eu; php -l wordpress-event-manager.php >/dev/null; find includes tests -type f -name "*.php" -exec sh -c '\''for file do php -l "$file" >/dev/null || exit 1; done'\'' sh {} +'
 phpunit_log=$log
 syntax_log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
-trap 'rm -f "$phpunit_log" "$syntax_log"' EXIT
+trap 'rm -f "$phpunit_log" "$syntax_log"; cleanup_integration_configs' EXIT
 set +e
 "${base_command[@]}" sh -lc "$static_cmd" >"$syntax_log" 2>&1
 static_exit=$?
