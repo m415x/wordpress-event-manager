@@ -3,6 +3,7 @@ declare(strict_types=1);
 // Executed only by the WEM-83 integration test, as an independent PHP process.
 [$script, $gate, $guest, $table] = $argv;
 require_once '/var/www/html/wp-load.php';
+require_once dirname(__DIR__, 3) . '/wordpress-event-manager.php';
 $deadline = microtime(true) + 12;
 while (!is_file($gate) && microtime(true) < $deadline) {
     usleep(10000);
