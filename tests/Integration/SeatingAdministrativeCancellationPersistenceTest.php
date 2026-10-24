@@ -47,7 +47,14 @@ final class SeatingAdministrativeCancellationPersistenceTest extends TestCase
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
 
-            (new \WEM_Seating_Administrative_Cancellation_Service())->cancel($guestId, 'Authorized seat release');
+            $failure = null;
+            try {
+                (new \WEM_Seating_Administrative_Cancellation_Service())->cancel($guestId, 'Authorized seat release');
+            } catch (\Throwable $caught) {
+                $failure = $caught;
+            }
+            self::assertNull($failure, 'Authorized cancellation must succeed; observed: '
+                . ($failure ? get_class($failure) . ': ' . $failure->getMessage() : 'none'));
             self::assertSame(0, (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d AND status='active' AND active_slot=1", $guestId
             )));
