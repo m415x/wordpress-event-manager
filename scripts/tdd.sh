@@ -54,40 +54,70 @@ done
 # CI runs on a detached checkout and the mock runner opts out explicitly.
 # A failed fast-forward stops the test instead of masking a stale baseline.
 if [[ ${CI:-} != true && ${WEM_TDD_SKIP_SYNC:-0} != 1 ]]; then
-  git_log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
-  if ! "${WEM_TDD_GIT_BIN:-git}" pull --ff-only --quiet >"$git_log" 2>&1; then
-    printf 'ERROR\n' >&2
-    if [[ $verbose == true ]]; then cat "$git_log" >&2; fi
-    rm -f "$git_log"
-    exit 1
+  git_# Full integration: classify every *Test.php exactly once and run the two
+# transaction models in separate, sequential PHPUnit CLI invocations.
+# Focused paths keep the original single-process execution contract.
+integration_configs=()
+cleanup_integration_configs() {
+  local file
+  for file in "${integration_configs[@]}"; do rm -f "$file"; done
+}
+if [[ $suite == integration && -z $test_path ]]; then
+  integration_files=()
+  while IFS= read -r name; do integration_files+=("$name"); done < <(find tests/Integration -type f -name '*Test.php' | LC_ALL=C sort)
+  if (("${#integration_files[@]}" == 0)); then printf 'ERROR\n' >&2; exit 1; fi
+  core_files=(); durable_files=()
+  for name in "${integration_files[@]}"; do
+    if grep -Eq 'extends[[:space:]]+\\?WP_UnitTestCase\\b' "$name"; then
+      core_files+=("$name")
+    elif grep -Eq 'extends[[:space:]]+(\\?PHPUnit\\\\Framework\\\\TestCase|TestCase)\\b' "$name"; then
+      durable_files+=("$name")
+    else
+      printf 'ERROR: unclassified integration test: %s\n' "$name" >&2
+      exit 1
+    fi
+  done
+  if (("${#core_files[@]}" + "${#durable_files[@]}" != "${#integration_files[@]}")); then
+    printf 'ERROR: integration classification does not cover all tests\n' >&2; exit 1
   fi
-  if [[ $verbose == true && -s $git_log ]]; then cat "$git_log"; fi
-  rm -f "$git_log"
+  # XML must live at repository root so PHPUnit resolves bootstrap and
+  # test file paths relative to the same root as the canonical config.
+  for group in core durable; do
+    cfg=$(mktemp "$repo_root/.wem-integration-${group}.XXXXXX.xml") || exit 2
+    integration_configs+=("$cfg")
+    printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
+      '<phpunit bootstrap="tests/integration-bootstrap.php" colors="true" failOnWarning="true">' \
+      '  <testsuites><testsuite name="integration">' > "$cfg"
+    if [[ $group == core ]]; then selected=("${core_files[@]}"); else selected=("${durable_files[@]}"); fi
+    for name in "${selected[@]}"; do
+      printf '    <file>%s</file>\n' "$name" >> "$cfg"
+    done
+    printf '%s\n' '  </testsuite></testsuites></phpunit>' >> "$cfg"
+  done
 fi
 
-wp_env_bin=${WEM_WP_ENV_BIN:-wp-env}
-# wp-env mounts plugins: ["."] under the checkout directory name.
-repo_root=$(git rev-parse --show-toplevel) || exit 2
-plugin_dir=$(basename "$repo_root")
-container_cwd="wp-content/plugins/$plugin_dir"
-configuration=phpunit.xml.dist
-if [[ $suite == integration ]]; then configuration=phpunit.integration.xml.dist; fi
+log=$(mktemp) || { cleanup_integration_configs; printf 'ERROR\n' >&2; exit 2; }
+trap 'rm -f "$log"; cleanup_integration_configs' EXIT
 
-# Dedicated PHPUnit WordPress installation: its database must never be
-# shared with the manual site at localhost:8890.
-wp_env_config='.wp-env.phpunit.json'
-base_command=("$wp_env_bin" run cli "--config=$wp_env_config" "--env-cwd=$container_cwd")
-phpunit_command=("${base_command[@]}" vendor/bin/phpunit -c "$configuration")
-if [[ -n $filter ]]; then phpunit_command+=(--filter "$filter"); fi
-if [[ -n $test_path ]]; then phpunit_command+=("$test_path"); fi
-
-log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
-trap 'rm -f "$log"' EXIT
-
-set +e
-"${phpunit_command[@]}" >"$log" 2>&1
-test_exit=$?
-set -e
+test_exit=0
+if (("${#integration_configs[@]}" > 0)); then
+  # No concurrent WordPress Core bootstraps or PHPUnit processes.
+  for cfg in "${integration_configs[@]}"; do
+    if ! grep -q '<file>' "$cfg"; then continue; fi
+    command=("${base_command[@]}" vendor/bin/phpunit -c "$(basename "$cfg")")
+    if [[ -n $filter ]]; then command+=(--filter "$filter"); fi
+    set +e
+    "${command[@]}" >>"$log" 2>&1
+    status=$?
+    set -e
+    if (( status != 0 )); then test_exit=$status; fi
+  done
+else
+  set +e
+  "${phpunit_command[@]}" >"$log" 2>&1
+  test_exit=$?
+  set -e
+fi
 
 show_details() {
   if [[ $verbose == true ]] || [[ $mode == diagnose ]]; then
