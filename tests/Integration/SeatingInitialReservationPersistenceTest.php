@@ -65,7 +65,7 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
             ), ARRAY_A);
 
             self::assertCount(1, $rows, 'Eligible same-event guest must receive one durable reservation; boundary failure: '
-                . ($failure ? get_class($failure) : 'none'));
+                . ($failure ? get_class($failure) . ': ' . $failure->getMessage() : 'none'));
             self::assertSame($eventId, (int) $rows[0]['event_term_id']);
             self::assertSame('active', $rows[0]['status']);
             self::assertSame(1, (int) $rows[0]['active_slot']);
