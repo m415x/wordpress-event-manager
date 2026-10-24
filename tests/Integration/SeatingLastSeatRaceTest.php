@@ -6,10 +6,6 @@ namespace WEM\Tests\Integration;
 use PHPUnit\Framework\TestCase;
 
 /** WEM-83: two PHP processes independently contend for one durable seat. */
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 final class SeatingLastSeatRaceTest extends TestCase
 {
     public function testTwoRealRequestsCannotOverbookLastSeat(): void
