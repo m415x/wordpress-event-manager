@@ -12,6 +12,11 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
     {
         parent::setUp();
 
+        // Ajax dispatch invokes admin_init. WordPress Core's background
+        // update probe depends on wordpress.org and is unrelated to this
+        // authorization regression; disable it only within this fixture.
+        remove_action('admin_init', '_maybe_update_core');
+
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
         if (!taxonomy_exists('evento')) {
@@ -29,6 +34,13 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
 
         $shortcodes = new \WEM_Shortcode_Manager();
         $shortcodes->register_shortcodes();
+    }
+
+    protected function tearDown(): void
+    {
+        // Restore the original hook for later integration test classes.
+        add_action('admin_init', '_maybe_update_core');
+        parent::tearDown();
     }
 
     public function testProvisionedViewerAndOperatorPreserveScopedOperationalBoundaries(): void
