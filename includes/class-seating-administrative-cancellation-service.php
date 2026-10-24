@@ -78,8 +78,9 @@ final class WEM_Seating_Administrative_Cancellation_Service
                     $updated = $wpdb->update($reservations, [
                         'status' => 'canceled',
                         'active_slot' => null,
+                        'canceled_at' => gmdate('Y-m-d H:i:s'),
                     ], ['id' => (int) $active['id'], 'status' => 'active', 'active_slot' => 1],
-                    ['%s', '%d'], ['%d', '%s', '%d']);
+                    ['%s', '%d', '%s'], ['%d', '%s', '%d']);
                     if ($updated !== 1) {
                         throw new RuntimeException('Could not cancel active reservation.');
                     }
