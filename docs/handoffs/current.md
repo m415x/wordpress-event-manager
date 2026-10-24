@@ -1,5 +1,8 @@
 # Current operational handoff — WEM-74 I1 integrated; WEM-73 custody gates open
 
+> **WEM-87/T7 pending closure gate (2026-10-24, feature branch only):** WEM-81–86 focal RED/GREEN records are in Jira, but WEM-75 has **no validated full integration GREEN, PR merge, or post-merge CI**. Jira WEM-87 comment 14160 documents the reproducible failure: a shared PHPUnit run after `MovementLedgerPersistenceTest` leaves `@@autocommit=0` and `@@in_transaction=1`, correctly denied by the production `WEM_Seating_Transaction` guard. Do not change that guard or WEM-72. An earlier `@runTestsInSeparateProcesses` attempt deadlocked child WordPress `install.php` processes; those were selectively terminated without deleting the reused Docker environment. The feature branch now contains an **unverified** sequential, exhaustive integration partition in `scripts/tdd.sh`, classifier `scripts/classify-integration-tests.sh`, mock regression `tests/Runner/integration-partition.test.sh`, and operating notes `docs/testing.md`. First run mock regression and grouped smoke tests locally in the existing PHPUnit container; diagnose failures before the full gate. Do not assert GREEN until the user reports actual execution. Then run applicable PHP quality gates, SHA-specific CI and reconcile PR/merge/docs/Jira. Preserve .wp-env.phpunit.json isolated from the manual site.
+
+
 Updated: 2026-10-22. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
 
 ## Canonical integration baseline
