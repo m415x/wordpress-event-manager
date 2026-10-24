@@ -21,7 +21,9 @@ final class WEM_Seating_Reservation_Service
             throw new DomainException('Invalid seating identity.');
         }
 
-        return WEM_Seating_Transaction::run(static function () use ($wpdb, $guestId, $tableId) {
+        for ($attempt = 0; $attempt < 3; ++$attempt) {
+            try {
+                return WEM_Seating_Transaction::run(static function () use ($wpdb, $guestId, $tableId) {
             $posts = $wpdb->posts;
             $tables = $wpdb->prefix . 'wem_event_tables';
             $reservations = $wpdb->prefix . 'wem_table_reservations';
@@ -40,6 +42,13 @@ final class WEM_Seating_Reservation_Service
                 "SELECT id,event_term_id,capacity FROM {$tables} WHERE id=%d FOR UPDATE",
                 $tableId
             ), ARRAY_A);
+            if ($wpdb->last_error !== '') {
+                $errorCode = $wpdb->dbh instanceof mysqli ? (int) $wpdb->dbh->errno : 0;
+                if (in_array($errorCode, [1205, 1213], true)) {
+                    throw new WEM_Seating_Transient_Lock_Exception('Seating lock contention.');
+                }
+                throw new RuntimeException('Could not acquire seating capacity lock.');
+            }
             if (!$table || (int) $table['capacity'] < 1) {
                 throw new DomainException('Table is not available.');
             }
@@ -98,6 +107,20 @@ final class WEM_Seating_Reservation_Service
                 throw new RuntimeException('Could not persist initial reservation.');
             }
             return (int) $wpdb->insert_id;
-        });
+                });
+            } catch (WEM_Seating_Transient_Lock_Exception $exception) {
+                if ($attempt === 2) {
+                    throw new RuntimeException('Seating temporarily unavailable.', 0, $exception);
+                }
+                // The transaction boundary has already rolled back. A fresh
+                // attempt re-evaluates guest, event, participation and capacity.
+            }
+        }
+        throw new RuntimeException('Seating temporarily unavailable.');
     }
+}
+
+/** Internal marker: retry only actual InnoDB deadlock/lock timeout. */
+final class WEM_Seating_Transient_Lock_Exception extends RuntimeException
+{
 }
