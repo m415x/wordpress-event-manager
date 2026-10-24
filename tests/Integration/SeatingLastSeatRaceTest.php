@@ -62,6 +62,9 @@ final class SeatingLastSeatRaceTest extends TestCase
                 fclose($pipes[1]);
                 fclose($pipes[2]);
                 $status = proc_close($process);
+                foreach ($jobs as $index => $job) {
+                    if ($job[0] === $process) { unset($jobs[$index]); break; }
+                }
                 self::assertSame(0, $status, 'Worker failed: '.$stderr);
                 self::assertMatchesRegularExpression('/^(WIN|DENY):[1-9][0-9]*$/D', $stdout);
                 $outcomes[] = explode(':', $stdout);
@@ -80,9 +83,9 @@ final class SeatingLastSeatRaceTest extends TestCase
             self::assertContains((int) $rows[0]['guest_id'], $guests);
         } finally {
             foreach ($jobs as [$process, $pipes]) {
-                proc_terminate($process);
+                if (is_resource($process)) { proc_terminate($process); }
                 foreach ($pipes as $pipe) { if (is_resource($pipe)) { fclose($pipe); } }
-                proc_close($process);
+                if (is_resource($process)) { proc_close($process); }
             }
             if (is_file($gate)) { unlink($gate); }
             foreach ($guests as $guest) {
