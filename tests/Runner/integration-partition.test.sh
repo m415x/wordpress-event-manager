@@ -6,9 +6,10 @@ trap 'rm -rf "$temp"' EXIT
 mkdir -p "$temp/tests"
 printf '%s\n' '<?php class CoreTest extends WP_UnitTestCase {}' > "$temp/tests/CoreTest.php"
 printf '%s\n' '<?php class DurableTest extends TestCase {}' > "$temp/tests/DurableTest.php"
+printf '%s\n' '<?php class AjaxTest extends WP_Ajax_UnitTestCase {}' > "$temp/tests/AjaxTest.php"
 bash "$root/scripts/classify-integration-tests.sh" "$temp/tests" "$temp/core" "$temp/durable" > "$temp/classification"
-grep -q 'total=2 core=1 durable=1' "$temp/classification"
-[[ $(wc -l < "$temp/core") -eq 1 && $(wc -l < "$temp/durable") -eq 1 ]]
+grep -q 'total=3 core=2 durable=1' "$temp/classification"
+[[ $(wc -l < "$temp/core") -eq 2 && $(wc -l < "$temp/durable") -eq 1 ]]
 printf '%s\n' '<?php class UnknownTest extends CustomBase {}' > "$temp/tests/UnknownTest.php"
 if bash "$root/scripts/classify-integration-tests.sh" "$temp/tests" "$temp/core" "$temp/durable" > /dev/null 2>&1; then
   echo 'FAIL: unknown test was silently omitted' >&2; exit 1
