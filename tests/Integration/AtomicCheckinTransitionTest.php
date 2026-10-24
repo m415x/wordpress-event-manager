@@ -45,6 +45,22 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
 
         $actorId = self::factory()->user->create(['role' => 'subscriber']);
 
+        // WEM-87 diagnostic: fail before mutation when durable movement rows
+        // already exist for factory-allocated identities in the reused DB.
+        $preexisting = (new \\WEM_Movement_Ledger())->find_by_guest_event($guestId, $eventId);
+        $checkinProjection = get_post_meta($guestId, 'wem_checkin', true);
+        $checkoutProjection = get_post_meta($guestId, 'wem_checkout', true);
+        self::assertSame(
+            [],
+            $preexisting,
+            'WEM-87 DIAGNOSTIC: preexisting movements for fresh factory guest/event; guest=' .
+            $guestId . ', event=' . $eventId . ', rows=' . count($preexisting) .
+            ', checkin=' . var_export($checkinProjection, true) .
+            ', checkout=' . var_export($checkoutProjection, true)
+        );
+        self::assertEmpty($checkinProjection, 'WEM-87 DIAGNOSTIC: guest check-in projection already set.');
+        self::assertEmpty($checkoutProjection, 'WEM-87 DIAGNOSTIC: guest check-out projection already set.');
+
         $service = new \WEM_Movement_Service();
         $result = $service->checkin($guestId, $eventId, $actorId, 'staff_web');
 
