@@ -17,17 +17,6 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
         global $wpdb;
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
-        // WP_UnitTestCase can leave the shared wpdb connection inside an
-        // outer test transaction after schema DDL. Durable reservation tests
-        // must use their own fresh connection, not roll back another owner's
-        // transaction or weaken the production transaction guard.
-        if ((int) $wpdb->get_var('SELECT @@in_transaction') !== 0) {
-            self::assertTrue($wpdb->db_connect(), 'Could not open a fresh PHPUnit MySQL session.');
-        }
-        self::assertSame(0, (int) $wpdb->get_var('SELECT @@in_transaction'),
-            'Durable seating test requires an idle MySQL session.');
-
-
         if (!taxonomy_exists('evento')) {
             register_taxonomy('evento', 'invitado');
         }
@@ -61,6 +50,19 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
                 'capacity' => 1,
             ], ['%d', '%s', '%d']));
             $tableId = (int) $wpdb->insert_id;
+
+            $transactionState = $wpdb->get_row(
+                'SELECT CONNECTION_ID() AS connection_id, @@in_transaction AS in_transaction, @@autocommit AS autocommit',
+                ARRAY_A
+            );
+            self::assertIsArray($transactionState);
+            self::assertSame(
+                0,
+                (int) $transactionState['in_transaction'],
+                'DIAGNOSTIC WEM-87: after fixture setup connection=' .
+                $transactionState['connection_id'] . ', autocommit=' .
+                $transactionState['autocommit'] . '; shared PHPUnit transaction is still open.'
+            );
 
             $failure = null;
             try {
