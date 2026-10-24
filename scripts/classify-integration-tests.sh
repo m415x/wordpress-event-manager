@@ -18,7 +18,7 @@ while IFS= read -r file; do
   count=$((count + 1))
   wp=0
   raw=0
-  if grep -Eq 'extends[[:space:]]+\\?WP_UnitTestCase\b' "$file"; then wp=1; fi
+  if grep -Eq 'extends[[:space:]]+\\?(WP_UnitTestCase|WP_Ajax_UnitTestCase)([^[:alnum:]_]|$)' "$file"; then wp=1; fi
   if grep -Eq 'extends[[:space:]]+(\\?PHPUnit\\Framework\\TestCase|TestCase)\b' "$file"; then raw=1; fi
   if (( wp + raw != 1 )); then
     printf 'ERROR: unclassified or ambiguous integration test: %s\n' "$file" >&2
