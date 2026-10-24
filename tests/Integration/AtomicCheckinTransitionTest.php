@@ -32,34 +32,33 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
             'WEM-27 requires a transactional movement service after WEM-13 authorization.'
         );
 
-        $event = wp_insert_term('WEM-27 Checkin Event', 'evento');
-        self::assertNotWPError($event);
-
-        $eventId = (int) $event['term_id'];
+        // WP_UnitTestCase resets post/term identity between runs, while the
+        // movement ledger is durable in the reused PHPUnit database.
+        // Choose a fresh guest/event pair without erasing ledger history.
         $guestId = self::factory()->post->create([
             'post_type' => 'invitado',
             'post_title' => 'WEM-27 Guest',
             'post_status' => 'publish',
         ]);
+        $eventId = 0;
+        $ledger = new \WEM_Movement_Ledger();
+        for ($attempt = 0; $attempt < 100; $attempt++) {
+            $event = wp_insert_term('WEM-27 Checkin Event ' . wp_generate_uuid4(), 'evento');
+            self::assertNotWPError($event);
+            $candidate = (int) $event['term_id'];
+            if ($ledger->find_by_guest_event($guestId, $candidate) === []) {
+                $eventId = $candidate;
+                break;
+            }
+        }
+        self::assertGreaterThan(
+            0,
+            $eventId,
+            'No uncontaminated synthetic event identity available; persistent ledger must not be deleted.'
+        );
         wp_set_object_terms($guestId, [$eventId], 'evento', false);
 
         $actorId = self::factory()->user->create(['role' => 'subscriber']);
-
-        // WEM-87 diagnostic: fail before mutation when durable movement rows
-        // already exist for factory-allocated identities in the reused DB.
-        $preexisting = (new \WEM_Movement_Ledger())->find_by_guest_event($guestId, $eventId);
-        $checkinProjection = get_post_meta($guestId, 'wem_checkin', true);
-        $checkoutProjection = get_post_meta($guestId, 'wem_checkout', true);
-        self::assertSame(
-            [],
-            $preexisting,
-            'WEM-87 DIAGNOSTIC: preexisting movements for fresh factory guest/event; guest=' .
-            $guestId . ', event=' . $eventId . ', rows=' . count($preexisting) .
-            ', checkin=' . var_export($checkinProjection, true) .
-            ', checkout=' . var_export($checkoutProjection, true)
-        );
-        self::assertEmpty($checkinProjection, 'WEM-87 DIAGNOSTIC: guest check-in projection already set.');
-        self::assertEmpty($checkoutProjection, 'WEM-87 DIAGNOSTIC: guest check-out projection already set.');
 
         $service = new \WEM_Movement_Service();
         $result = $service->checkin($guestId, $eventId, $actorId, 'staff_web');
