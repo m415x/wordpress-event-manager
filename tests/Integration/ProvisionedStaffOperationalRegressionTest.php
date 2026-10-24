@@ -49,13 +49,15 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
         $eventBId = $this->createEvent('WEM-48 Event B');
         $guestA = $this->createGuest('WEM-48-A', 'visible-a', $eventAId);
         $guestB = $this->createGuest('WEM-48-B', 'hidden-b', $eventBId);
-        // WP_UnitTestCase can reuse guest/event identities while the movement
-        // ledger remains durable across runs. Reject contaminated fixture
-        // identities without deleting historical movement records.
+        // WordPress factories can reuse term/post IDs between PHPUnit runs,
+        // while the movement ledger keeps durable rows. Select a new event
+        // for this synthetic guest when that identity pair is contaminated.
         $ledger = new \WEM_Movement_Ledger();
-        self::assertSame([], $ledger->find_by_guest_event($guestA, $eventAId),
-            'WEM-87 fixture collision: existing movement for scoped guest/event.');
-
+        for ($attempt = 0; $ledger->find_by_guest_event($guestA, $eventAId) !== []; $attempt++) {
+            self::assertLessThan(100, $attempt, 'No clean synthetic event identity for operator fixture.');
+            $eventAId = $this->createEvent('WEM-48 Event A ' . wp_generate_uuid4());
+            self::assertNotWPError(wp_set_object_terms($guestA, [$eventAId], 'evento', false));
+        }
 
         $staffId = self::factory()->user->create(['role' => 'subscriber']);
         self::assertTrue(
