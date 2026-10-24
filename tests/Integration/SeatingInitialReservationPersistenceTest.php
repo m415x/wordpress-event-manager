@@ -10,6 +10,10 @@ use PHPUnit\Framework\TestCase;
  * WEM-82/T2: real InnoDB reservation, no WP_UnitTestCase transaction wrapper.
  * Synthetic WP identities and seating rows are scoped and removed in finally.
  */
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 final class SeatingInitialReservationPersistenceTest extends TestCase
 {
     public function testEligibleGuestCanReserveOneSeatAtomically(): void
