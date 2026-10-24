@@ -54,7 +54,30 @@ done
 # CI runs on a detached checkout and the mock runner opts out explicitly.
 # A failed fast-forward stops the test instead of masking a stale baseline.
 if [[ ${CI:-} != true && ${WEM_TDD_SKIP_SYNC:-0} != 1 ]]; then
-  git_# Full integration: classify every *Test.php exactly once and run the two
+  git_log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
+  if ! "${WEM_TDD_GIT_BIN:-git}" pull --ff-only --quiet >"$git_log" 2>&1; then
+    printf 'ERROR\n' >&2
+    if [[ $verbose == true ]]; then cat "$git_log" >&2; fi
+    rm -f "$git_log"
+    exit 1
+  fi
+  if [[ $verbose == true && -s $git_log ]]; then cat "$git_log"; fi
+  rm -f "$git_log"
+fi
+
+wp_env_bin=${WEM_WP_ENV_BIN:-wp-env}
+repo_root=$(git rev-parse --show-toplevel) || exit 2
+plugin_dir=$(basename "$repo_root")
+container_cwd="wp-content/plugins/$plugin_dir"
+configuration=phpunit.xml.dist
+if [[ $suite == integration ]]; then configuration=phpunit.integration.xml.dist; fi
+wp_env_config='.wp-env.phpunit.json'
+base_command=("$wp_env_bin" run cli "--config=$wp_env_config" "--env-cwd=$container_cwd")
+phpunit_command=("${base_command[@]}" vendor/bin/phpunit -c "$configuration")
+if [[ -n $filter ]]; then phpunit_command+=(--filter "$filter"); fi
+if [[ -n $test_path ]]; then phpunit_command+=("$test_path"); fi
+
+# Full integration: classify every *Test.php exactly once and run the two
 # transaction models in separate, sequential PHPUnit CLI invocations.
 # Focused paths keep the original single-process execution contract.
 integration_configs=()
