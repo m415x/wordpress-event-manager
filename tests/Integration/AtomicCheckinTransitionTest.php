@@ -47,7 +47,7 @@ final class AtomicCheckinTransitionTest extends WP_UnitTestCase
 
         // WEM-87 diagnostic: fail before mutation when durable movement rows
         // already exist for factory-allocated identities in the reused DB.
-        $preexisting = (new \\WEM_Movement_Ledger())->find_by_guest_event($guestId, $eventId);
+        $preexisting = (new \WEM_Movement_Ledger())->find_by_guest_event($guestId, $eventId);
         $checkinProjection = get_post_meta($guestId, 'wem_checkin', true);
         $checkoutProjection = get_post_meta($guestId, 'wem_checkout', true);
         self::assertSame(
