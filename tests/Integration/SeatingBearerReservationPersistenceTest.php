@@ -64,7 +64,7 @@ final class SeatingBearerReservationPersistenceTest extends TestCase
                 ));
             };
             self::assertSame(1, $count());
-            $credentials->revoke($guest, (int) $admin[0]);
+            $credentials->revoke($guest, $adminId);
             try {
                 $adapter->reserve_for_bearer($issued['token'], $tableId);
                 self::fail('Revoked bearer must be rejected.');
