@@ -27,6 +27,7 @@ final class SeatingBearerReservationPersistenceTest extends TestCase
         $guest = 0;
         $tableId = 0;
         $eventId = 0;
+        $adminId = 0;
         try {
             $event = wp_insert_term('T5-persist-' . wp_generate_uuid4(), 'evento');
             self::assertFalse(is_wp_error($event));
@@ -46,10 +47,11 @@ final class SeatingBearerReservationPersistenceTest extends TestCase
             $tableId = (int) $wpdb->insert_id;
             self::assertGreaterThan(0, $tableId);
 
-            $admin = get_users(['role' => 'administrator', 'number' => 1, 'fields' => 'ID']);
-            self::assertNotEmpty($admin, 'Use existing administrator in the isolated PHPUnit fixture.');
+            $adminId = (int) wp_create_user('wem-t5-' . wp_generate_uuid4(), wp_generate_password(32), 'wem-t5-' . wp_generate_uuid4() . '@example.invalid');
+            self::assertGreaterThan(0, $adminId);
+            (new \WP_User($adminId))->set_role('administrator');
             $credentials = new \WEM_Invitation_Credential_Service();
-            $issued = $credentials->issue($guest, (int) $admin[0]);
+            $issued = $credentials->issue($guest, $adminId);
             $adapter = new \WEM_Seating_Bearer_Initial_Reservation();
             $reservationId = $adapter->reserve_for_bearer($issued['token'], $tableId);
             self::assertGreaterThan(0, $reservationId);
@@ -79,6 +81,9 @@ final class SeatingBearerReservationPersistenceTest extends TestCase
             }
             if ($guest > 0) {
                 wp_delete_post($guest, true);
+            }
+            if ($adminId > 0) {
+                wp_delete_user($adminId);
             }
             if ($eventId > 0) {
                 wp_delete_term($eventId, 'evento');
