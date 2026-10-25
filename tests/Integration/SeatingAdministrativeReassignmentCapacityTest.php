@@ -46,16 +46,27 @@ final class SeatingAdministrativeReassignmentCapacityTest extends TestCase
                     'capacity' => 1,
                 ]));
                 $tables[] = (int) $wpdb->insert_id;
-                self::assertGreaterThan(0, (new \WEM_Seating_Reservation_Service())->reserve_initial($guest, $tables[$i]));
+                self::assertGreaterThan(
+                    0,
+                     (new \WEM_Seating_Reservation_Service())->reserve_initial($guest, $tables[$i])
+                );
             }
-            $actorId = (int) wp_create_user('wem85-full-' . wp_generate_uuid4(), wp_generate_password(), 'wem85-full@example.invalid');
+            $actorId = (int) wp_create_user(
+                'wem85-full-' . wp_generate_uuid4(),
+                wp_generate_password(),
+                'wem85-full@example.invalid'
+            );
             self::assertGreaterThan(0, $actorId);
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
 
             $error = null;
             try {
-                (new \WEM_Seating_Administrative_Reassignment_Service())->reassign($guests[0], $tables[1], 'Full table');
+                (new \WEM_Seating_Administrative_Reassignment_Service())->reassign(
+                    $guests[0],
+                    $tables[1],
+                     'Full table'
+                );
             } catch (\Throwable $caught) {
                 $error = $caught;
             }
