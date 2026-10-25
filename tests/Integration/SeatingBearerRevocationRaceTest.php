@@ -19,6 +19,12 @@ final class SeatingBearerRevocationRaceTest extends TestCase
     {
         global $wpdb;
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+        if (!taxonomy_exists('evento')) {
+            (new \WEM_Taxonomy_Manager())->register_taxonomy();
+        }
+        if (!post_type_exists('invitado')) {
+            (new \WEM_CPT_Manager())->register_cpt();
+        }
 
         self::assertSame(0, (int) $wpdb->get_var('SELECT @@in_transaction'), 'I2 requires an idle connection; do not use WP_UnitTestCase.');
 
