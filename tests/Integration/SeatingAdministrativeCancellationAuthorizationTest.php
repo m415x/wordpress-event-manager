@@ -18,7 +18,9 @@ final class SeatingAdministrativeCancellationAuthorizationTest extends TestCase
         $audit = $wpdb->prefix . 'wem_seating_admin_audit';
         $reservations = $wpdb->prefix . 'wem_table_reservations';
         $beforeAudit = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$audit}");
-        $beforeActive = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$reservations} WHERE status='active' AND active_slot=1");
+        $beforeActive = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$reservations} WHERE status='active' AND active_slot=1"
+        );
 
         try {
             wp_set_current_user(0);
@@ -29,7 +31,9 @@ final class SeatingAdministrativeCancellationAuthorizationTest extends TestCase
                 self::assertSame('Administrative seating permission denied.', $denied->getMessage());
             }
             self::assertSame($beforeAudit, (int) $wpdb->get_var("SELECT COUNT(*) FROM {$audit}"));
-            self::assertSame($beforeActive, (int) $wpdb->get_var("SELECT COUNT(*) FROM {$reservations} WHERE status='active' AND active_slot=1"));
+            self::assertSame($beforeActive, (int) $wpdb->get_var(
+                "SELECT COUNT(*) FROM {$reservations} WHERE status='active' AND active_slot=1"
+            ));
         } finally {
             wp_set_current_user($originalUser);
         }
