@@ -135,7 +135,7 @@ final class SeatingReservationTransactionTest extends TestCase
             self::assertGreaterThan(
                 $insert,
                 $rollback,
-                 'ROLLBACK must follow successful INSERT and injected exception.'
+                'ROLLBACK must follow successful INSERT and injected exception.'
             );
             self::assertSame(-1, $commit, 'COMMIT must not execute on an exception path.');
 

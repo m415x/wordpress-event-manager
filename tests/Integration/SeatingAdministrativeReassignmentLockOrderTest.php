@@ -59,11 +59,13 @@ final class SeatingAdministrativeReassignmentLockOrderTest extends TestCase
             wp_set_current_user($actorId);
             $lockedTableIds = [];
             $capture = static function ($sql) use (&$lockedTableIds) {
-                if (preg_match(
-                    '/FROM\\s+[^\\s]*wem_event_tables\\s+WHERE\\s+id=(\\d+)\\s+FOR UPDATE/i',
-                    $sql,
-                    $matches
-                )) {
+                if (
+                    preg_match(
+                        '/FROM\\s+[^\\s]*wem_event_tables\\s+WHERE\\s+id=(\\d+)\\s+FOR UPDATE/i',
+                        $sql,
+                        $matches
+                    )
+                ) {
                     $lockedTableIds[] = (int) $matches[1];
                 }
                 return $sql;

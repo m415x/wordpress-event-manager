@@ -78,7 +78,8 @@ final class SeatingParticipationCredentialInvarianceTest extends TestCase
                 $failure = $caught;
             }
             self::assertNull(
-                $failure, 'Authorized cancellation failed: ' . ($failure ? $failure->getMessage() : 'none')
+                $failure,
+                'Authorized cancellation failed: ' . ($failure ? $failure->getMessage() : 'none')
             );
             $after = $wpdb->get_results($wpdb->prepare(
                 "SELECT * FROM {$credentials} WHERE guest_id=%d ORDER BY sequence",

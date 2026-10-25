@@ -48,7 +48,7 @@ final class SeatingAdministrativeReassignmentCapacityTest extends TestCase
                 $tables[] = (int) $wpdb->insert_id;
                 self::assertGreaterThan(
                     0,
-                     (new \WEM_Seating_Reservation_Service())->reserve_initial($guest, $tables[$i])
+                    (new \WEM_Seating_Reservation_Service())->reserve_initial($guest, $tables[$i])
                 );
             }
             $actorId = (int) wp_create_user(
@@ -65,7 +65,7 @@ final class SeatingAdministrativeReassignmentCapacityTest extends TestCase
                 (new \WEM_Seating_Administrative_Reassignment_Service())->reassign(
                     $guests[0],
                     $tables[1],
-                     'Full table'
+                    'Full table'
                 );
             } catch (\Throwable $caught) {
                 $error = $caught;

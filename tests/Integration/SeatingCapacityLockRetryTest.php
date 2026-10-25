@@ -62,13 +62,13 @@ final class SeatingCapacityLockRetryTest extends TestCase
                 self::assertSame(
                     'Seating temporarily unavailable.',
                     $actual->getMessage(),
-                     'Lock timeout must be classified as controlled retry exhaustion, not table ineligibility.'
+                    'Lock timeout must be classified as controlled retry exhaustion, not table ineligibility.'
                 );
             } catch (\RuntimeException $actual) {
                 self::assertSame(
                     'Seating temporarily unavailable.',
                     $actual->getMessage(),
-                     'Lock timeout must produce a controlled unavailable result.'
+                    'Lock timeout must produce a controlled unavailable result.'
                 );
             } finally {
                 remove_filter('query', $track);
@@ -76,7 +76,7 @@ final class SeatingCapacityLockRetryTest extends TestCase
             self::assertSame(3, $attempts, 'Exactly one initial attempt and two bounded retries.');
             self::assertSame(
                 0,
-                 (int) $wpdb->get_var($wpdb->prepare(
+                (int) $wpdb->get_var($wpdb->prepare(
                     "SELECT COUNT(*) FROM {$reservationName} WHERE guest_id=%d",
                     $guest
                 ))

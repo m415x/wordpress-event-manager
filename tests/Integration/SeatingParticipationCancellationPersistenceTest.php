@@ -65,7 +65,8 @@ final class SeatingParticipationCancellationPersistenceTest extends TestCase
                 $failure = $caught;
             }
             self::assertNull(
-                $failure, 'Authorized cancellation failed: ' . ($failure ? $failure->getMessage() : 'none')
+                $failure,
+                'Authorized cancellation failed: ' . ($failure ? $failure->getMessage() : 'none')
             );
             $state = $wpdb->get_row($wpdb->prepare(
                 "SELECT participation_status,canceled_at FROM {$participation}
