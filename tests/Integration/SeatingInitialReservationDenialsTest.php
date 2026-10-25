@@ -65,7 +65,9 @@ final class SeatingInitialReservationDenialsTest extends TestCase
             }
             self::assertSame(
                 0,
-                 (int) $wpdb->get_var("SELECT COUNT(*) FROM {$reservations} WHERE table_id=" . (int) $tableId
+                (int) $wpdb->get_var(
+                    "SELECT COUNT(*) FROM {$reservations} WHERE table_id=" . (int) $tableId
+                )
             );
 
             $firstId = (new \WEM_Seating_Reservation_Service())->reserve_initial($guests['active'], $tableId);
