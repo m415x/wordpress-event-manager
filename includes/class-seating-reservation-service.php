@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
  */
 final class WEM_Seating_Reservation_Service
 {
-    public function reserve_initial($guestId, $tableId)
+    public function reserve_initial($guestId, $tableId, $authorizeAfterGuestLock = null)
     {
         global $wpdb;
 
@@ -21,9 +21,13 @@ final class WEM_Seating_Reservation_Service
             throw new DomainException('Invalid seating identity.');
         }
 
+        if ($authorizeAfterGuestLock !== null && !is_callable($authorizeAfterGuestLock)) {
+            throw new InvalidArgumentException('Invalid authorization callback.');
+        }
+
         for ($attempt = 0; $attempt < 3; ++$attempt) {
             try {
-                return WEM_Seating_Transaction::run(static function () use ($wpdb, $guestId, $tableId) {
+                return WEM_Seating_Transaction::run(static function () use ($wpdb, $guestId, $tableId, $authorizeAfterGuestLock) {
             $posts = $wpdb->posts;
             $tables = $wpdb->prefix . 'wem_event_tables';
             $reservations = $wpdb->prefix . 'wem_table_reservations';
@@ -36,6 +40,10 @@ final class WEM_Seating_Reservation_Service
             ), ARRAY_A);
             if (!$guest || $guest['post_type'] !== 'invitado' || $guest['post_status'] !== 'publish') {
                 throw new DomainException('Guest is not eligible.');
+            }
+
+            if ($authorizeAfterGuestLock !== null) {
+                $authorizeAfterGuestLock($guestId);
             }
 
             $table = $wpdb->get_row($wpdb->prepare(
