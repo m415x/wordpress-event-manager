@@ -47,7 +47,11 @@ final class SeatingAdministrativeCancellationPersistenceTest extends TestCase
             $tableId = (int) $wpdb->insert_id;
             $reservationId = (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId);
             self::assertGreaterThan(0, $reservationId);
-            $actorId = (int) wp_create_user('wem84-' . wp_generate_uuid4(), wp_generate_password(), 'wem84@example.invalid');
+            $actorId = (int) wp_create_user(
+                'wem84-' . wp_generate_uuid4(),
+                wp_generate_password(),
+                'wem84@example.invalid'
+            );
             self::assertGreaterThan(0, $actorId);
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
