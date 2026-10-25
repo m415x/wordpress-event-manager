@@ -48,7 +48,8 @@ final class SeatingCrossEventDenialTest extends TestCase
             ], ['%d', '%s', '%d']));
             $tableId = (int) $wpdb->insert_id;
             $before = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d",
+                $guestId
             ));
 
             try {
@@ -62,7 +63,8 @@ final class SeatingCrossEventDenialTest extends TestCase
             }
 
             self::assertSame($before, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d",
+                $guestId
             )), 'DENY must not mutate the reservation ledger.');
         } finally {
             if ($guestId > 0) {

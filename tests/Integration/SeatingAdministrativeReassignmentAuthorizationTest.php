@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace WEM\Tests\Integration;
@@ -26,7 +27,9 @@ final class SeatingAdministrativeReassignmentAuthorizationTest extends TestCase
             $error = null;
             try {
                 (new \WEM_Seating_Administrative_Reassignment_Service())->reassign(
-                    1, 2, 'Unauthorized move'
+                    1,
+                    2,
+                    'Unauthorized move'
                 );
             } catch (\Throwable $caught) {
                 $error = $caught;

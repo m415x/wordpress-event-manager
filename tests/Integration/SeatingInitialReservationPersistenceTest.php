@@ -61,7 +61,8 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
             $rows = $wpdb->get_results($wpdb->prepare(
                 "SELECT guest_id,table_id,event_term_id,status,active_slot
                  FROM {$reservations} WHERE guest_id=%d AND table_id=%d",
-                $guestId, $tableId
+                $guestId,
+                $tableId
             ), ARRAY_A);
 
             self::assertCount(1, $rows, 'Eligible same-event guest must receive one durable reservation; boundary failure: '
@@ -70,7 +71,7 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
             self::assertSame('active', $rows[0]['status']);
             self::assertSame(1, (int) $rows[0]['active_slot']);
             self::assertNull($failure, 'Successful reserve_initial must not throw.');
-            
+
             // Same guest may not reserve twice, even the same table; first row
             // remains unchanged and the failed attempt must not create a row.
             $firstReservationId = (int) $wpdb->get_var($wpdb->prepare(
@@ -85,13 +86,13 @@ final class SeatingInitialReservationPersistenceTest extends TestCase
                 self::assertSame('Guest already has an active reservation.', $expected->getMessage());
             }
             self::assertSame(1, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d",
+                $guestId
             )), 'Duplicate DENY must not write another reservation.');
             self::assertSame($firstReservationId, (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT id FROM {$reservations} WHERE guest_id=%d AND active_slot=1",
                 $guestId
             )), 'Duplicate DENY must preserve the original reservation.');
-
         } finally {
             if ($guestId > 0) {
                 $wpdb->delete($reservations, ['guest_id' => $guestId], ['%d']);

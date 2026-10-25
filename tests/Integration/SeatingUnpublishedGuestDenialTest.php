@@ -49,10 +49,12 @@ final class SeatingUnpublishedGuestDenialTest extends TestCase
             $tableId = (int) $wpdb->insert_id;
 
             $beforeReservations = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d",
+                $guestId
             ));
             $beforeAudit = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$audit} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$audit} WHERE guest_id=%d",
+                $guestId
             ));
 
             try {
@@ -63,10 +65,12 @@ final class SeatingUnpublishedGuestDenialTest extends TestCase
             }
 
             self::assertSame($beforeReservations, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id=%d",
+                $guestId
             )));
             self::assertSame($beforeAudit, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$audit} WHERE guest_id=%d", $guestId
+                "SELECT COUNT(*) FROM {$audit} WHERE guest_id=%d",
+                $guestId
             )));
         } finally {
             if ($guestId > 0) {

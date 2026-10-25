@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 // Executed only by the WEM-83 integration test, as an independent PHP process.
 [$script, $gate, $guest, $table] = $argv;
 require_once '/var/www/html/wp-load.php';
@@ -8,7 +10,10 @@ $deadline = microtime(true) + 12;
 while (!is_file($gate) && microtime(true) < $deadline) {
     usleep(10000);
 }
-if (!is_file($gate)) { fwrite(STDERR, "GATE_TIMEOUT\n"); exit(2); }
+if (!is_file($gate)) {
+    fwrite(STDERR, "GATE_TIMEOUT\n");
+    exit(2);
+}
 global $wpdb;
 // SQL contention is an expected domain outcome; keep worker stdout protocol clean.
 $wpdb->hide_errors();

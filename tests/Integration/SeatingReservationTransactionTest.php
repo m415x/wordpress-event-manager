@@ -64,17 +64,24 @@ final class SeatingReservationTransactionTest extends TestCase
             $beforeActive = $count();
             $beforeAudit = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$audit} WHERE guest_id = %d AND event_term_id = %d",
-                $guestId, $eventId
+                $guestId,
+                $eventId
             ));
             $capacity = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT capacity FROM {$tables} WHERE id = %d", $tableId
+                "SELECT capacity FROM {$tables} WHERE id = %d",
+                $tableId
             ));
             $beforeAvailable = $capacity - $beforeActive;
 
             add_filter('query', $filter);
             try {
                 \WEM_Seating_Transaction::run(static function () use (
-                    $wpdb, $reservations, $guestId, $tableId, $eventId, &$insertObserved
+                    $wpdb,
+                    $reservations,
+                    $guestId,
+                    $tableId,
+                    $eventId,
+                    &$insertObserved
                 ): void {
                     $result = $wpdb->insert($reservations, [
                         'guest_id' => $guestId,
@@ -104,10 +111,18 @@ final class SeatingReservationTransactionTest extends TestCase
             }, $queries);
             $begin = $insert = $rollback = $commit = -1;
             foreach ($normalized as $index => $sql) {
-                if ($begin < 0 && preg_match('/^(START TRANSACTION|BEGIN)\\b/', $sql)) { $begin = $index; }
-                if ($insert < 0 && str_starts_with($sql, 'INSERT INTO') && str_contains($sql, strtoupper($reservations))) { $insert = $index; }
-                if ($rollback < 0 && str_starts_with($sql, 'ROLLBACK')) { $rollback = $index; }
-                if ($commit < 0 && str_starts_with($sql, 'COMMIT')) { $commit = $index; }
+                if ($begin < 0 && preg_match('/^(START TRANSACTION|BEGIN)\\b/', $sql)) {
+                    $begin = $index;
+                }
+                if ($insert < 0 && str_starts_with($sql, 'INSERT INTO') && str_contains($sql, strtoupper($reservations))) {
+                    $insert = $index;
+                }
+                if ($rollback < 0 && str_starts_with($sql, 'ROLLBACK')) {
+                    $rollback = $index;
+                }
+                if ($commit < 0 && str_starts_with($sql, 'COMMIT')) {
+                    $commit = $index;
+                }
             }
             self::assertGreaterThanOrEqual(0, $begin, 'START TRANSACTION must execute.');
             self::assertGreaterThan($begin, $insert, 'INSERT must occur after transaction start.');
@@ -118,13 +133,15 @@ final class SeatingReservationTransactionTest extends TestCase
             $afterActive = $count();
             $afterAudit = (int) $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$audit} WHERE guest_id = %d AND event_term_id = %d",
-                $guestId, $eventId
+                $guestId,
+                $eventId
             ));
             self::assertSame($beforeActive, $afterActive, 'Rollback must restore active occupancy.');
             self::assertSame($beforeAvailable, $capacity - $afterActive, 'Rollback must restore derived availability.');
             self::assertSame($beforeAudit, $afterAudit, 'Rollback must not leave partial audit.');
             self::assertSame(0, (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id = %d", $guestId
+                "SELECT COUNT(*) FROM {$reservations} WHERE guest_id = %d",
+                $guestId
             )), 'No rolled-back reservation row may persist.');
         } finally {
             // Test-specific fixture only: never truncate/reset shared tables.
