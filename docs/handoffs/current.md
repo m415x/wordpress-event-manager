@@ -4,6 +4,15 @@
 
 Updated: 2026-10-25. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
 
+## 2026-10-23 — extraordinary P0 priority canceled; ordinary WEM-75 Harness v2 resumed
+
+- Client canceled improvements for the immediate 2026-10-23 event. This cancels **urgency only**, not the functional contracts or prior RED/GREEN evidence. P0 branch `feat/WEM-preissued-invitations-p0` is preserved without merge, closure or real-event issuance. Last user-observed focal GREEN: `PreissuedPrintableMappingTest.php` at `ce13f8d4cc545158debf55341b4c7bb73af5ecee`; substantial P0 gates remain (real InnoDB concurrency, independent QR decode, HTTP verification, private custody).
+- `dev` includes the infrastructure reuse policy via PR #13, merge `32c0fbd6651f67296100b769021bbd020fb3f3dd`. No new Docker/wp-env project per story or branch; preserve manual/PHPUnit database isolation and other projects' resources.
+- WEM-75 is `En curso`, feature branch `feat/WEM-75-atomic-reservations` compared with current `dev`: ahead 7 / behind 5, so reconcile integration base later without attributing prior gates to new SHA. WEM-81/T1 is `En curso` in Jira: candidate implementation `6e6251767febfd633f82e5e30753f02866d02a5a`; local T1 GREEN was user-reported, but exact executed RED/GREEN Jira comments and closure conditions require reconciliation, not manufactured status.
+- WEM-82/T2 remains `Por hacer` in Jira. Initial-reservation RED **test committed** at `bd83826747c5893004f45b82de634c2a1896665b`, but an actually executed behavioral RED was not recorded in Jira at this checkpoint. Precise restart: reconcile T1 evidence, transition T2 appropriately, execute the existing focused T2 RED on an already owned isolated InnoDB environment, record assertion/output+SHA, then implement the smallest GREEN without rerunning valid T1 probes. Jira WEM-75 comment 14031; WEM-82 comment 14032.
+- Approved WEM-75 dependency sequence: T1 WEM-81 → T2 WEM-82 → T3 WEM-83 (concurrency) → T4 WEM-84 (admin cancellation) → T5 WEM-85 (reassignment) → T6 WEM-86 (participation cancellation) → T7 WEM-87 (closure). Follow parent WEM-80 and WEM-41 dependencies for subsequent stories. WEM-34 stays `En Revisión` on its own contract and is not forced into this critical path.
+- This checkpoint is documentation-only; no production code, Docker services, tests or functional contracts were changed. Historical sections below may reference earlier plans; this dated decision takes precedence for current priority, but actual GitHub/Jira state must be rechecked before implementation.
+
 ## Canonical integration baseline
 
 - Canonical integrated functional merge: WEM-75/I2 [PR #15](https://github.com/m415x/wordpress-event-manager/pull/15), merge SHA `006f838fb31f65e3edf11013018487e8d7dd0173`. [CI post-merge run 40147674595](https://github.com/m415x/wordpress-event-manager/actions/runs/40147674595) **GREEN 2/2 on that merge SHA only**.
