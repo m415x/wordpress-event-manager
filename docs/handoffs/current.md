@@ -1,4 +1,4 @@
-# Current operational handoff — WEM-74 I1 integrated; WEM-73 custody gates open
+# Current operational handoff — WEM-75/I2 integrated; WEM-76/I3 next candidate
 
 > **WEM-75/WEM-87 integrated closure evidence (2026-10-25):** PR [#15](https://github.com/m415x/wordpress-event-manager/pull/15) merged into `dev` at `006f838fb31f65e3edf11013018487e8d7dd0173`. Post-merge GitHub Actions [run 40147674595](https://github.com/m415x/wordpress-event-manager/actions/runs/40147674595) finished **GREEN 2/2**: PHP 8.3 lint/analysis/unit and WordPress isolated integration. Local partitioned integration gate: Core 140 tests / 3948 assertions, durable InnoDB 27 tests / 281 assertions, syntax PASS (Jira 14193); full suite partitioned sequentially to avoid WP test transaction state leaking into durable transactional assertions. The runner classifier fails closed on unknown tests and is covered in CI. WEM-81–86 focal RED/GREEN and T7 evidence are in Jira. This is **server-side seating reservation/administrative-service and test-harness delivery**, not the full WEM-41 guest-facing selection UI or operational GO for real invitations. Preserve separate PHPUnit/manual WordPress environments and credential custody requirements.
 
@@ -6,19 +6,15 @@ Updated: 2026-10-25. Start from GitHub `dev`, Jira and current code; this handof
 
 ## Canonical integration baseline
 
-- `dev`: WEM-73 PR #8 merged at `404748ee759480c3f4ae013ed2bdcaa16f1411bf`.
-- WEM-73 candidate HEAD: `9ae68e79182b`, GitHub Actions `39624597563` GREEN 2/2. Post-merge push `php-quality.yml` run #1022 GREEN 2/2; Jira 13821.
-- WEM-73 source-focused ZIP: 69 runtime files; SHA-256 `f24f5933227f8faf987a8c93fd3c99a592b27debdcb1e431b4c134635a266b6e`. Acceptance: clean WP ZIP installation, two-guest private URL/CSV, duplicate operation denied; separate persistence / SQL recon / encrypted archive restore synthetic PASS. See [durable WEM-73 contract](../architecture/private-bulk-invitations-wem73.md) and Jira 13792–13795, 13809–13821.
-- WEM-33 PR #6 merged previously at `79b6ec`; WEM-33 public read-only bearer resolver is implemented. Do not resurrect outdated branch-only WEM-33 closure claims.
-- Earlier integrated stories WEM-2, 12, 13, 14 and 32 remain covered by the docs index and architecture contracts. `main` is not the integration target.
-- This documentation branch `docs/WEM-73-post-merge-handoff` is docs-only and **must not** be mistaken for the unchanged candidate HEAD/ZIP. No QR integration was made.
+- Canonical integrated functional merge: WEM-75/I2 [PR #15](https://github.com/m415x/wordpress-event-manager/pull/15), merge SHA `006f838fb31f65e3edf11013018487e8d7dd0173`. [CI post-merge run 40147674595](https://github.com/m415x/wordpress-event-manager/actions/runs/40147674595) **GREEN 2/2 on that merge SHA only**.
+- Subsequent documentation-only commits: `38c1b7f177716801673ea6def2b81197825718e7` (handoff), `353f759f8b2b74aaaa4da57ae4c02216724cea2d` (testing). These are **not** the tested merge SHA, and the earlier CI must not be attributed to either commit or later documentation HEAD.
+- WEM-74/I1 [PR #12](https://github.com/m415x/wordpress-event-manager/pull/12) merged at `d5fd385dae4ba75f5fadbade6afa31cc660ba6ac`; foundational storage completed. WEM-75/I2 adds transactional single-seat reservation, race/overcapacity protection, administrative cancellation/reassignment, and participation cancellation with audit. **Neither I1 nor I2 delivers public seating projection, privacy controls or guest selector.**
+- Prior credential milestones remain distinct: WEM-33 bearer/read-only invitation; WEM-34 QR-local packaging; WEM-73 private bulk URL/CSV and unresolved real-event custody. WEM-72 repeatability remains separate; WEM-75 runner partition did not change movement business logic or production transaction guards.
+- **Next candidate, not started:** [WEM-76/I3](https://trail-running-workout-planning.atlassian.net/browse/WEM-76) (`Por hacer`, I2 dependency satisfied): bearer-scoped seating read and own-initial-reservation boundary, privacy consent and minimized member projection. Read [approved WEM-41 contract](../architecture/seating-reservations-wem41.md), then confirm Jira comments, blockers and latest remote `dev` before proposing implementation. I4 public Spanish selector follows I3; I5 admin management may proceed separately after I2.
 
-## Documentation-only checkpoint — Docker/wp-env reuse policy (2026-10-23)
+## Docker/wp-env infrastructure reuse
 
-- Separate documentation branch `docs/WEM-infrastructure-reuse-policy` from current `dev`, independent of P0 preissued-invitation implementation and WEM-82/T2.
-- `AGENTS.md`, `docs/agent-harness.md`, `docs/testing.md`: reuse-first inventory and ownership, disposable database isolation, manual/PHPUnit separation, CI preference, narrow exceptions, and selective retirement requiring evidence and express authorization. This is **documentation only**; no Docker/Compose action, script/config change, RED/GREEN, or application-code change is claimed.
-- Fresh executors must read the policy on integrated `dev`, not infer a specific Compose project or port from temporary observations. Docs branch requires scoped diff review, PR/CI and integration verification before this becomes canonical on `dev`.
-- P0 print work remains urgent and independent, with no authorization to emit real credentials until WEM-73 custody gates are met.
+Harness v2 in [AGENTS.md](../../AGENTS.md), [agent harness](../agent-harness.md) and [testing guide](../testing.md) is integrated policy: inventory and reuse before startup, manual/PHPUnit database isolation, avoid a Compose project per story, prefer CI, preserve evidence and obtain express authorization for selective destructive retirement. The policy is not a pending documentation branch. No Docker lifecycle operation is authorized by this handoff.
 
 ## Functional delivery status
 
@@ -28,21 +24,12 @@ Public bearer possession grants only the WEM-33 minimal read-only public view. C
 
 **No operational GO for real guest credentials yet.** Appoint custodian and replacement; confirm server PHP 8.3, private persistent POSIX volume, 0700/0600, administrator/host access, off-host encrypted backup with key custody, consistent MySQL backup/restore, sensitive HTTP/access/error log policy, confidential delivery channel, documented retention and deletion deadline. Synthetic Docker volume restore is not a full WordPress restore. See WEM-73 contract/runbook.
 
-## WEM-74 I1 — integrated into dev
-
-- WEM-41 approved I1 implements physical event tables, structured table reservations, consent, participation status, administrative audit storage, and a composite reservation-to-table/event FK. Runtime reservation transactions, public selection, administrative flows and privacy projection remain I2–I6, **not** completed by I1. The audit table is storage; append-only behavior must be enforced at the authorized writer in the later service.
-- PR [#12](https://github.com/m415x/wordpress-event-manager/pull/12) **merged into `dev`**: candidate HEAD `ef194be4270ebfbdc23898fecd1455b5158098b2`, merge commit `d5fd385dae4ba75f5fadbade6afa31cc660ba6ac`. Candidate [GitHub Actions #1175](https://github.com/m415x/wordpress-event-manager/actions/runs/39711127415) GREEN both PHP 8.3 lint/analysis/unit and isolated WordPress integration. A separate workflow associated with the merge SHA had **not** been returned when checked on 2026-10-22; do not invent post-merge GREEN.
-- Fresh-instance complete local PHPUnit gate: `d89704a1789e4f0e408a9846273e7b081ff8f076`, 73 unit/542 assertions and 142 integration/3950 assertions = 215 tests/4492 assertions, PASS. Product FK persistent InnoDB probe `5d3a908a9bca3b6061ade504184796894dd6b3ef` PASS: valid same-event reservation, cross-event/nonexistent-table rejection, retained rows on schema rerun, ON UPDATE/DELETE RESTRICT. Subsequent first-run movement focal on `58754f957775fdea69e28d9b3f3100cb7b2fd064` PASS 3 tests/27 assertions. These are **different commits** and do not prove repeated-run PHPUnit reliability.
-- General PHPUnit reusable environment exhibited movement-ledger count/projection drift on subsequent runs; isolated first-run tests passed without changes to movement business logic. WEM-72 owns repeatability investigation; do not erase or reset that environment to generate artificial GREEN.
-- Disposable Docker WEM-74 resources cleaned selectively after inventory and backups: 6 Compose projects, 18 containers, 12 exclusive volumes, 6 networks removed; WEM-73 custody and PHPUnit general preserved. Host-side evidence is retained under `~/WEM74-CLOSURE-EVIDENCE-20261021`; manifest `evidence-manifest-v3.sha256` verified PASS. Evidence is local, not stored in Git or the Docker volumes.
-- After merge: reconcile Jira WEM-74, verify any later `dev` CI and handoff; do not claim a merge-SHA post-merge run without evidence. Fresh focal movement probe on `58754f9` used an additional disposable local WP environment (port 9011) that must be selectively removed by exact Compose project after preserving its logs; this resource is NOT included in the six previously cleaned instances. Dependencies I2–I6 remain not implemented.
-
 ## Immediate next work
 
-1. WEM-73 technical and administrative closure is complete in Jira (`Listo`); PR #8 and documentation PR #9 are merged. Documentation merge on `dev`: `7c752a9348ad`, post-merge documentary CI #1026 GREEN 2/2 (Jira 13836–13839). Operational custody gates for real guest credentials remain open independently; **no production GO**.
-2. WEM-41 I1 is now being implemented in WEM-74, PR #12 Draft. Recheck remaining dependent stories and boundaries in Jira. Historical instruction: after this bounded docs-only harness reconciliation is integrated, resume [WEM-41](https://trail-running-workout-planning.atlassian.net/browse/WEM-41) discovery for the individual table-selection MVP. WEM-41 was `Por hacer` at the 2026-10-21 audit; recheck Jira issue, related stories, approvals and scope before implementation. Do not create duplicate seating stories or implement WEM-72.
-3. Preserve WEM-33/34/73 contracts and existing WEM-73 functional evidence. No QR, seating behavior or guest self check-in is part of this documentation change.
-4. Before cleanup, inventory ignored/untracked ZIPs, logs, databases and test helpers; preserve needed safe evidence and keep tokens, private CSVs and production data out of Git. The workflow is in [agent harness](../agent-harness.md).
+1. **Candidate:** [WEM-76/I3 — Bearer-scoped table members and privacy](https://trail-running-workout-planning.atlassian.net/browse/WEM-76), currently `Por hacer`. Verify live Jira status, accepted product decisions, dependency/blockers, current `dev`, and [WEM-41 I3 contract](../architecture/seating-reservations-wem41.md) before beginning a bounded RED/GREEN cycle. I3 is not implemented.
+2. **Closed upstream:** WEM-74/I1 and WEM-75/I2 are `Listo`; do not reopen them, rerun unchanged functional gates, or resurrect historical draft-PR / pending-I1 instructions. I2's tests and server-side services are complete, not public authorization or UI.
+3. **Security:** maintain WEM-33 active bearer and minimal own-guest projection independently of the new I3 seating boundary; preserve WEM-34 QR security, WEM-73 private CSV/operational custody, WEM-72 movement repeatability, and event-scoped staff/check-in authorization. No operational GO for real bearer distribution without custody gates.
+4. **Environment:** apply Harness v2 reuse-first policy, protect local files and secrets, never remove Docker resources without inventory and approval. No new stack merely for WEM-76.
 
 ## RED/GREEN evidence and fresh-chat continuity
 
