@@ -79,7 +79,7 @@ final class SeatingCapacityLockRetryTest extends TestCase
                  (int) $wpdb->get_var($wpdb->prepare(
                     "SELECT COUNT(*) FROM {$reservationName} WHERE guest_id=%d",
                     $guest
-                )
+                ))
             );
         } finally {
             if ($locker instanceof \mysqli) {
