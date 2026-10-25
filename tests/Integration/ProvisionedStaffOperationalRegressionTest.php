@@ -95,7 +95,10 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
             $this->dispatchMovement($guestA, $action);
             $response = json_decode($this->_last_response, true);
             self::assertIsArray($response);
-            self::assertTrue((bool) ($response['success'] ?? false), 'Provisioned operator action failed: ' . $action . '; response=' . wp_json_encode($response));
+            self::assertTrue(
+                (bool) ($response['success'] ?? false),
+                'Provisioned operator action failed: ' . $action . '; response=' . wp_json_encode($response)
+            );
         }
 
         $this->_last_response = '';
