@@ -71,18 +71,23 @@ final class SeatingBearerRevocationRaceTest extends TestCase
                     $callbackCalled = true;
                     // NOWAIT must reject a competing WEM-33-style guest lock.
                     $blocked = false;
+                    $errorCode = 0;
                     try {
                         $result = $second->query(
                             'SELECT ID FROM ' . $GLOBALS['wpdb']->posts .
                             ' WHERE ID=' . $guestId . ' FOR UPDATE NOWAIT'
                         );
-                        if ($result instanceof \mysqli_result) {
+                        if ($result === false) {
+                            $errorCode = (int) $second->errno;
+                            $blocked = in_array($errorCode, [1205, 3572], true);
+                        } elseif ($result instanceof \mysqli_result) {
                             $result->free();
                         }
                     } catch (\mysqli_sql_exception $error) {
-                        $blocked = in_array((int) $error->getCode(), [1205, 3572], true);
+                        $errorCode = (int) $error->getCode();
+                        $blocked = in_array($errorCode, [1205, 3572], true);
                     }
-                    self::assertTrue($blocked, 'Concurrent session must be unable to acquire the guest lock.');
+                    self::assertTrue($blocked, 'Concurrent guest lock must fail with 1205/3572; observed MySQL errno ' . $errorCode . '.');
                 }
             );
             self::assertTrue($callbackCalled, 'I2 currently ignores the optional post-lock callback: contractual RED.');
