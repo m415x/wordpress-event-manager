@@ -53,6 +53,9 @@ jobs:
       - name: TDD runner classification
         run: bash tests/Runner/tdd-runner.test.sh
 
+      - name: Integration partition runner regression
+        run: bash tests/Runner/integration-partition.test.sh
+
       - name: Ensure manual and PHPUnit environment separation
         run: bash tests/Runner/wp-db-isolation.test.sh
 
