@@ -63,7 +63,10 @@ final class SeatingInitialReservationDenialsTest extends TestCase
             } catch (\DomainException $expected) {
                 self::assertSame('Participation is canceled or invalid.', $expected->getMessage());
             }
-            self::assertSame(0, (int) $wpdb->get_var("SELECT COUNT(*) FROM {$reservations} WHERE table_id=" . (int) $tableId));
+            self::assertSame(
+                0,
+                 (int) $wpdb->get_var("SELECT COUNT(*) FROM {$reservations} WHERE table_id=" . (int) $tableId
+            );
 
             $firstId = (new \WEM_Seating_Reservation_Service())->reserve_initial($guests['active'], $tableId);
             self::assertGreaterThan(0, $firstId);
