@@ -29,7 +29,8 @@ final class SeatingReservationTransactionTest extends TestCase
 
         foreach ([$tables, $reservations, $audit] as $name) {
             $row = $wpdb->get_row($wpdb->prepare(
-                'SELECT ENGINE, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s',
+                'SELECT ENGINE, TABLE_TYPE FROM information_schema.TABLES ' .
+                    'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s',
                 $name
             ), ARRAY_A);
             self::assertIsArray($row, 'Persistent table required: ' . $name);
@@ -57,7 +58,8 @@ final class SeatingReservationTransactionTest extends TestCase
             $tableId = (int) $wpdb->insert_id;
             $count = static function () use ($wpdb, $reservations, $tableId): int {
                 return (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$reservations} WHERE table_id = %d AND status = 'active' AND active_slot = 1",
+                    "SELECT COUNT(*) FROM {$reservations}" .
+                        "WHERE table_id = %d AND status = 'active' AND active_slot = 1",
                     $tableId
                 ));
             };
@@ -114,7 +116,11 @@ final class SeatingReservationTransactionTest extends TestCase
                 if ($begin < 0 && preg_match('/^(START TRANSACTION|BEGIN)\\b/', $sql)) {
                     $begin = $index;
                 }
-                if ($insert < 0 && str_starts_with($sql, 'INSERT INTO') && str_contains($sql, strtoupper($reservations))) {
+                if (
+                    $insert < 0
+                    && str_starts_with($sql, 'INSERT INTO')
+                    && str_contains($sql, strtoupper($reservations))
+                ) {
                     $insert = $index;
                 }
                 if ($rollback < 0 && str_starts_with($sql, 'ROLLBACK')) {
@@ -126,7 +132,11 @@ final class SeatingReservationTransactionTest extends TestCase
             }
             self::assertGreaterThanOrEqual(0, $begin, 'START TRANSACTION must execute.');
             self::assertGreaterThan($begin, $insert, 'INSERT must occur after transaction start.');
-            self::assertGreaterThan($insert, $rollback, 'ROLLBACK must follow successful INSERT and injected exception.');
+            self::assertGreaterThan(
+                $insert,
+                $rollback,
+                 'ROLLBACK must follow successful INSERT and injected exception.'
+            );
             self::assertSame(-1, $commit, 'COMMIT must not execute on an exception path.');
 
             // Independent SELECTs after run() returns, outside its transaction.
