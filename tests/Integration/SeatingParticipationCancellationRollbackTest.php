@@ -34,7 +34,11 @@ final class SeatingParticipationCancellationRollbackTest extends TestCase
             $term = wp_insert_term('WEM86-fault-' . wp_generate_uuid4(), 'evento');
             self::assertFalse(is_wp_error($term));
             $eventId = (int)$term['term_id'];
-            $post = wp_insert_post(['post_type' => 'invitado','post_status' => 'publish','post_title' => 'WEM86 rollback'], true);
+            $post = wp_insert_post([
+                'post_type' => 'invitado',
+                'post_status' => 'publish',
+                'post_title' => 'WEM86 rollback'
+            ], true);
             self::assertFalse(is_wp_error($post));
             $guestId = (int)$post;
             self::assertFalse(is_wp_error(wp_set_object_terms($guestId, [$eventId], 'evento')));
@@ -44,7 +48,11 @@ final class SeatingParticipationCancellationRollbackTest extends TestCase
             $tableId = (int)$wpdb->insert_id;
             $reservationId = (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId);
             self::assertGreaterThan(0, $reservationId);
-            $actorId = (int)wp_create_user('wem86-fault-' . wp_generate_uuid4(), wp_generate_password(), 'wem86-fault@example.invalid');
+            $actorId = (int)wp_create_user(
+                'wem86-fault-' . wp_generate_uuid4(),
+                wp_generate_password(),
+                'wem86-fault@example.invalid'
+            );
             self::assertGreaterThan(0, $actorId);
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
@@ -73,7 +81,8 @@ final class SeatingParticipationCancellationRollbackTest extends TestCase
                 $reservationId
             )));
             self::assertSame(0, (int)$wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$participation} WHERE guest_id=%d AND event_term_id=%d AND participation_status='canceled'",
+                "SELECT COUNT(*) FROM {$participation} WHERE guest_id=%d AND event_term_id=%d" .
+                    "AND participation_status='canceled'",
                 $guestId,
                 $eventId
             )));
