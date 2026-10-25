@@ -34,7 +34,11 @@ final class SeatingParticipationCredentialInvarianceTest extends TestCase
             $term = wp_insert_term('WEM86-cancel-' . wp_generate_uuid4(), 'evento');
             self::assertFalse(is_wp_error($term));
             $eventId = (int) $term['term_id'];
-            $post = wp_insert_post(['post_type' => 'invitado','post_status' => 'publish','post_title' => 'WEM86 synthetic'], true);
+            $post = wp_insert_post([
+                'post_type' => 'invitado',
+                'post_status' => 'publish',
+                'post_title' => 'WEM86 synthetic'
+            ], true);
             self::assertFalse(is_wp_error($post));
             $guestId = (int) $post;
             self::assertFalse(is_wp_error(wp_set_object_terms($guestId, [$eventId], 'evento')));
@@ -46,7 +50,11 @@ final class SeatingParticipationCredentialInvarianceTest extends TestCase
             $tableId = (int) $wpdb->insert_id;
             $reservationId = (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId);
             self::assertGreaterThan(0, $reservationId);
-            $actorId = (int) wp_create_user('wem86-' . wp_generate_uuid4(), wp_generate_password(), 'wem86@example.invalid');
+            $actorId = (int) wp_create_user(
+                'wem86-' . wp_generate_uuid4(),
+                wp_generate_password(),
+                'wem86@example.invalid'
+            );
             self::assertGreaterThan(0, $actorId);
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
@@ -69,7 +77,9 @@ final class SeatingParticipationCredentialInvarianceTest extends TestCase
             } catch (\Throwable $caught) {
                 $failure = $caught;
             }
-            self::assertNull($failure, 'Authorized cancellation failed: ' . ($failure ? $failure->getMessage() : 'none'));
+            self::assertNull(
+                $failure, 'Authorized cancellation failed: ' . ($failure ? $failure->getMessage() : 'none')
+            );
             $after = $wpdb->get_results($wpdb->prepare(
                 "SELECT * FROM {$credentials} WHERE guest_id=%d ORDER BY sequence",
                 $guestId
