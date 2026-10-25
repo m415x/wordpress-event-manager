@@ -34,7 +34,11 @@ final class SeatingAdministrativeReassignmentRollbackTest extends TestCase
             $term = wp_insert_term('WEM85-rollback-' . wp_generate_uuid4(), 'evento');
             self::assertFalse(is_wp_error($term));
             $eventId = (int) $term['term_id'];
-            $post = wp_insert_post(['post_type' => 'invitado','post_status' => 'publish','post_title' => 'WEM85 rollback'], true);
+            $post = wp_insert_post([
+                'post_type' => 'invitado',
+                'post_status' => 'publish',
+                'post_title' => 'WEM85 rollback'
+            ], true);
             self::assertFalse(is_wp_error($post));
             $guestId = (int) $post;
             self::assertFalse(is_wp_error(wp_set_object_terms($guestId, [$eventId], 'evento')));
@@ -48,7 +52,11 @@ final class SeatingAdministrativeReassignmentRollbackTest extends TestCase
             }
             $reservationId = (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableIds[0]);
             self::assertGreaterThan(0, $reservationId);
-            $actorId = (int) wp_create_user('wem85-audit-' . wp_generate_uuid4(), wp_generate_password(), 'wem85-audit@example.invalid');
+            $actorId = (int) wp_create_user(
+                'wem85-audit-' . wp_generate_uuid4(),
+                wp_generate_password(),
+                'wem85-audit@example.invalid'
+            );
             self::assertGreaterThan(0, $actorId);
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
