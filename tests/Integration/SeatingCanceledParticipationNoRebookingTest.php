@@ -32,7 +32,11 @@ final class SeatingCanceledParticipationNoRebookingTest extends TestCase
             $term = wp_insert_term('WEM86-rebook-' . wp_generate_uuid4(), 'evento');
             self::assertFalse(is_wp_error($term));
             $termId = (int)$term['term_id'];
-            $post = wp_insert_post(['post_type' => 'invitado','post_status' => 'publish','post_title' => 'WEM86 rebook'], true);
+            $post = wp_insert_post([
+                'post_type' => 'invitado',
+                'post_status' => 'publish',
+                'post_title' => 'WEM86 rebook'
+            ], true);
             self::assertFalse(is_wp_error($post));
             $guestId = (int)$post;
             self::assertFalse(is_wp_error(wp_set_object_terms($guestId, [$termId], 'evento')));
@@ -41,7 +45,11 @@ final class SeatingCanceledParticipationNoRebookingTest extends TestCase
             ]));
             $tableId = (int)$wpdb->insert_id;
             self::assertGreaterThan(0, (new \WEM_Seating_Reservation_Service())->reserve_initial($guestId, $tableId));
-            $actorId = (int)wp_create_user('wem86-rebook-' . wp_generate_uuid4(), wp_generate_password(), 'wem86-rebook@example.invalid');
+            $actorId = (int)wp_create_user(
+                'wem86-rebook-' . wp_generate_uuid4(),
+                wp_generate_password(),
+                'wem86-rebook@example.invalid'
+            );
             self::assertGreaterThan(0, $actorId);
             (new \WP_User($actorId))->set_role('administrator');
             wp_set_current_user($actorId);
