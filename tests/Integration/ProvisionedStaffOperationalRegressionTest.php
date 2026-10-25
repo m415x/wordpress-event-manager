@@ -12,6 +12,11 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
     {
         parent::setUp();
 
+        // Ajax dispatch invokes admin_init. WordPress Core's background
+        // update probe depends on wordpress.org and is unrelated to this
+        // authorization regression; disable it only within this fixture.
+        remove_action('admin_init', '_maybe_update_core');
+
         require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
 
         if (!taxonomy_exists('evento')) {
@@ -31,12 +36,28 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
         $shortcodes->register_shortcodes();
     }
 
+    protected function tearDown(): void
+    {
+        // Restore the original hook for later integration test classes.
+        add_action('admin_init', '_maybe_update_core');
+        parent::tearDown();
+    }
+
     public function testProvisionedViewerAndOperatorPreserveScopedOperationalBoundaries(): void
     {
         $eventAId = $this->createEvent('WEM-48 Event A');
         $eventBId = $this->createEvent('WEM-48 Event B');
         $guestA = $this->createGuest('WEM-48-A', 'visible-a', $eventAId);
         $guestB = $this->createGuest('WEM-48-B', 'hidden-b', $eventBId);
+        // WordPress factories can reuse term/post IDs between PHPUnit runs,
+        // while the movement ledger keeps durable rows. Select a new event
+        // for this synthetic guest when that identity pair is contaminated.
+        $ledger = new \WEM_Movement_Ledger();
+        for ($attempt = 0; $ledger->find_by_guest_event($guestA, $eventAId) !== []; $attempt++) {
+            self::assertLessThan(100, $attempt, 'No clean synthetic event identity for operator fixture.');
+            $eventAId = $this->createEvent('WEM-48 Event A ' . wp_generate_uuid4());
+            self::assertNotWPError(wp_set_object_terms($guestA, [$eventAId], 'evento', false));
+        }
 
         $staffId = self::factory()->user->create(['role' => 'subscriber']);
         self::assertTrue(
@@ -74,7 +95,10 @@ final class ProvisionedStaffOperationalRegressionTest extends WP_Ajax_UnitTestCa
             $this->dispatchMovement($guestA, $action);
             $response = json_decode($this->_last_response, true);
             self::assertIsArray($response);
-            self::assertTrue((bool) $response['success'], 'Provisioned operator action failed: ' . $action);
+            self::assertTrue(
+                (bool) ($response['success'] ?? false),
+                'Provisioned operator action failed: ' . $action . '; response=' . wp_json_encode($response)
+            );
         }
 
         $this->_last_response = '';

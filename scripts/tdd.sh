@@ -66,28 +66,75 @@ if [[ ${CI:-} != true && ${WEM_TDD_SKIP_SYNC:-0} != 1 ]]; then
 fi
 
 wp_env_bin=${WEM_WP_ENV_BIN:-wp-env}
-# wp-env mounts plugins: ["."] under the checkout directory name.
 repo_root=$(git rev-parse --show-toplevel) || exit 2
 plugin_dir=$(basename "$repo_root")
 container_cwd="wp-content/plugins/$plugin_dir"
 configuration=phpunit.xml.dist
 if [[ $suite == integration ]]; then configuration=phpunit.integration.xml.dist; fi
-
-# Dedicated PHPUnit WordPress installation: its database must never be
-# shared with the manual site at localhost:8890.
 wp_env_config='.wp-env.phpunit.json'
 base_command=("$wp_env_bin" run cli "--config=$wp_env_config" "--env-cwd=$container_cwd")
 phpunit_command=("${base_command[@]}" vendor/bin/phpunit -c "$configuration")
 if [[ -n $filter ]]; then phpunit_command+=(--filter "$filter"); fi
 if [[ -n $test_path ]]; then phpunit_command+=("$test_path"); fi
 
-log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
-trap 'rm -f "$log"' EXIT
+# Full integration: classify every *Test.php exactly once and run the two
+# transaction models in separate, sequential PHPUnit CLI invocations.
+# Focused paths keep the original single-process execution contract.
+integration_configs=()
+cleanup_integration_configs() {
+  local file
+  for file in "${integration_configs[@]}"; do rm -f "$file"; done
+}
+if [[ $suite == integration && -z $test_path ]]; then
+  core_manifest=$(mktemp) || exit 2
+  durable_manifest=$(mktemp) || { rm -f "$core_manifest"; exit 2; }
+  integration_configs+=("$core_manifest" "$durable_manifest")
+  if ! bash scripts/classify-integration-tests.sh tests/Integration "$core_manifest" "$durable_manifest" >/dev/null; then
+    cleanup_integration_configs
+    printf 'ERROR\n' >&2
+    exit 1
+  fi
+  mapfile -t core_files < "$core_manifest"
+  mapfile -t durable_files < "$durable_manifest"
+  # XML must live at repository root so PHPUnit resolves bootstrap and
+  # test file paths relative to the same root as the canonical config.
+  for group in core durable; do
+    cfg=$(mktemp "$repo_root/.wem-integration-${group}.XXXXXX.xml") || exit 2
+    integration_configs+=("$cfg")
+    printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
+      '<phpunit bootstrap="tests/integration-bootstrap.php" colors="true" failOnWarning="true">' \
+      '  <testsuites><testsuite name="integration">' > "$cfg"
+    if [[ $group == core ]]; then selected=("${core_files[@]}"); else selected=("${durable_files[@]}"); fi
+    for name in "${selected[@]}"; do
+      printf '    <file>%s</file>\n' "$name" >> "$cfg"
+    done
+    printf '%s\n' '  </testsuite></testsuites></phpunit>' >> "$cfg"
+  done
+fi
 
-set +e
-"${phpunit_command[@]}" >"$log" 2>&1
-test_exit=$?
-set -e
+log=$(mktemp) || { cleanup_integration_configs; printf 'ERROR\n' >&2; exit 2; }
+trap 'rm -f "$log"; cleanup_integration_configs' EXIT
+
+test_exit=0
+if (("${#integration_configs[@]}" > 0)); then
+  # No concurrent WordPress Core bootstraps or PHPUnit processes.
+  for cfg in "${integration_configs[@]}"; do
+    if [[ $cfg != *.xml ]]; then continue; fi
+    if ! grep -q '<file>' "$cfg"; then continue; fi
+    command=("${base_command[@]}" vendor/bin/phpunit -c "$(basename "$cfg")")
+    if [[ -n $filter ]]; then command+=(--filter "$filter"); fi
+    set +e
+    "${command[@]}" >>"$log" 2>&1
+    status=$?
+    set -e
+    if (( status != 0 )); then test_exit=$status; fi
+  done
+else
+  set +e
+  "${phpunit_command[@]}" >"$log" 2>&1
+  test_exit=$?
+  set -e
+fi
 
 show_details() {
   if [[ $verbose == true ]] || [[ $mode == diagnose ]]; then
@@ -125,7 +172,7 @@ fi
 static_cmd='set -eu; php -l wordpress-event-manager.php >/dev/null; find includes tests -type f -name "*.php" -exec sh -c '\''for file do php -l "$file" >/dev/null || exit 1; done'\'' sh {} +'
 phpunit_log=$log
 syntax_log=$(mktemp) || { printf 'ERROR\n' >&2; exit 2; }
-trap 'rm -f "$phpunit_log" "$syntax_log"' EXIT
+trap 'rm -f "$phpunit_log" "$syntax_log"; cleanup_integration_configs' EXIT
 set +e
 "${base_command[@]}" sh -lc "$static_cmd" >"$syntax_log" 2>&1
 static_exit=$?

@@ -1,6 +1,8 @@
 # Current operational handoff — WEM-74 I1 integrated; WEM-73 custody gates open
 
-Updated: 2026-10-22. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
+> **WEM-87/T7 pre-merge gate verified (2026-10-25, feature branch only):** WEM-81–86 focal RED/GREEN records are in Jira. The original WordPress PHPUnit shared-connection contamination was addressed through exhaustive, sequential integration partitioning (Core-managed tests and durable InnoDB tests), without weakening production transaction guards. Local integration GREEN: 140 Core tests / 3948 assertions plus 27 durable tests / 281 assertions and PHP syntax PASS (Jira 14193). After test-fixture and PHPCS-only corrections, GitHub Actions run [#1308](https://github.com/m415x/wordpress-event-manager/actions/runs/40147217278) on SHA `7a953b124f00e53a5d102915a551656022603f89` finished **GREEN 2/2**: PHP 8.3 lint/analysis/unit and WordPress isolated integration. The classifier regression is included in the PHP quality job. **WEM-75 has not yet been merged into `dev`; post-merge CI is not yet established.** Complete PR review, merge, post-merge checks, documentary reconciliation and Jira closure before declaring WEM-87 Listo. Preserve `.wp-env.phpunit.json` isolation from the manual site.
+
+Updated: 2026-10-25. Start from GitHub `dev`, Jira and current code; this handoff is orientation, not higher authority.
 
 ## Canonical integration baseline
 
