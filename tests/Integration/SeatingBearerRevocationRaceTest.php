@@ -29,7 +29,7 @@ final class SeatingBearerRevocationRaceTest extends TestCase
 
         try {
             $event = wp_insert_term('T5-' . wp_generate_uuid4(), 'evento');
-            self::assertNotWPError($event);
+            self::assertFalse(is_wp_error($event), 'The event fixture must be a real taxonomy term.');
             $eventId = (int) $event['term_id'];
             $guestId = (int) wp_insert_post([
                 'post_type' => 'invitado',
