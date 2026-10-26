@@ -278,10 +278,11 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             // Readiness is NOT the evidence. Observe the exact worker connection
             // in InnoDB LOCK WAIT, while coordinator owns canonical guest lock.
             $waitForLock=static function ($path) use ($wpdb): int {
-                $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError='';
+                $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError=''; $lastStage='';
                 do {
                     $notice=trim((string)file_get_contents($path));
-                    if (preg_match('/^READY:(\d+)$/',$notice,$found)) {
+                    $lastStage=$notice;
+                    if (preg_match('/^(?:READY|PREFLIGHT_OK|PREFLIGHT_DENIED):(\d+)$/',$notice,$found)) {
                         $thread=(int)$found[1];
                         $state=$wpdb->get_var($wpdb->prepare(
                             "SELECT trx_state FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id=%d",
@@ -293,7 +294,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                     }
                     usleep(10000); // polling interval only, never evidence of ordering
                 } while (microtime(true)<$deadline);
-                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)$wpdb->get_var('SELECT COUNT(*) FROM information_schema.INNODB_TRX') . '; mysql_errno=' . ($wpdb->dbh instanceof \mysqli ? $wpdb->dbh->errno : 'unknown') . '.');
+                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; stage=' . $lastStage . '; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)$wpdb->get_var('SELECT COUNT(*) FROM information_schema.INNODB_TRX') . '; mysql_errno=' . ($wpdb->dbh instanceof \mysqli ? $wpdb->dbh->errno : 'unknown') . '.');
             };
             $reserveThread=$waitForLock($reservationReady);
             $revokeWorker=proc_open(
