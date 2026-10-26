@@ -13,6 +13,7 @@ final class SeatingPublicHttpSecurityTest extends TestCase
 {
     public function testI3PublicOperationsRequireDedicatedSecurityBoundary(): void
     {
+        require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
         self::assertTrue(
             class_exists('WEM_Seating_Public_Http_Route'),
             'WEM-93 RED: public I3 HTTP route with fail-closed authentication and safe headers is absent.'
