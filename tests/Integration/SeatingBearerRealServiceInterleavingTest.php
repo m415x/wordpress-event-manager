@@ -66,7 +66,7 @@ final class SeatingBearerRealServiceInterleavingTest extends TestCase
                     fclose($pipes[2]);
                     $exit = proc_close($process);
                     \PHPUnit\Framework\Assert::assertSame(0, $exit, 'Real WEM-33 worker failed: ' . $stderr);
-                    \PHPUnit\Framework\Assert::assertSame("REVOKED\\n", $stdout);
+                    \PHPUnit\Framework\Assert::assertSame("REVOKED", trim($stdout));
                     $this->revoked=true;
                     return $identity;
                 }
