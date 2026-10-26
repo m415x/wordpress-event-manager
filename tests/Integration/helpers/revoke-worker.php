@@ -39,7 +39,7 @@ if (!is_array($guestRow) || get_post_type($guestId) !== 'invitado') {
 }
 $readyPath = $argv[3] ?? '';
 if (is_string($readyPath) && $readyPath !== '') {
-    if (!is_file($readyPath) || file_put_contents($readyPath, 'READY') === false) {
+    if (!is_file($readyPath) || file_put_contents($readyPath, ($argv[4] ?? '') === 'session' ? 'READY:' . (string)$wpdb->get_var('SELECT CONNECTION_ID()') : 'READY') === false) {
         fwrite(STDERR, "Worker readiness handshake failed\n");
         exit(4);
     }
