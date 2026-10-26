@@ -42,9 +42,9 @@ final class SeatingBearerPreflightRevocationTest extends TestCase
 
             $host = DB_HOST; $port = 3306;
             if (preg_match('/^([^:]+):(\\d+)$/', $host, $m)) {$host=$m[1];$port=(int)$m[2];}
-            $other = new \\mysqli($host, DB_USER, DB_PASSWORD, DB_NAME, $port);
+            $other = new \mysqli($host, DB_USER, DB_PASSWORD, DB_NAME, $port);
             self::assertNotSame($wpdb->dbh->thread_id, $other->thread_id);
-            $adapter = new class($other, $guest, $admin) extends \\WEM_Seating_Bearer_Initial_Reservation {
+            $adapter = new class($other, $guest, $admin) extends \WEM_Seating_Bearer_Initial_Reservation {
                 private $other;
                 private $guest;
                 private $admin;
@@ -54,20 +54,20 @@ final class SeatingBearerPreflightRevocationTest extends TestCase
                 }
                 protected function resolve_identity($bearer) {
                     $identity=parent::resolve_identity($bearer);
-                    \\PHPUnit\\Framework\\Assert::assertIsArray($identity, 'Preflight must have resolved an active bearer.');
-                    \\PHPUnit\\Framework\\Assert::assertSame($this->guest, $identity['guest_id']);
-                    \\PHPUnit\\Framework\\Assert::assertTrue($this->other->begin_transaction());
+                    \PHPUnit\\Framework\\Assert::assertIsArray($identity, 'Preflight must have resolved an active bearer.');
+                    \PHPUnit\\Framework\\Assert::assertSame($this->guest, $identity['guest_id']);
+                    \PHPUnit\\Framework\\Assert::assertTrue($this->other->begin_transaction());
                     $lock=$this->other->query('SELECT ID FROM ' . $GLOBALS['wpdb']->posts . ' WHERE ID=' . $this->guest . ' FOR UPDATE');
-                    \\PHPUnit\\Framework\\Assert::assertInstanceOf(\\mysqli_result::class, $lock);
+                    \PHPUnit\\Framework\\Assert::assertInstanceOf(\mysqli_result::class, $lock);
                     $lock->free();
-                    $credentials=\\WEM_Invitation_Credential_Schema::table_name();
+                    $credentials=\WEM_Invitation_Credential_Schema::table_name();
                     $stmt=$this->other->prepare("UPDATE {$credentials} SET status='revoked', active_slot=NULL, invalidated_at=NOW(), invalidated_by_user_id=? WHERE guest_id=? AND token_digest=? AND status='active' AND active_slot=1");
                     $digest=hash('sha256',$bearer);
                     $stmt->bind_param('iis',$this->admin,$this->guest,$digest);
-                    \\PHPUnit\\Framework\\Assert::assertTrue($stmt->execute());
-                    \\PHPUnit\\Framework\\Assert::assertSame(1,$stmt->affected_rows);
+                    \PHPUnit\\Framework\\Assert::assertTrue($stmt->execute());
+                    \PHPUnit\\Framework\\Assert::assertSame(1,$stmt->affected_rows);
                     $stmt->close();
-                    \\PHPUnit\\Framework\\Assert::assertTrue($this->other->commit());
+                    \PHPUnit\\Framework\\Assert::assertTrue($this->other->commit());
                     $this->revoked=true;
                     return $identity;
                 }
@@ -75,10 +75,10 @@ final class SeatingBearerPreflightRevocationTest extends TestCase
             try {
                 $adapter->reserve_for_bearer($bearer, $table);
                 self::fail('A revoked bearer cannot authorize an I2 write after stale preflight.');
-            } catch (\\DomainException $expected) {
+            } catch (\DomainException $expected) {
                 self::assertTrue($adapter->revoked, 'Revocation must happen within preflight seam.');
                 self::assertSame(0, (int)$wpdb->get_var($wpdb->prepare(
-                    'SELECT COUNT(*) FROM ' . \\WEM_Table_Reservation_Schema::table_name() . ' WHERE guest_id=%d', $guest
+                    'SELECT COUNT(*) FROM ' . \WEM_Table_Reservation_Schema::table_name() . ' WHERE guest_id=%d', $guest
                 )));
             }
         } finally {
