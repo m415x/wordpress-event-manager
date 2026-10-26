@@ -37,6 +37,13 @@ if (!is_array($guestRow) || get_post_type($guestId) !== 'invitado') {
         . ', get_post_type=' . var_export(get_post_type($guestId), true) . "\n");
     exit(3);
 }
+$readyPath = $argv[3] ?? '';
+if (is_string($readyPath) && $readyPath !== '') {
+    if (!is_file($readyPath) || file_put_contents($readyPath, 'READY') === false) {
+        fwrite(STDERR, "Worker readiness handshake failed\n");
+        exit(4);
+    }
+}
 try {
     (new WEM_Invitation_Credential_Service())->revoke($guestId, $adminId);
     fwrite(STDOUT, "REVOKED\n");
