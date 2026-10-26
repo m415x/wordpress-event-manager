@@ -3,7 +3,14 @@ declare(strict_types=1);
 
 // Dedicated PHP worker: separate WordPress bootstrap and wpdb connection.
 // Not a PHPUnit test file; invoked by a focused integration test.
-require_once dirname(__DIR__, 2) . '/integration-bootstrap.php';
+$wpLoad = dirname(__DIR__, 6) . '/wp-load.php';
+if (!is_file($wpLoad)) {
+    fwrite(STDERR, 'WordPress runtime not found: ' . $wpLoad . "\n");
+    exit(2);
+}
+// Do not launch the WordPress PHPUnit bootstrap in a second process: it
+// reinstalls/resets test tables and destroys the first process's fixtures.
+require_once $wpLoad;
 require_once dirname(__DIR__, 3) . '/wordpress-event-manager.php';
 if (!function_exists('get_post_type')) {
     fwrite(STDERR, "WordPress unavailable\n");
@@ -27,7 +34,7 @@ if (!is_array($guestRow) || get_post_type($guestId) !== 'invitado') {
         . ', guest_id=' . $guestId
         . ', post_type_registered=' . (post_type_exists('invitado') ? 'yes' : 'no')
         . ', raw_guest=' . json_encode($guestRow)
-        . ', get_post_type=' . var_export(get_post_type($guestId), true) . "\\n");
+        . ', get_post_type=' . var_export(get_post_type($guestId), true) . "\n");
     exit(3);
 }
 try {
