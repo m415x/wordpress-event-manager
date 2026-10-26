@@ -17,6 +17,22 @@ final class WEM_Seating_Public_Http_Route
         ];
     }
 
+    /**
+     * Internal HTTP response contract. No public hook is registered yet.
+     * Until a real abuse policy and authorized dispatch are tested,
+     * every operation fails closed with an indistinguishable denial.
+     */
+    public function handle_operation($operation, $bearer, $parameters = [])
+    {
+        $denial = $this->deny_authentication();
+
+        return [
+            'status' => $denial['status'],
+            'headers' => $this->security_headers(),
+            'body' => $denial['body'],
+        ];
+    }
+
     public function deny_authentication()
     {
         return ['status' => 403, 'body' => ['code' => 'seating_access_unavailable']];
