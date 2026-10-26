@@ -4,6 +4,9 @@ namespace WEM\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
 
+// PHPUnit's file-scoped runner does not autoload neighboring test classes.
+require_once __DIR__ . '/SeatingBearerRealConcurrentServicesTest.php';
+
 /**
  * WEM-92/T5: an acceptable race result is not evidence of both race orders.
  * RED requires separately named witnesses with deterministic barriers.
