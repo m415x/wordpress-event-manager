@@ -28,30 +28,39 @@ final class WEM_Seating_Public_Abuse_Guard
         $expires = $now + $windowSeconds;
         $table = $wpdb->options;
 
-        // Unique option_name serializes increments across PHP workers. A
-        // stale bucket resets in the same atomic SQL statement.
+        // The unique option_name row serializes increments. LAST_INSERT_ID(expr)
+        // records THIS connection's awarded sequence, rather than reading a
+        // subsequently changed shared value from another worker.
         $updated = $wpdb->query($wpdb->prepare(
             "INSERT INTO {$table} (option_name, option_value, autoload)
              VALUES (%s, %s, 'no')
              ON DUPLICATE KEY UPDATE option_value =
-                IF(CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED) <= %d,
-                   VALUES(option_value),
-                   CONCAT(CAST(SUBSTRING_INDEX(option_value, ':', 1) AS UNSIGNED) + 1,
-                          ':', SUBSTRING_INDEX(option_value, ':', -1)))",
-            $option, '1:' . $expires, $now
+               CONCAT(
+                 LAST_INSERT_ID(
+                   IF(CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED) <= %d,
+                      1,
+                      CAST(SUBSTRING_INDEX(option_value, ':', 1) AS UNSIGNED) + 1)
+                 ),
+                 ':',
+                 IF(CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED) <= %d,
+                    %d,
+                    CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED))
+               )",
+            $option, '1:' . $expires, $now, $now, $expires
         ));
         if ($updated === false) {
             return false;
         }
 
-        $value = $wpdb->get_var($wpdb->prepare(
-            "SELECT option_value FROM {$table} WHERE option_name=%s",
-            $option
-        ));
-        if (!is_string($value) || !preg_match('/^([0-9]+):([0-9]+)$/', $value, $matches)) {
+        // A fresh INSERT (affected rows=1) owns sequence 1; an UPDATE uses
+        // the connection-local sequence from its atomic row update.
+        if ($updated === 1) {
+            return true;
+        }
+        $sequence = $wpdb->get_var('SELECT LAST_INSERT_ID()');
+        if ($sequence === null || $wpdb->last_error !== '') {
             return false;
         }
-
-        return (int)$matches[2] > $now && (int)$matches[1] <= $limit;
+        return (int)$sequence > 0 && (int)$sequence <= $limit;
     }
 }
