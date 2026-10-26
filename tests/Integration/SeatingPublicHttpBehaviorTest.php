@@ -26,7 +26,9 @@ final class SeatingPublicHttpBehaviorTest extends TestCase
             self::assertSame('private, no-store', $response['headers']['Cache-Control']);
             self::assertSame('no-referrer', $response['headers']['Referrer-Policy']);
             self::assertSame('noindex, nofollow, noarchive', $response['headers']['X-Robots-Tag']);
-            self::assertStringNotContainsString((string)$bearer, json_encode($response), $name);
+            if (is_string($bearer) && $bearer !== '') {
+                self::assertStringNotContainsString($bearer, json_encode($response), $name);
+            }
             $responses[] = $response;
         }
         self::assertSame($responses[0], $responses[1]);
