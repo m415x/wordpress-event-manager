@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 // Dedicated PHP worker: separate WordPress bootstrap and wpdb connection.
 // Not a PHPUnit test file; invoked by a focused integration test.
-require_once dirname(__DIR__) . '/integration-bootstrap.php';
-require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+require_once dirname(__DIR__, 2) . '/integration-bootstrap.php';
+require_once dirname(__DIR__, 3) . '/wordpress-event-manager.php';
 if (!function_exists('get_post_type')) {
     fwrite(STDERR, "WordPress unavailable\n");
     exit(2);
