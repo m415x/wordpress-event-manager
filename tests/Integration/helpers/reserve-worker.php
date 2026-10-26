@@ -5,6 +5,7 @@ $wpLoad = dirname(__DIR__, 6) . '/wp-load.php';
 if (!is_file($wpLoad)) { fwrite(STDERR, "WordPress runtime unavailable\n"); exit(2); }
 require_once $wpLoad;
 require_once dirname(__DIR__, 3) . '/wordpress-event-manager.php';
+if (!taxonomy_exists('evento')) { (new WEM_Taxonomy_Manager())->register_taxonomy(); }
 if (!post_type_exists('invitado')) { (new WEM_CPT_Manager())->register_cpt(); }
 $token = $argv[1] ?? '';
 $tableId = isset($argv[2]) ? (int)$argv[2] : 0;
