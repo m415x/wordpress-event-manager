@@ -282,6 +282,9 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                 do {
                     $notice=trim((string)file_get_contents($path));
                     $lastStage=$notice;
+                    if (strpos($notice, 'PREFLIGHT_DENIED:') === 0) {
+                        return -1;
+                    }
                     if (preg_match('/^(?:READY|PREFLIGHT_OK|PREFLIGHT_DENIED):(\d+)$/',$notice,$found)) {
                         $thread=(int)$found[1];
                         $state=$wpdb->get_var($wpdb->prepare(
@@ -296,7 +299,14 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                 } while (microtime(true)<$deadline);
                 self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; stage=' . $lastStage . '; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)$wpdb->get_var('SELECT COUNT(*) FROM information_schema.INNODB_TRX') . '; mysql_errno=' . ($wpdb->dbh instanceof \mysqli ? $wpdb->dbh->errno : 'unknown') . '.');
             };
+            if (trim((string)file_get_contents($reservationReady)) === 'PREFLIGHT_DENIED') {
+                self::fail('Reserve worker denied preflight before I2.');
+            }
             $reserveThread=$waitForLock($reservationReady);
+            if ($reserveThread === -1) {
+                $diagnostic = stream_get_contents($reservationPipes[2]);
+                self::fail('Reserve worker preflight failed: ' . $diagnostic);
+            }
             $revokeWorker=proc_open(
                 [PHP_BINARY,__DIR__ . '/helpers/revoke-worker.php',
                     (string)$guest,(string)$admin,$revokeReady,'session'],
