@@ -278,7 +278,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             // Readiness is NOT the evidence. Observe the exact worker connection
             // in InnoDB LOCK WAIT, while coordinator owns canonical guest lock.
             $waitForLock=static function ($path) use ($wpdb): int {
-                $deadline=microtime(true)+8.0; $thread=0;
+                $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError='';
                 do {
                     $notice=trim((string)file_get_contents($path));
                     if (preg_match('/^READY:(\d+)$/',$notice,$found)) {
@@ -287,11 +287,13 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                             "SELECT trx_state FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id=%d",
                             $thread
                         ));
+                        $lastState=$state;
+                        $queryError=(string)$wpdb->last_error;
                         if ($state==='LOCK WAIT') {return $thread;}
                     }
                     usleep(10000); // polling interval only, never evidence of ordering
                 } while (microtime(true)<$deadline);
-                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT while coordinator held the guest lock.');
+                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)$wpdb->get_var('SELECT COUNT(*) FROM information_schema.INNODB_TRX') . '; mysql_errno=' . ($wpdb->dbh instanceof \mysqli ? $wpdb->dbh->errno : 'unknown') . '.');
             };
             $reserveThread=$waitForLock($reservationReady);
             $revokeWorker=proc_open(
