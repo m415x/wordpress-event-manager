@@ -18,6 +18,18 @@ if ($guestId < 1 || $adminId < 1) {
     fwrite(STDERR, "Invalid worker identity\n");
     exit(2);
 }
+global $wpdb;
+$guestRow = $wpdb->get_row($wpdb->prepare("SELECT ID, post_type, post_status FROM {$wpdb->posts} WHERE ID=%d", $guestId), ARRAY_A);
+if (!is_array($guestRow) || get_post_type($guestId) !== 'invitado') {
+    $database = (string)$wpdb->get_var('SELECT DATABASE()');
+    fwrite(STDERR, 'Worker fixture visibility: database=' . $database
+        . ', prefix=' . $wpdb->prefix
+        . ', guest_id=' . $guestId
+        . ', post_type_registered=' . (post_type_exists('invitado') ? 'yes' : 'no')
+        . ', raw_guest=' . json_encode($guestRow)
+        . ', get_post_type=' . var_export(get_post_type($guestId), true) . "\\n");
+    exit(3);
+}
 try {
     (new WEM_Invitation_Credential_Service())->revoke($guestId, $adminId);
     fwrite(STDOUT, "REVOKED\n");
