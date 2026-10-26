@@ -17,7 +17,17 @@ if (file_put_contents($readyPath, 'READY:' . (string)$wpdb->get_var('SELECT CONN
     fwrite(STDERR, "Readiness failed\n"); exit(3);
 }
 try {
-    $id = (new WEM_Seating_Bearer_Initial_Reservation())->reserve_for_bearer($token, $tableId);
+    $service = new class($readyPath) extends WEM_Seating_Bearer_Initial_Reservation {
+        private $readyPath;
+        public function __construct($readyPath) { $this->readyPath = $readyPath; }
+        protected function resolve_identity($bearer) {
+            $identity = parent::resolve_identity($bearer);
+            $stage = $identity === null ? 'PREFLIGHT_DENIED:' : 'PREFLIGHT_OK:';
+            file_put_contents($this->readyPath, $stage . (string)$GLOBALS['wpdb']->get_var('SELECT CONNECTION_ID()'));
+            return $identity;
+        }
+    };
+    $id = $service->reserve_for_bearer($token, $tableId);
     fwrite(STDOUT, 'RESERVED:' . $id . "\n");
 } catch (Throwable $error) {
     fwrite(STDERR, get_class($error) . ': ' . $error->getMessage() . "\n");
