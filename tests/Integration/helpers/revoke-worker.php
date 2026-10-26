@@ -9,6 +9,9 @@ if (!function_exists('get_post_type')) {
     fwrite(STDERR, "WordPress unavailable\n");
     exit(2);
 }
+if (!post_type_exists('invitado')) {
+    (new WEM_CPT_Manager())->register_cpt();
+}
 $guestId = isset($argv[1]) ? (int)$argv[1] : 0;
 $adminId = isset($argv[2]) ? (int)$argv[2] : 0;
 if ($guestId < 1 || $adminId < 1) {
