@@ -37,6 +37,10 @@ final class SeatingPublicRestLimitTest extends WP_UnitTestCase
             self::assertSame(403,$response->get_status());
             self::assertSame(['code'=>'seating_access_unavailable'],$response->get_data());
             self::assertSame('private, no-store',$response->get_headers()['Cache-Control'] ?? null);
+            $unknown='wem_i3_rate_' . hash_hmac('sha256','seating:availability:',wp_salt('auth'));
+            self::assertNull($wpdb->get_var($wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name=%s",$unknown
+            )), 'Missing peer must not enter one global shared bucket.');
         } finally {
             $wpdb->delete($wpdb->options,['option_name'=>$key]);
             $unknown='wem_i3_rate_' . hash_hmac('sha256','seating:availability:',wp_salt('auth'));
