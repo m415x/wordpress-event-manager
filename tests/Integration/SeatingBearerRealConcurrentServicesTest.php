@@ -262,7 +262,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             $revokeReady=tempnam(sys_get_temp_dir(),'wem-revoke-');
             self::assertNotFalse($reservationReady);
             self::assertNotFalse($revokeReady);
-            self::assertSame(1,$wpdb->query('START TRANSACTION'));
+            self::assertNotFalse($wpdb->query('START TRANSACTION'));
             $gateOpen=true;
             $locked=$wpdb->get_var($wpdb->prepare(
                 "SELECT ID FROM {$wpdb->posts} WHERE ID=%d FOR UPDATE",$guest
@@ -307,7 +307,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             self::assertSame(0,(int)$wpdb->get_var($wpdb->prepare(
                 'SELECT COUNT(*) FROM ' . \WEM_Table_Reservation_Schema::table_name() . ' WHERE guest_id=%d',$guest
             )));
-            self::assertSame(1,$wpdb->query('COMMIT'));
+            self::assertNotFalse($wpdb->query('COMMIT'));
             $gateOpen=false;
             $finish=static function (&$proc, &$pipes, $label): string {
                 $deadline=microtime(true)+8.0;
