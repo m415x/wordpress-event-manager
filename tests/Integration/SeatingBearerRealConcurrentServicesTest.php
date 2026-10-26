@@ -277,7 +277,11 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
 
             // Readiness is NOT the evidence. Observe the exact worker connection
             // in InnoDB LOCK WAIT, while coordinator owns canonical guest lock.
-            $waitForLock=static function ($path) use ($wpdb): int {
+            // Observe locks from a separate autocommit connection, never from
+            // the coordinator's open REPEATABLE READ transaction.
+            $monitor = new \mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+            self::assertSame(0, $monitor->connect_errno);
+            $waitForLock=static function ($path) use ($monitor): int {
                 $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError=''; $lastStage='';
                 do {
                     $notice=trim((string)file_get_contents($path));
@@ -287,17 +291,16 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                     }
                     if (preg_match('/^(?:READY|PREFLIGHT_OK|PREFLIGHT_DENIED):(\d+)$/',$notice,$found)) {
                         $thread=(int)$found[1];
-                        $state=$wpdb->get_var($wpdb->prepare(
-                            "SELECT trx_state FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id=%d",
-                            $thread
-                        ));
+                        $check=$monitor->query("SELECT trx_state FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id=" . $thread);
+                        $state=$check instanceof \mysqli_result ? ($check->fetch_assoc()['trx_state'] ?? null) : null;
+                        if ($check instanceof \mysqli_result) {$check->free();}
                         $lastState=$state;
-                        $queryError=(string)$wpdb->last_error;
+                        $queryError=$monitor->error;
                         if ($state==='LOCK WAIT') {return $thread;}
                     }
                     usleep(10000); // polling interval only, never evidence of ordering
                 } while (microtime(true)<$deadline);
-                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; stage=' . $lastStage . '; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)$wpdb->get_var('SELECT COUNT(*) FROM information_schema.INNODB_TRX') . '; mysql_errno=' . ($wpdb->dbh instanceof \mysqli ? $wpdb->dbh->errno : 'unknown') . '.');
+                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; stage=' . $lastStage . '; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)($monitor->query('SELECT COUNT(*) AS n FROM information_schema.INNODB_TRX')->fetch_assoc()['n'] ?? 'unknown') . '; mysql_errno=' . $monitor->errno . '.');
             };
             if (trim((string)file_get_contents($reservationReady)) === 'PREFLIGHT_DENIED') {
                 self::fail('Reserve worker denied preflight before I2.');
@@ -361,6 +364,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             self::assertNull((new \WEM_Seating_Bearer_Authorization())->resolve($bearer));
         } finally {
             if ($gateOpen) {$wpdb->query('ROLLBACK');}
+            if (isset($monitor) && $monitor instanceof \mysqli) {$monitor->close();}
             foreach ([$reservationWorker,$revokeWorker] as $proc) {
                 if (is_resource($proc)) {proc_terminate($proc);proc_close($proc);}
             }
