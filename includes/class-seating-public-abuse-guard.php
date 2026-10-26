@@ -63,4 +63,29 @@ final class WEM_Seating_Public_Abuse_Guard
         }
         return (int)$sequence > 0 && (int)$sequence <= $limit;
     }
+    /**
+     * Explicit bounded maintenance, never invoked on the request hot path.
+     * Only well-formed expired WEM counters are eligible; active counters
+     * and unrelated wp_options rows remain untouched.
+     */
+    public function purge_expired($maxRows = 100)
+    {
+        if (!is_int($maxRows) || $maxRows < 1 || $maxRows > 500) {
+            return false;
+        }
+
+        global $wpdb;
+        $table = $wpdb->options;
+        $now = time();
+        $deleted = $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$table}
+              WHERE option_name LIKE 'wem\\_i3\\_rate\\_%'
+                AND option_value REGEXP '^[0-9]+:[0-9]+
+                AND CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED) <= %d
+              ORDER BY option_name ASC
+              LIMIT %d",
+            $now, $maxRows
+        ));
+        return $deleted === false ? false : (int) $deleted;
+    }
 }
