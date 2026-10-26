@@ -2,12 +2,35 @@
 if (!defined('ABSPATH')) { exit; }
 
 /**
- * WEM-93/T6: fail-closed HTTP boundary. Deliberately not registered yet.
- * HTTP operation dispatch is prohibited until its authorization, headers,
- * abuse-control and response regressions are proven.
+ * WEM-93/T6: deny-all REST transport gate. Authorized operations remain
+ * disabled until authorization, abuse control and HTTP regressions pass.
  */
 final class WEM_Seating_Public_Http_Route
 {
+    public function register_hooks()
+    {
+        add_action('rest_api_init', [$this, 'register_routes']);
+    }
+
+    public function register_routes()
+    {
+        register_rest_route('wem/v1', '/seating/availability', [
+            'methods' => 'GET',
+            'permission_callback' => '__return_true',
+            'callback' => [$this, 'deny_rest_request'],
+        ]);
+    }
+
+    public function deny_rest_request($request)
+    {
+        $result = $this->handle_operation('availability', null);
+        $response = new WP_REST_Response($result['body'], $result['status']);
+        foreach ($result['headers'] as $name => $value) {
+            $response->header($name, $value);
+        }
+        return $response;
+    }
+
     public function security_headers()
     {
         return [
