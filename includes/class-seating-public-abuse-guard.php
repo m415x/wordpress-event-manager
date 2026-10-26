@@ -77,14 +77,15 @@ final class WEM_Seating_Public_Abuse_Guard
         global $wpdb;
         $table = $wpdb->options;
         $now = time();
+        $pattern = $wpdb->esc_like('wem_i3_rate_') . '%';
         $deleted = $wpdb->query($wpdb->prepare(
             "DELETE FROM {$table}
-              WHERE option_name LIKE 'wem\\_i3\\_rate\\_%'
-                AND option_value REGEXP '^[0-9]+:[0-9]+
+              WHERE option_name LIKE %s
+                AND option_value REGEXP %s
                 AND CAST(SUBSTRING_INDEX(option_value, ':', -1) AS UNSIGNED) <= %d
               ORDER BY option_name ASC
               LIMIT %d",
-            $now, $maxRows
+            $pattern, '^[0-9]+:[0-9]+$' , $now, $maxRows
         ));
         return $deleted === false ? false : (int) $deleted;
     }
