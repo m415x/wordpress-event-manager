@@ -22,6 +22,27 @@ try {
         public function __construct($readyPath) { $this->readyPath = $readyPath; }
         protected function resolve_identity($bearer) {
             $identity = parent::resolve_identity($bearer);
+            if ($identity === null) {
+                $db = $GLOBALS['wpdb'];
+                $credentials = WEM_Invitation_Credential_Schema::table_name();
+                $row = $db->get_row($db->prepare(
+                    "SELECT guest_id,status,active_slot FROM {$credentials} WHERE token_digest=%s",
+                    hash('sha256', $bearer)
+                ), ARRAY_A);
+                $guest = is_array($row) ? (int)$row['guest_id'] : 0;
+                $raw = $guest ? $db->get_row($db->prepare(
+                    "SELECT ID,post_type,post_status FROM {$db->posts} WHERE ID=%d", $guest
+                ), ARRAY_A) : null;
+                $terms = $guest ? $db->get_results($db->prepare(
+                    "SELECT tt.term_id,tt.taxonomy FROM {$db->term_relationships} tr
+                     JOIN {$db->term_taxonomy} tt ON tt.term_taxonomy_id=tr.term_taxonomy_id
+                     WHERE tr.object_id=%d", $guest
+                ), ARRAY_A) : null;
+                fwrite(STDERR, 'PREFLIGHT_DIAG: credential=' . json_encode($row)
+                    . ', guest=' . json_encode($raw) . ', terms=' . json_encode($terms)
+                    . ', wp_type=' . var_export($guest ? get_post_type($guest) : null, true)
+                    . ', sql_error=' . $db->last_error . "\n");
+            }
             $stage = $identity === null ? 'PREFLIGHT_DENIED:' : 'PREFLIGHT_OK:';
             file_put_contents($this->readyPath, $stage . (string)$GLOBALS['wpdb']->get_var('SELECT CONNECTION_ID()'));
             return $identity;
