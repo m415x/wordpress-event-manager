@@ -9,11 +9,17 @@ if (!defined('ABSPATH')) {
  * Authorization is serialized with WEM-33 credential lifecycle through I2's
  * canonical guest lock; I2 remains the sole reservation write authority.
  */
-final class WEM_Seating_Bearer_Initial_Reservation
+class WEM_Seating_Bearer_Initial_Reservation
 {
+    /** Protected preflight seam for deterministic revocation-race integration tests. */
+    protected function resolve_identity($bearer)
+    {
+        return (new WEM_Seating_Bearer_Authorization())->resolve($bearer);
+    }
+
     public function reserve_for_bearer($bearer, $tableId)
     {
-        $identity = (new WEM_Seating_Bearer_Authorization())->resolve($bearer);
+        $identity = $this->resolve_identity($bearer);
         if ($identity === null) {
             throw new DomainException('Seating authorization unavailable.');
         }
