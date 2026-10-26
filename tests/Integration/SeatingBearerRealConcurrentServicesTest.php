@@ -318,7 +318,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                         $sql=is_array($detail) ? (string)($detail['Info'] ?? '') : '';
                         if (is_array($detail) && ($detail['Command'] ?? '')==='Query'
                             && strpos($sql,'FOR UPDATE')!==false
-                            && strpos($sql,'WHERE ID=' . $guestId)!==false
+                            && preg_match('/WHERE\\s+ID\\s*=\\s*' . $guestId . '\\b/i',$sql)===1
                             && strpos($sql,'FROM wp_posts')!==false
                         ) {return $thread;}
                     }
