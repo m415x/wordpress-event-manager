@@ -54,20 +54,20 @@ final class SeatingBearerPreflightRevocationTest extends TestCase
                 }
                 protected function resolve_identity($bearer) {
                     $identity=parent::resolve_identity($bearer);
-                    \PHPUnit\\Framework\\Assert::assertIsArray($identity, 'Preflight must have resolved an active bearer.');
-                    \PHPUnit\\Framework\\Assert::assertSame($this->guest, $identity['guest_id']);
-                    \PHPUnit\\Framework\\Assert::assertTrue($this->other->begin_transaction());
+                    \PHPUnit\Framework\Assert::assertIsArray($identity, 'Preflight must have resolved an active bearer.');
+                    \PHPUnit\Framework\Assert::assertSame($this->guest, $identity['guest_id']);
+                    \PHPUnit\Framework\Assert::assertTrue($this->other->begin_transaction());
                     $lock=$this->other->query('SELECT ID FROM ' . $GLOBALS['wpdb']->posts . ' WHERE ID=' . $this->guest . ' FOR UPDATE');
-                    \PHPUnit\\Framework\\Assert::assertInstanceOf(\mysqli_result::class, $lock);
+                    \PHPUnit\Framework\Assert::assertInstanceOf(\mysqli_result::class, $lock);
                     $lock->free();
                     $credentials=\WEM_Invitation_Credential_Schema::table_name();
                     $stmt=$this->other->prepare("UPDATE {$credentials} SET status='revoked', active_slot=NULL, invalidated_at=NOW(), invalidated_by_user_id=? WHERE guest_id=? AND token_digest=? AND status='active' AND active_slot=1");
                     $digest=hash('sha256',$bearer);
                     $stmt->bind_param('iis',$this->admin,$this->guest,$digest);
-                    \PHPUnit\\Framework\\Assert::assertTrue($stmt->execute());
-                    \PHPUnit\\Framework\\Assert::assertSame(1,$stmt->affected_rows);
+                    \PHPUnit\Framework\Assert::assertTrue($stmt->execute());
+                    \PHPUnit\Framework\Assert::assertSame(1,$stmt->affected_rows);
                     $stmt->close();
-                    \PHPUnit\\Framework\\Assert::assertTrue($this->other->commit());
+                    \PHPUnit\Framework\Assert::assertTrue($this->other->commit());
                     $this->revoked=true;
                     return $identity;
                 }
