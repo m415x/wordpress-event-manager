@@ -27,8 +27,11 @@ final class WEM_Seating_Public_Http_Route
         // rate bucket or trust client-forwarded IP headers.
         $peer = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])
             ? $_SERVER['REMOTE_ADDR'] : '';
-        $bucket = 'seating:availability:' . $peer;
-        (new WEM_Seating_Public_Abuse_Guard())->record_attempt($bucket, 30, 60);
+        if (filter_var($peer, FILTER_VALIDATE_IP) !== false) {
+            $bucket = 'seating:availability:' . $peer;
+            (new WEM_Seating_Public_Abuse_Guard())->record_attempt($bucket, 30, 60);
+        }
+        // Missing/invalid peer: fail closed without a shared anonymous bucket.
         // Absent/invalid peer and quota failures remain a generic DENY.
         $result = $this->handle_operation('availability', null);
         $response = new WP_REST_Response($result['body'], $result['status']);
