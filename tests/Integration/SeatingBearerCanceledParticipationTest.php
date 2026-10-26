@@ -58,6 +58,8 @@ final class SeatingBearerCanceledParticipationTest extends TestCase
                 'guest_id' => $guest,
                 'event_term_id' => $eventId,
                 'participation_status' => 'canceled',
+                'canceled_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql'),
             ]));
             try {
                 $adapter->reserve_for_bearer($issued['token'], $tableId);
