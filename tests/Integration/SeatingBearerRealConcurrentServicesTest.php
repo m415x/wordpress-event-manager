@@ -281,7 +281,8 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             // the coordinator's open REPEATABLE READ transaction.
             $monitor = new \mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
             self::assertSame(0, $monitor->connect_errno);
-            $waitForLock=static function ($path) use ($monitor): int {
+            $waitForLock=static function ($path) use ($monitor, $guest): int {
+                $guestId=$guest;
                 $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError=''; $lastStage=''; $lastProcess='unseen';
                 do {
                     $notice=trim((string)file_get_contents($path));
@@ -311,6 +312,15 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                             $ps->free();
                         }
                         if ($state==='LOCK WAIT') {return $thread;}
+                        // Verify the specific lock acquisition statement actually
+                        // started, even if InnoDB telemetry omits LOCK WAIT.
+                        $detail=json_decode($lastProcess,true);
+                        $sql=is_array($detail) ? (string)($detail['Info'] ?? '') : '';
+                        if (is_array($detail) && ($detail['Command'] ?? '')==='Query'
+                            && strpos($sql,'FOR UPDATE')!==false
+                            && strpos($sql,'WHERE ID=' . $guestId)!==false
+                            && strpos($sql,'FROM wp_posts')!==false
+                        ) {return $thread;}
                     }
                     usleep(10000); // polling interval only, never evidence of ordering
                 } while (microtime(true)<$deadline);
