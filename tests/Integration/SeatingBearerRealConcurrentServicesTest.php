@@ -282,7 +282,7 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             $monitor = new \mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
             self::assertSame(0, $monitor->connect_errno);
             $waitForLock=static function ($path) use ($monitor): int {
-                $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError=''; $lastStage='';
+                $deadline=microtime(true)+8.0; $thread=0; $lastState=null; $queryError=''; $lastStage=''; $lastProcess='unseen';
                 do {
                     $notice=trim((string)file_get_contents($path));
                     $lastStage=$notice;
@@ -296,11 +296,25 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
                         if ($check instanceof \mysqli_result) {$check->free();}
                         $lastState=$state;
                         $queryError=$monitor->error;
+                        $ps=$monitor->query('SHOW FULL PROCESSLIST');
+                        if ($ps instanceof \mysqli_result) {
+                            while ($processRow=$ps->fetch_assoc()) {
+                                if ((int)$processRow['Id']===$thread) {
+                                    $lastProcess=json_encode([
+                                        'Command'=>$processRow['Command'],
+                                        'State'=>$processRow['State'],
+                                        'Info'=>$processRow['Info']
+                                    ]);
+                                    break;
+                                }
+                            }
+                            $ps->free();
+                        }
                         if ($state==='LOCK WAIT') {return $thread;}
                     }
                     usleep(10000); // polling interval only, never evidence of ordering
                 } while (microtime(true)<$deadline);
-                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; stage=' . $lastStage . '; observed_state=' . var_export($lastState,true) . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)($monitor->query('SELECT COUNT(*) AS n FROM information_schema.INNODB_TRX')->fetch_assoc()['n'] ?? 'unknown') . '; mysql_errno=' . $monitor->errno . '.');
+                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT; stage=' . $lastStage . '; observed_state=' . var_export($lastState,true) . '; process=' . $lastProcess . '; query_error=' . $queryError . '; innodb_trx_visible=' . (string)($monitor->query('SELECT COUNT(*) AS n FROM information_schema.INNODB_TRX')->fetch_assoc()['n'] ?? 'unknown') . '; mysql_errno=' . $monitor->errno . '.');
             };
             if (trim((string)file_get_contents($reservationReady)) === 'PREFLIGHT_DENIED') {
                 self::fail('Reserve worker denied preflight before I2.');
