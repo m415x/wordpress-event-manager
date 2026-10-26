@@ -230,4 +230,141 @@ final class SeatingBearerRealConcurrentServicesTest extends TestCase
             if ($event>0) {wp_delete_term($event,'evento');}
         }
     }
+
+    public function testReserveFirstWorkerAttemptsGuestLockBeforeReservationCommit(): void
+    {
+        global $wpdb;
+        require_once dirname(__DIR__, 2) . '/wordpress-event-manager.php';
+        if (!taxonomy_exists('evento')) {(new \WEM_Taxonomy_Manager())->register_taxonomy();}
+        if (!post_type_exists('invitado')) {(new \WEM_CPT_Manager())->register_cpt();}
+        self::assertSame(0, (int)$wpdb->get_var('SELECT @@in_transaction'));
+
+        $guest=$event=$table=$admin=0;
+        $reservationWorker=null; $revokeWorker=null; $reservationPipes=[]; $revokePipes=[];
+        $reservationReady=null; $revokeReady=null; $gateOpen=false;
+        try {
+            $term=wp_insert_term('T5-two-orders-' . wp_generate_uuid4(), 'evento');
+            self::assertFalse(is_wp_error($term));
+            $event=(int)$term['term_id'];
+            $guest=(int)wp_insert_post(['post_type'=>'invitado','post_status'=>'publish','post_title'=>'T5-' . wp_generate_uuid4()]);
+            self::assertGreaterThan(0,$guest);
+            wp_set_object_terms($guest,[$event],'evento',false);
+            self::assertSame(1,$wpdb->insert(\WEM_Event_Table_Schema::table_name(),[
+                'event_term_id'=>$event,'table_code'=>'T5-' . wp_generate_uuid4(),'capacity'=>1
+            ]));
+            $table=(int)$wpdb->insert_id;
+            $admin=(int)wp_create_user('wem-t5-' . wp_generate_uuid4(),wp_generate_password(32),'wem-t5-' . wp_generate_uuid4() . '@example.invalid');
+            self::assertGreaterThan(0,$admin);
+            (new \WP_User($admin))->set_role('administrator');
+            $bearer=(new \WEM_Invitation_Credential_Service())->issue($guest,$admin)['token'];
+
+            $reservationReady=tempnam(sys_get_temp_dir(),'wem-seat-');
+            $revokeReady=tempnam(sys_get_temp_dir(),'wem-revoke-');
+            self::assertNotFalse($reservationReady);
+            self::assertNotFalse($revokeReady);
+            self::assertSame(1,$wpdb->query('START TRANSACTION'));
+            $gateOpen=true;
+            $locked=$wpdb->get_var($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts} WHERE ID=%d FOR UPDATE",$guest
+            ));
+            self::assertSame($guest,(int)$locked);
+            $reservationWorker=proc_open(
+                [PHP_BINARY,__DIR__ . '/helpers/reserve-worker.php',$bearer,(string)$table,$reservationReady],
+                [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$reservationPipes
+            );
+            self::assertIsResource($reservationWorker);
+            fclose($reservationPipes[0]);
+
+            // Readiness is NOT the evidence. Observe the exact worker connection
+            // in InnoDB LOCK WAIT, while coordinator owns canonical guest lock.
+            $waitForLock=static function ($path) use ($wpdb): int {
+                $deadline=microtime(true)+8.0; $thread=0;
+                do {
+                    $notice=trim((string)file_get_contents($path));
+                    if (preg_match('/^READY:(\d+)$/',$notice,$found)) {
+                        $thread=(int)$found[1];
+                        $state=$wpdb->get_var($wpdb->prepare(
+                            "SELECT trx_state FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id=%d",
+                            $thread
+                        ));
+                        if ($state==='LOCK WAIT') {return $thread;}
+                    }
+                    usleep(10000); // polling interval only, never evidence of ordering
+                } while (microtime(true)<$deadline);
+                self::fail('Worker ' . $thread . ' never entered InnoDB LOCK WAIT while coordinator held the guest lock.');
+            };
+            $reserveThread=$waitForLock($reservationReady);
+            $revokeWorker=proc_open(
+                [PHP_BINARY,__DIR__ . '/helpers/revoke-worker.php',
+                    (string)$guest,(string)$admin,$revokeReady,'session'],
+                [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$revokePipes
+            );
+            self::assertIsResource($revokeWorker);
+            fclose($revokePipes[0]);
+            $revokeThread=$waitForLock($revokeReady);
+            self::assertNotSame($reserveThread,$revokeThread);
+            self::assertNotSame((int)$wpdb->get_var('SELECT CONNECTION_ID()'),$reserveThread);
+            self::assertSame(0,(int)$wpdb->get_var($wpdb->prepare(
+                'SELECT COUNT(*) FROM ' . \WEM_Table_Reservation_Schema::table_name() . ' WHERE guest_id=%d',$guest
+            )));
+            self::assertSame(1,$wpdb->query('COMMIT'));
+            $gateOpen=false;
+            $finish=static function (&$proc, &$pipes, $label): string {
+                $deadline=microtime(true)+8.0;
+                while (is_resource($proc) && proc_get_status($proc)['running']) {
+                    if (microtime(true)>=$deadline) {
+                        proc_terminate($proc);
+                        self::fail($label . ' failed to finish after releasing guest lock.');
+                    }
+                    usleep(10000);
+                }
+                $out=stream_get_contents($pipes[1]); $error=stream_get_contents($pipes[2]);
+                fclose($pipes[1]); fclose($pipes[2]);
+                $code=proc_close($proc); $proc=null;
+                // proc_get_status may reap the process exit code in some PHP versions.
+                self::assertSame('',trim($error),$label . ' stderr: ' . $error);
+                self::assertContains($code,[0,-1],$label . ' exited abnormally.');
+                return trim((string)$out);
+            };
+            $seatResult=$finish($reservationWorker,$reservationPipes,'reserve worker');
+            $revokeResult=$finish($revokeWorker,$revokePipes,'revoke worker');
+            self::assertStringStartsWith('RESERVED:',$seatResult);
+            self::assertSame('REVOKED',$revokeResult);
+            $reservationTable=\WEM_Table_Reservation_Schema::table_name();
+            self::assertSame(1,(int)$wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$reservationTable} WHERE guest_id=%d AND table_id=%d AND status='active' AND active_slot=1",
+                $guest,$table
+            )));
+            self::assertSame(1,(int)$wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$reservationTable} WHERE table_id=%d AND status='active' AND active_slot=1",$table
+            )));
+            $credentialTable=\WEM_Invitation_Credential_Schema::table_name();
+            $credential=$wpdb->get_row($wpdb->prepare(
+                "SELECT status,active_slot FROM {$credentialTable} WHERE token_digest=%s",
+                hash('sha256',$bearer)
+            ),ARRAY_A);
+            self::assertSame('revoked',$credential['status']);
+            self::assertNull($credential['active_slot']);
+            self::assertNull((new \WEM_Seating_Bearer_Authorization())->resolve($bearer));
+        } finally {
+            if ($gateOpen) {$wpdb->query('ROLLBACK');}
+            foreach ([$reservationWorker,$revokeWorker] as $proc) {
+                if (is_resource($proc)) {proc_terminate($proc);proc_close($proc);}
+            }
+            foreach ([$reservationPipes,$revokePipes] as $set) {
+                foreach ($set as $pipe) {if (is_resource($pipe)) {fclose($pipe);}}
+            }
+            foreach ([$reservationReady,$revokeReady] as $ready) {
+                if (is_string($ready) && is_file($ready)) {unlink($ready);}
+            }
+            if ($guest>0) {
+                $wpdb->delete(\WEM_Table_Reservation_Schema::table_name(),['guest_id'=>$guest]);
+                $wpdb->delete(\WEM_Invitation_Credential_Schema::table_name(),['guest_id'=>$guest]);
+            }
+            if ($table>0) {$wpdb->delete(\WEM_Event_Table_Schema::table_name(),['id'=>$table]);}
+            if ($guest>0) {wp_delete_post($guest,true);}
+            if ($admin>0) {wp_delete_user($admin);}
+            if ($event>0) {wp_delete_term($event,'evento');}
+        }
+    }
 }
