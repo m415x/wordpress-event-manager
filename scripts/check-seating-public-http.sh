@@ -7,7 +7,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 for entry in "GET availability" "GET members" "POST reservations"; do
   read -r method endpoint <<<"$entry"
-  url="$base/wp-json/wem/v1/seating/$endpoint/"
+  url="$base/?rest_route=/wem/v1/seating/$endpoint"
   code="$(curl --silent --show-error --max-time 15 --dump-header "$tmp/headers" --output "$tmp/body" --write-out '%{http_code}' --request "$method" --header 'Accept: application/json' "$url")"
   if [[ "$code" != 403 ]]; then
     echo "FAIL $method $endpoint HTTP $code (expected 403)"
