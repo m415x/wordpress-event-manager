@@ -57,6 +57,26 @@ final class WEM_Seating_Public_Http_Route
      */
     public function handle_operation($operation, $bearer, $parameters = [])
     {
+        if ($operation === 'availability' && is_string($bearer)) {
+            try {
+                $available = (new WEM_Seating_Bearer_Availability())->list_for_bearer($bearer);
+                if (is_array($available)) {
+                    return [
+                        'status' => 200,
+                        'headers' => $this->security_headers(),
+                        'body' => $available,
+                    ];
+                }
+            } catch (Throwable $error) {
+                // Internal availability failures must not expose SQL, PII or
+                // credentials. Authorization failures retain the same 403.
+                return [
+                    'status' => 503,
+                    'headers' => $this->security_headers(),
+                    'body' => ['code' => 'seating_temporarily_unavailable'],
+                ];
+            }
+        }
         $denial = $this->deny_authentication();
 
         return [
