@@ -19,6 +19,22 @@ final class WEM_Seating_Public_Http_Route
             'permission_callback' => '__return_true',
             'callback' => [$this, 'deny_rest_request'],
         ]);
+        register_rest_route('wem/v1', '/seating/members', [
+            'methods' => 'GET',
+            'permission_callback' => '__return_true',
+            'callback' => [$this, 'deny_members_request'],
+        ]);
+    }
+
+    public function deny_members_request($request)
+    {
+        // Strictly deny until the authorized members HTTP protocol is proven.
+        $denial = $this->handle_operation('members', null);
+        $response = new WP_REST_Response($denial['body'], $denial['status']);
+        foreach ($denial['headers'] as $name => $value) {
+            $response->header($name, $value);
+        }
+        return $response;
     }
 
     public function deny_rest_request($request)
