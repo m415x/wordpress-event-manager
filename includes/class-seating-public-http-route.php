@@ -173,13 +173,31 @@ final class WEM_Seating_Public_Http_Route
                         'body' => ['code' => 'seating_unavailable'],
                     ];
                 }
-                // Actual mutation remains disabled until POST and the I2
-                // transactional gate are exercised outside WP_UnitTestCase.
-                return [
-                    'status' => 503,
-                    'headers' => $this->security_headers(),
-                    'body' => ['code' => 'seating_temporarily_unavailable'],
-                ];
+                // The I2 writer owns transaction, guest lock, bearer
+                // revalidation and capacity checks. Never write here.
+                try {
+                    $reservationId = (new WEM_Seating_Bearer_Initial_Reservation())
+                        ->reserve_for_bearer($bearer, $tableId);
+                    return [
+                        'status' => 201,
+                        'headers' => $this->security_headers(),
+                        'body' => ['reservation_id' => (int) $reservationId],
+                    ];
+                } catch (DomainException $error) {
+                    // A revoked bearer and competing business conflicts must
+                    // not disclose their internal exception messages.
+                    return [
+                        'status' => 409,
+                        'headers' => $this->security_headers(),
+                        'body' => ['code' => 'seating_unavailable'],
+                    ];
+                } catch (Throwable $error) {
+                    return [
+                        'status' => 503,
+                        'headers' => $this->security_headers(),
+                        'body' => ['code' => 'seating_temporarily_unavailable'],
+                    ];
+                }
             }
         }
         if ($operation === 'availability' && is_string($bearer)) {
