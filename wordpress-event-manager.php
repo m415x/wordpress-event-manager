@@ -80,4 +80,8 @@ add_action('plugins_loaded', function () {
 
     $public_invitation_route = new WEM_Public_Invitation_Route();
     $public_invitation_route->register_hooks();
+
+    // WEM-93/T6: publish scoped I3 REST routes through the audited HTTP guards.
+    $public_seating_route = new WEM_Seating_Public_Http_Route();
+    $public_seating_route->register_hooks();
 });
