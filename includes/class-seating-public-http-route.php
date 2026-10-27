@@ -61,6 +61,53 @@ final class WEM_Seating_Public_Http_Route
      */
     public function handle_operation($operation, $bearer, $parameters = [])
     {
+        if ($operation === 'reserve') {
+            // Never inspect a requested table before establishing bearer scope.
+            $identity = is_string($bearer)
+                ? (new WEM_Seating_Bearer_Authorization())->resolve($bearer)
+                : null;
+            if (is_array($identity)) {
+                $tableId = $parameters['table_id'] ?? null;
+                $tableId = filter_var($tableId, FILTER_VALIDATE_INT, [
+                    'options' => ['min_range' => 1],
+                ]);
+                if ($tableId === false) {
+                    return [
+                        'status' => 409,
+                        'headers' => $this->security_headers(),
+                        'body' => ['code' => 'seating_unavailable'],
+                    ];
+                }
+
+                global $wpdb;
+                $tableName = WEM_Event_Table_Schema::table_name();
+                $row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT event_term_id FROM {$tableName} WHERE id=%d",
+                    $tableId
+                ), ARRAY_A);
+                if ($wpdb->last_error !== '') {
+                    return [
+                        'status' => 503,
+                        'headers' => $this->security_headers(),
+                        'body' => ['code' => 'seating_temporarily_unavailable'],
+                    ];
+                }
+                if (!is_array($row) || (int)$row['event_term_id'] !== (int)$identity['event_term_id']) {
+                    return [
+                        'status' => 409,
+                        'headers' => $this->security_headers(),
+                        'body' => ['code' => 'seating_unavailable'],
+                    ];
+                }
+                // Actual mutation remains disabled until POST and the I2
+                // transactional gate are exercised outside WP_UnitTestCase.
+                return [
+                    'status' => 503,
+                    'headers' => $this->security_headers(),
+                    'body' => ['code' => 'seating_temporarily_unavailable'],
+                ];
+            }
+        }
         if ($operation === 'availability' && is_string($bearer)) {
             try {
                 $available = (new WEM_Seating_Bearer_Availability())->list_for_bearer($bearer);
