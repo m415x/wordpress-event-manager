@@ -19,11 +19,28 @@ final class WEM_Seating_Public_Http_Route
             'permission_callback' => '__return_true',
             'callback' => [$this, 'deny_rest_request'],
         ]);
+        register_rest_route('wem/v1', '/seating/reservations', [
+            'methods' => 'POST',
+            'permission_callback' => '__return_true',
+            'callback' => [$this, 'deny_reservation_request'],
+        ]);
         register_rest_route('wem/v1', '/seating/members', [
             'methods' => 'GET',
             'permission_callback' => '__return_true',
             'callback' => [$this, 'deny_members_request'],
         ]);
+    }
+
+    public function deny_reservation_request($request)
+    {
+        // Mutation remains disabled until the I2 transactional HTTP gate passes.
+        // In particular, no table lookup is performed for unauthenticated calls.
+        $result = $this->handle_operation('reserve', null);
+        $response = new WP_REST_Response($result['body'], $result['status']);
+        foreach ($result['headers'] as $name => $value) {
+            $response->header($name, $value);
+        }
+        return $response;
     }
 
     public function deny_members_request($request)
