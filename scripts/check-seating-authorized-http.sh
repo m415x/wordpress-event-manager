@@ -8,12 +8,12 @@ tmp="$(mktemp -d)"
 guest='' event='' table='' admin='' token=''
 cleanup() {
   if [[ -n "$guest" && -n "$event" && -n "$table" && -n "$admin" ]]; then
-    MSYS_NO_PATHCONV=1 docker exec "$cli" wp eval-file "$fixture" cleanup "$guest" "$event" "$table" "$admin" --allow-root >/dev/null || echo 'FAIL: fixture cleanup; inspect isolated database' >&2
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker exec "$cli" wp eval-file "$fixture" cleanup "$guest" "$event" "$table" "$admin" --allow-root >/dev/null || echo 'FAIL: fixture cleanup; inspect isolated database' >&2
   fi
   rm -rf "$tmp"
 }
 trap cleanup EXIT
-if ! output="$(docker exec "$cli" wp eval-file "$fixture" create --allow-root)"; then
+if ! output="$(MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker exec "$cli" wp eval-file "$fixture" create --allow-root)"; then
   echo 'FAIL: fixture creation' >&2; exit 1
 fi
 IFS='|' read -r token guest event table admin <<<"$output"
