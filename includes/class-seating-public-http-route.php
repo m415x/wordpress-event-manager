@@ -28,10 +28,19 @@ final class WEM_Seating_Public_Http_Route
 
     public function deny_members_request($request)
     {
-        // Strictly deny until the authorized members HTTP protocol is proven.
-        $denial = $this->handle_operation('members', null);
-        $response = new WP_REST_Response($denial['body'], $denial['status']);
-        foreach ($denial['headers'] as $name => $value) {
+        $peer = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])
+            ? $_SERVER['REMOTE_ADDR'] : '';
+        $result = $this->handle_operation('members', null);
+        if (filter_var($peer, FILTER_VALIDATE_IP) !== false) {
+            $allowed = (new WEM_Seating_Public_Abuse_Guard())->record_attempt(
+                'seating:members:' . $peer, 30, 60
+            );
+            if ($allowed && $request instanceof WP_REST_Request) {
+                $result = $this->handle_operation('members', $request->get_header('X-WEM-Invitation'));
+            }
+        }
+        $response = new WP_REST_Response($result['body'], $result['status']);
+        foreach ($result['headers'] as $name => $value) {
             $response->header($name, $value);
         }
         return $response;
@@ -77,6 +86,24 @@ final class WEM_Seating_Public_Http_Route
      */
     public function handle_operation($operation, $bearer, $parameters = [])
     {
+        if ($operation === 'members' && is_string($bearer)) {
+            try {
+                $members = (new WEM_Seating_Bearer_Members())->list_for_bearer($bearer);
+                if (is_array($members)) {
+                    return [
+                        'status' => 200,
+                        'headers' => $this->security_headers(),
+                        'body' => $members,
+                    ];
+                }
+            } catch (Throwable $error) {
+                return [
+                    'status' => 503,
+                    'headers' => $this->security_headers(),
+                    'body' => ['code' => 'seating_temporarily_unavailable'],
+                ];
+            }
+        }
         if ($operation === 'reserve') {
             // Never inspect a requested table before establishing bearer scope.
             $identity = is_string($bearer)
