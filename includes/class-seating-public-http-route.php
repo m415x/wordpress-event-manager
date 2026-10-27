@@ -33,17 +33,23 @@ final class WEM_Seating_Public_Http_Route
 
     public function deny_reservation_request($request)
     {
-        // Count anonymous POST attempts by the trusted server peer only.
-        // Never accept a token from the request body or query parameters.
+        // The HTTP endpoint remains read-only until I2 transactional gates
+        // are exercised. Bearer is accepted from the header only.
         $peer = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])
             ? $_SERVER['REMOTE_ADDR'] : '';
+        $result = $this->handle_operation('reserve', null);
         if (filter_var($peer, FILTER_VALIDATE_IP) !== false) {
-            (new WEM_Seating_Public_Abuse_Guard())->record_attempt(
+            $allowed = (new WEM_Seating_Public_Abuse_Guard())->record_attempt(
                 'seating:reservations:' . $peer, 30, 60
             );
+            if ($allowed && $request instanceof WP_REST_Request) {
+                $result = $this->handle_operation(
+                    'reserve',
+                    $request->get_header('X-WEM-Invitation'),
+                    ['table_id' => $request->get_param('table_id')]
+                );
+            }
         }
-        // Mutation remains disabled until the I2 transactional HTTP gate passes.
-        $result = $this->handle_operation('reserve', null);
         $response = new WP_REST_Response($result['body'], $result['status']);
         foreach ($result['headers'] as $name => $value) {
             $response->header($name, $value);
