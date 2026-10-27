@@ -8,7 +8,7 @@ tmp="$(mktemp -d)"
 guest='' event='' table='' admin='' token=''
 cleanup() {
   if [[ -n "$guest" && -n "$event" && -n "$table" && -n "$admin" ]]; then
-    docker exec "$cli" wp eval-file "$fixture" cleanup "$guest" "$event" "$table" "$admin" --allow-root >/dev/null || echo 'FAIL: fixture cleanup; inspect isolated database' >&2
+    MSYS_NO_PATHCONV=1 docker exec "$cli" wp eval-file "$fixture" cleanup "$guest" "$event" "$table" "$admin" --allow-root >/dev/null || echo 'FAIL: fixture cleanup; inspect isolated database' >&2
   fi
   rm -rf "$tmp"
 }
