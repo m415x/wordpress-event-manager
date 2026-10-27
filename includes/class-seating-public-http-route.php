@@ -23,17 +23,21 @@ final class WEM_Seating_Public_Http_Route
 
     public function deny_rest_request($request)
     {
-        // Server-observed peer address only. Never include the bearer in the
-        // rate bucket or trust client-forwarded IP headers.
         $peer = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])
             ? $_SERVER['REMOTE_ADDR'] : '';
-        if (filter_var($peer, FILTER_VALIDATE_IP) !== false) {
+        // A missing or invalid peer cannot share an unbounded anonymous bucket.
+        // Never trust X-Forwarded-For or persist the presented bearer.
+        if (filter_var($peer, FILTER_VALIDATE_IP) === false) {
+            $result = $this->handle_operation('availability', null);
+        } else {
             $bucket = 'seating:availability:' . $peer;
-            (new WEM_Seating_Public_Abuse_Guard())->record_attempt($bucket, 30, 60);
+            $allowed = (new WEM_Seating_Public_Abuse_Guard())->record_attempt($bucket, 30, 60);
+            $bearer = $request instanceof WP_REST_Request
+                ? $request->get_header('X-WEM-Invitation') : null;
+            $result = $allowed
+                ? $this->handle_operation('availability', $bearer)
+                : $this->handle_operation('availability', null);
         }
-        // Missing/invalid peer: fail closed without a shared anonymous bucket.
-        // Absent/invalid peer and quota failures remain a generic DENY.
-        $result = $this->handle_operation('availability', null);
         $response = new WP_REST_Response($result['body'], $result['status']);
         foreach ($result['headers'] as $name => $value) {
             $response->header($name, $value);
