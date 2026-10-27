@@ -38,12 +38,12 @@ final class SeatingPublicReservationRevokedRestTest extends TestCase
             $request=new \WP_REST_Request('POST','/wem/v1/seating/reservations');
             $request->set_header('X-WEM-Invitation',$token);
             $request->set_param('table_id',$table);
-            (new \\WEM_Invitation_Credential_Service())->revoke($guest, $admin);
+            (new \WEM_Invitation_Credential_Service())->revoke($guest, $admin);
             $response=rest_get_server()->dispatch($request);
             self::assertSame(403,$response->get_status());
             self::assertSame(['code'=>'seating_access_unavailable'],$response->get_data());
             self::assertSame(0,(int)$wpdb->get_var($wpdb->prepare(
-                'SELECT COUNT(*) FROM '.\\WEM_Table_Reservation_Schema::table_name().
+                'SELECT COUNT(*) FROM '.\WEM_Table_Reservation_Schema::table_name().
                 " WHERE guest_id=%d AND status='active'",$guest
             )));
         } finally {
