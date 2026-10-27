@@ -40,6 +40,8 @@ final class SeatingPublicReservationCommitRestTest extends TestCase
             $request->set_param('table_id',$table);
             $response=rest_get_server()->dispatch($request);
             self::assertSame(201,$response->get_status());
+            self::assertSame(['code' => 'seating_reserved'], $response->get_data(),
+                'Public 201 must exclude reservation_id, guest_id, table_id, event IDs and internal identifiers.');
             self::assertStringNotContainsString($token,wp_json_encode($response->get_data()));
             self::assertSame(1,(int)$wpdb->get_var($wpdb->prepare(
                 'SELECT COUNT(*) FROM '.\WEM_Table_Reservation_Schema::table_name().
