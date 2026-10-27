@@ -17,6 +17,11 @@ final class SeatingPublicAuthorizedResponseTest extends WP_UnitTestCase
         $event=self::factory()->term->create(['taxonomy'=>'evento','name'=>'T6-' . wp_generate_uuid4()]);
         $guest=self::factory()->post->create(['post_type'=>'invitado','post_status'=>'publish']);
         wp_set_object_terms($guest,[$event],'evento',false);
+        global $wpdb;
+        // WP_UnitTestCase resets post IDs inside an outer transaction, while
+        // WEM-33 credentials can survive earlier integration fixtures.
+        // Clean only this test guest's stale credential rows in the isolated DB.
+        $wpdb->delete(\WEM_Invitation_Credential_Schema::table_name(), ['guest_id'=>$guest]);
         $issued=(new \WEM_Invitation_Credential_Service())->issue($guest,$admin);
         $result=(new \WEM_Seating_Public_Http_Route())->handle_operation('availability',$issued['token'],[]);
         self::assertSame(200,$result['status'],'Valid bearer must not be treated as unknown.');
