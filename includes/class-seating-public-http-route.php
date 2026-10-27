@@ -33,8 +33,16 @@ final class WEM_Seating_Public_Http_Route
 
     public function deny_reservation_request($request)
     {
+        // Count anonymous POST attempts by the trusted server peer only.
+        // Never accept a token from the request body or query parameters.
+        $peer = isset($_SERVER['REMOTE_ADDR']) && is_string($_SERVER['REMOTE_ADDR'])
+            ? $_SERVER['REMOTE_ADDR'] : '';
+        if (filter_var($peer, FILTER_VALIDATE_IP) !== false) {
+            (new WEM_Seating_Public_Abuse_Guard())->record_attempt(
+                'seating:reservations:' . $peer, 30, 60
+            );
+        }
         // Mutation remains disabled until the I2 transactional HTTP gate passes.
-        // In particular, no table lookup is performed for unauthenticated calls.
         $result = $this->handle_operation('reserve', null);
         $response = new WP_REST_Response($result['body'], $result['status']);
         foreach ($result['headers'] as $name => $value) {
