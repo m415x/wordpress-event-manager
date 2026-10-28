@@ -176,12 +176,12 @@ final class WEM_Seating_Public_Http_Route
                 // The I2 writer owns transaction, guest lock, bearer
                 // revalidation and capacity checks. Never write here.
                 try {
-                    $reservationId = (new WEM_Seating_Bearer_Initial_Reservation())
+                    (new WEM_Seating_Bearer_Initial_Reservation())
                         ->reserve_for_bearer($bearer, $tableId);
                     return [
                         'status' => 201,
                         'headers' => $this->security_headers(),
-                        'body' => ['reservation_id' => (int) $reservationId],
+                        'body' => ['code' => 'seating_reserved'],
                     ];
                 } catch (DomainException $error) {
                     // A revoked bearer and competing business conflicts must
