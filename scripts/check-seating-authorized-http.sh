@@ -38,6 +38,11 @@ probe() {
 probe GET availability 200
 probe GET members 200
 probe POST reservations 201 --data-urlencode "table_id=$table"
+if [[ "$(tr -d '\\r\\n\\t ' < "$tmp/body")" != '{"code":"seating_reserved"}' ]]; then
+  echo 'FAIL public HTTP 201 must contain only seating_reserved (no internal IDs)' >&2
+  exit 1
+fi
+echo 'PASS public HTTP 201 contains no internal IDs'
 probe POST reservations 409 --data-urlencode "table_id=$table"
 probe GET members 200
 if ! grep -Fq 'Integrante privado' "$tmp/body"; then echo 'FAIL private member projection' >&2; exit 1; fi
