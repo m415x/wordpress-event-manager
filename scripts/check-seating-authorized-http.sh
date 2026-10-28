@@ -38,7 +38,7 @@ probe() {
 probe GET availability 200
 probe GET members 200
 probe POST reservations 201 --data-urlencode "table_id=$table"
-if [[ "$(tr -d '\\r\\n\\t ' < "$tmp/body")" != '{"code":"seating_reserved"}' ]]; then
+if [[ "$(cat "$tmp/body")" != '{"code":"seating_reserved"}' ]]; then
   echo 'FAIL public HTTP 201 must contain only seating_reserved (no internal IDs)' >&2
   exit 1
 fi
