@@ -5,7 +5,7 @@ namespace WEM\Tests\Integration;
 use PHPUnit\Framework\TestCase;
 
 // PHPUnit's file-scoped runner does not autoload neighboring test classes.
-require_once __DIR__ . '/SeatingBearerRealConcurrentServicesTest.php';
+
 
 /**
  * WEM-92/T5: an acceptable race result is not evidence of both race orders.
@@ -13,6 +13,12 @@ require_once __DIR__ . '/SeatingBearerRealConcurrentServicesTest.php';
  */
 final class SeatingBearerBothOrdersContractTest extends TestCase
 {
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        require_once __DIR__ . '/SeatingBearerRealConcurrentServicesTest.php';
+    }
+
     public function testRevocationFirstRealServicesHasDeterministicWitness(): void
     {
         self::assertTrue(
